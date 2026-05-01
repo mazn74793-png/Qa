@@ -78,52 +78,57 @@ export default function Portal() {
     (window as any).showAddClassModal = () => setShowAddClass(true);
   }, []);
 
+  if (!user) return <LoginView />;
+
   return (
-    <div className="pt-32 pb-20 min-h-screen bg-slate-50">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="flex flex-col lg:flex-row gap-8">
+    <div className="pt-24 pb-20 min-h-screen bg-slate-50">
+      <div className="container mx-auto px-2 md:px-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           
           {/* Navigation - Mobile: Horizontal Scroll, Desktop: Sidebar */}
           <aside className="lg:w-1/4">
-            <div className="bg-white rounded-[32px] p-4 md:p-6 border border-slate-100 shadow-sm lg:sticky lg:top-32">
+            <div className="bg-white rounded-[32px] p-4 md:p-6 border border-slate-100 shadow-sm lg:sticky lg:top-24">
               <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                <img 
-                  src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`} 
-                  alt={user.displayName || 'User'} 
-                  className="w-12 h-12 md:w-14 md:h-14 rounded-2xl object-cover"
-                />
+                <div className="relative">
+                  <img 
+                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} 
+                    alt={user.displayName || 'User'} 
+                    className="w-12 h-12 md:w-14 md:h-14 rounded-2xl object-cover border-2 border-slate-50"
+                  />
+                  {isAdmin && <div className="absolute -top-1 -right-1 bg-accent text-white p-1 rounded-lg border-2 border-white shadow-sm"><Shield className="w-2.5 h-2.5" /></div>}
+                </div>
                 <div className="text-right flex-1 min-w-0">
-                  <h3 className="font-bold text-primary truncate leading-tight">{(user as any).displayName || (user as any).fullName || 'طالب متميز'}</h3>
+                  <h3 className="font-bold text-primary truncate leading-tight text-sm md:text-base">{(user as any).displayName || userData?.fullName || 'مستخدم النظام'}</h3>
                   <div className="flex flex-col gap-0.5">
-                    <p className="text-[10px] text-slate-500 font-bold">{isAdmin ? 'المدير العام للمنصة' : 'طالب النظام'}</p>
+                    <p className="text-[9px] md:text-[10px] text-slate-500 font-black">{isAdmin ? 'المدير العام للمنصة' : 'طالب النظام'}</p>
                     <button 
                       onClick={() => {
                         navigator.clipboard.writeText(user.uid);
                       }}
-                      className="text-[9px] text-slate-400 font-mono opacity-60 flex items-center gap-1 hover:text-accent hover:opacity-100 transition-all group"
+                      className="text-[8px] md:text-[9px] text-slate-400 font-mono opacity-60 flex items-center gap-1 hover:text-accent hover:opacity-100 transition-all group"
                       title="اضغط لنسخ الرقم التعريفي"
                     >
                       <span className="bg-slate-100 px-1 rounded uppercase">ID:</span>
-                      <span className="truncate max-w-[80px]">{user.uid}</span>
+                      <span className="truncate max-w-[60px] md:max-w-none">{user.uid}</span>
                       <span className="hidden group-hover:inline">📋</span>
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Tabs Wrapper */}
-              <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-hide -mx-2 px-2 lg:mx-0 lg:px-0">
+              {/* Tabs Wrapper - Enhanced for better spacing on mobile */}
+              <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-3 lg:pb-0 scrollbar-hide -mx-2 px-2 lg:mx-0 lg:px-0">
                 <TabButton 
                   active={activeTab === 'dashboard'} 
                   onClick={() => setActiveTab('dashboard')} 
                   icon={LayoutDashboard} 
-                  label="لوحة التحكم" 
+                  label="الرئيسية" 
                 />
                 <TabButton 
                   active={activeTab === 'schedule'} 
                   onClick={() => setActiveTab('schedule')} 
                   icon={Calendar} 
-                  label="جداولي" 
+                  label="الجداول" 
                 />
                 <TabButton 
                   active={activeTab === 'exams'} 
@@ -135,37 +140,37 @@ export default function Portal() {
                   active={activeTab === 'grades'} 
                   onClick={() => setActiveTab('grades')} 
                   icon={TrendingUp} 
-                  label="الدرجات" 
-                />
-                <TabButton 
-                  active={activeTab === 'materials'} 
-                  onClick={() => setActiveTab('materials')} 
-                  icon={BookOpen} 
-                  label="المذكرات" 
+                  label="نتائجي" 
                 />
                 {isAdmin && (
                   <TabButton 
                     active={activeTab === 'bookings'} 
                     onClick={() => setActiveTab('bookings')} 
                     icon={User} 
-                    label="سجل الحجوزات" 
+                    label="الحجوزات" 
                   />
                 )}
+                <TabButton 
+                  active={activeTab === 'materials'} 
+                  onClick={() => setActiveTab('materials')} 
+                  icon={BookOpen} 
+                  label="المذكرات" 
+                />
               </div>
 
               <button 
                 onClick={() => logout()}
-                className="hidden lg:flex w-full mt-8 items-center gap-3 p-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-all"
+                className="hidden lg:flex w-full mt-6 items-center gap-3 p-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-all border border-transparent hover:border-red-100"
               >
                 <LogOut className="w-5 h-5" />
-                تسجيل الخروج
+                خروج من النظام
               </button>
             </div>
             
             {/* Mobile Logout Button */}
             <button 
               onClick={() => logout()}
-              className="lg:hidden w-full mt-4 flex items-center justify-center gap-2 p-4 text-red-500 font-bold bg-white rounded-2xl border border-red-50"
+              className="lg:hidden w-full mt-4 flex items-center justify-center gap-2 p-3 text-red-500 font-bold bg-white rounded-2xl border border-red-50 text-sm"
             >
               <LogOut className="w-4 h-4" />
               <span>تسجيل الخروج</span>
@@ -441,57 +446,71 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-6 md:space-y-8 text-right pb-10"
+      className="space-y-6 md:space-y-10 text-right pb-10"
     >
-      {/* Hero Welcome */}
+      {/* Hero Welcome - Enhanced for Legibility */}
       <div className={cn(
-        "rounded-[32px] md:rounded-[40px] p-6 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-primary/20",
-        isAdmin ? "bg-gradient-to-br from-accent to-accent/80" : "bg-gradient-to-br from-primary to-primary/80"
+        "rounded-[32px] md:rounded-[48px] p-8 md:p-16 text-white relative overflow-hidden shadow-2xl flex flex-col justify-center min-h-[220px] md:min-h-[300px]",
+        isAdmin 
+          ? "bg-gradient-to-br from-slate-900 via-primary to-primary/90 shadow-primary/20" 
+          : "bg-gradient-to-br from-primary via-primary/95 to-accent/90 shadow-primary/10"
       )}>
-        <div className="absolute top-0 right-0 w-64 md:w-80 h-64 md:h-80 bg-white rounded-full blur-[100px] opacity-10 -translate-y-1/2 translate-x-1/2" />
+        {/* Decorative elements that don't overlap text */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white rounded-full blur-[140px] opacity-10 -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-60 h-60 bg-accent rounded-full blur-[100px] opacity-10 translate-y-1/2 -translate-x-1/2" />
         
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-4 md:mb-6">
-            <Shield className="w-3.5 h-3.5 text-white" />
-            {isAdmin ? 'الإدارة العامة' : 'حسابك الشخصي'}
+        <div className="relative z-10 space-y-4">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl px-5 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider border border-white/10">
+            <Shield className="w-3.5 h-3.5 text-accent" />
+            {isAdmin ? 'الإدارة المركزية' : 'بوابة الطالب الذكية'}
           </div>
-          <h2 className="text-2xl md:text-5xl font-black mb-3 md:mb-4 leading-tight">
-            أهلاً بك يا {((user as any).displayName || userData?.fullName || '').split(' ')[0]} 👋
+          <h2 className="text-3xl md:text-6xl font-black mb-3 leading-tight tracking-tight">
+            أهلاً بك، {((user as any).displayName || userData?.fullName || 'أستاذ').split(' ')[0]} 👋
           </h2>
-          <p className="text-white/80 text-sm md:text-xl max-w-xl leading-relaxed">
+          <p className="text-white/70 text-base md:text-xl max-w-2xl leading-relaxed font-medium">
             {isAdmin 
-              ? 'لديك الصلاحية الكاملة لإدارة كافة أقسام المنصة ومتابعة أداء الطلاب والمعلمين.'
-              : 'يسعدنا تواجدك اليوم. تابع آخر التحديثات والمذاكرات المرفوعة لك بانتظام.'}
+              ? 'لديك اليوم كامل الصلاحيات لإدارة المحتوى التعليمي، متابعة الطلاب، وتنظيم المواعيد.'
+              : 'رحلتك التعليمية مستمرة اليوم. تفقد المهام المطلوبة منك وتابع تقدمك الدراسي.'}
           </p>
         </div>
       </div>
 
-      {/* Admin Quick Tools */}
+      {/* Admin Quick Tools - Cleaner Layout */}
       {isAdmin && (
-        <div className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm overflow-hidden whitespace-nowrap overflow-x-auto scrollbar-hide flex gap-3">
-           <div className="text-xs font-black text-slate-300 px-4 py-2 border-l border-slate-50 flex items-center">أدوات سريعة</div>
-           <button onClick={() => (window as any).showAddExamModal()} className="flex items-center gap-2 bg-slate-50 hover:bg-accent hover:text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all shrink-0">
-             <ClipboardCheck className="w-4 h-4" /> إضافة امتحان
-           </button>
-           <button onClick={() => (window as any).showAddClassModal()} className="flex items-center gap-2 bg-slate-50 hover:bg-primary hover:text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all shrink-0">
-             <Calendar className="w-4 h-4" /> إضافة حصة
-           </button>
+        <div className="bg-white p-2 rounded-[32px] border border-slate-100 shadow-sm flex flex-wrap gap-2 md:gap-4">
+           <div className="text-[10px] font-black text-slate-400 px-6 py-4 flex items-center border-l border-slate-50">أدوات سريعة</div>
+           <div className="flex flex-1 gap-2 md:gap-4 p-2">
+             <button 
+               onClick={() => (window as any).showAddExamModal()} 
+               className="flex-1 flex items-center justify-center gap-2 bg-accent/5 hover:bg-accent text-accent hover:text-white p-4 rounded-2xl text-sm font-black transition-all shadow-sm hover:shadow-accent/20"
+             >
+               <ClipboardCheck className="w-5 h-5 shrink-0" />
+               <span className="hidden sm:inline">إضافة امتحان</span>
+             </button>
+             <button 
+               onClick={() => (window as any).showAddClassModal()} 
+               className="flex-1 flex items-center justify-center gap-2 bg-primary/5 hover:bg-primary text-primary hover:text-white p-4 rounded-2xl text-sm font-black transition-all shadow-sm hover:shadow-primary/20"
+             >
+               <Calendar className="w-5 h-5 shrink-0" />
+               <span className="hidden sm:inline">إضافة حصة</span>
+             </button>
+           </div>
         </div>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      {/* Stats Grid - Fixed Overlapping with Responsive Spacing */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
         {isAdmin ? (
           <>
-            <StatCard title="إجمالي الطلاب" value={stats.students} icon={User} color="bg-blue-500" desc="مسجلين في النظام" />
-            <StatCard title="الامتحانات" value={stats.exams} icon={ClipboardCheck} color="bg-orange-500" desc="منشورة حالياً" />
-            <StatCard title="الحجوزات" value={stats.bookings} icon={Calendar} color="bg-green-500" desc="تمت هذا الشهر" />
+            <StatCard title="إجمالي الطلاب" value={stats.students} icon={User} color="bg-blue-600" desc="مسجلين حالياً" />
+            <StatCard title="الامتحانات" value={stats.exams} icon={ClipboardCheck} color="bg-orange-500" desc="نشطة في النظام" />
+            <StatCard title="حجوزات جديدة" value={stats.bookings} icon={Calendar} color="bg-green-600" desc="هذا الشهر" />
           </>
         ) : (
           <>
-            <StatCard title="الحصص القادمة" value="3" icon={Calendar} color="bg-blue-500" desc="لهذا الأسبوع" />
-            <StatCard title="الدرجات" value="18/20" icon={TrendingUp} color="bg-green-500" desc="آخر اختبار" />
-            <StatCard title="المذكرات" value="5" icon={BookOpen} color="bg-accent" desc="تحميلات متبقية" />
+            <StatCard title="حصصك" value="3" icon={Calendar} color="bg-blue-500" desc="المستوى القادم" />
+            <StatCard title="متوسط الدرجات" value="18/20" icon={TrendingUp} color="bg-green-500" desc="أداء متميز" />
+            <StatCard title="مذكراتك" value="5" icon={BookOpen} color="bg-accent" desc="تم تحميلها" />
           </>
         )}
       </div>
@@ -1164,10 +1183,11 @@ function BookingsView() {
     const q = query(collection(db, 'bookings'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const data = await Promise.all(snapshot.docs.map(async (d) => {
-        const booking = { id: d.id, ...d.data() };
+        const bookingData = d.data() as any;
+        const booking = { id: d.id, ...bookingData };
         // Fetch student name
         try {
-          const uDoc = await getDocFromServer(doc(db, 'users', booking.studentId));
+          const uDoc = await getDocFromServer(doc(db, 'users', bookingData.studentId));
           return { ...booking, studentName: uDoc.exists() ? uDoc.data().fullName : 'طالب غير مسجل' };
         } catch {
           return { ...booking, studentName: 'خطأ في التحميل' };
