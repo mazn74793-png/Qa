@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAdmin } from '@/src/hooks/useAdmin';
 import { 
   BarChart3, 
@@ -8,22 +8,31 @@ import {
   Calendar, 
   LogOut, 
   LayoutDashboard,
-  Save,
-  Plus,
-  Trash2,
-  Edit3,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  ClipboardCheck,
+  TrendingUp,
+  Plus,
+  Edit3,
+  Video,
+  Eye
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
+import { Link } from 'react-router-dom';
+import { auth, db, logout } from '@/src/lib/firebase';
+import { collection, getDocs, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import SiteEditor from './SiteEditor';
 import CourseManager from './CourseManager';
 import TeacherManager from './TeacherManager';
 import ScheduleManager from './ScheduleManager';
 import AdminManager from './AdminManager';
+import ExamManager from './ExamManager';
+import BookingManager from './BookingManager';
+import VideoManager from './VideoManager';
+import MaterialManager from './MaterialManager';
 
-type AdminTab = 'overview' | 'content' | 'courses' | 'teachers' | 'schedule' | 'admins';
+type AdminTab = 'overview' | 'content' | 'courses' | 'teachers' | 'schedule' | 'exams' | 'bookings' | 'videos' | 'materials' | 'admins';
 
 export default function AdminDashboard() {
   const { isAdmin, loading, user } = useAdmin();
@@ -37,11 +46,18 @@ export default function AdminDashboard() {
 
   if (!isAdmin) return <AdminAccessDenied />;
 
+  const handleLogout = async () => {
+    if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+      await logout();
+      window.location.href = '/';
+    }
+  };
+
   return (
-    <div id="admin-panel" className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div id="admin-panel" className="min-h-screen bg-slate-50 flex flex-col md:flex-row overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-full md:w-72 bg-primary text-white p-6 md:min-h-screen sticky top-0 z-50">
-        <div className="flex items-center gap-3 mb-10 pb-6 border-b border-white/10">
+      <aside className="w-full md:w-72 bg-primary text-white p-6 md:min-h-screen sticky top-0 z-50 flex flex-col">
+        <div className="flex items-center gap-3 mb-8 pb-6 border-b border-white/10 shrink-0">
           <div className="bg-accent p-2 rounded-xl">
             <ShieldCheck className="w-6 h-6 text-white" />
           </div>
@@ -51,21 +67,28 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <nav className="space-y-2">
+        <nav className="space-y-1 overflow-y-auto scrollbar-hide flex-1">
           <SidebarLink active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={LayoutDashboard} label="نظرة عامة" />
           <SidebarLink active={activeTab === 'content'} onClick={() => setActiveTab('content')} icon={Settings2} label="محتوى الموقع" />
           <SidebarLink active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} icon={BookOpen} label="إدارة المواد" />
           <SidebarLink active={activeTab === 'teachers'} onClick={() => setActiveTab('teachers')} icon={Users} label="إدارة المدرسين" />
           <SidebarLink active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={Calendar} label="إدارة الجدول" />
+          <SidebarLink active={activeTab === 'videos'} onClick={() => setActiveTab('videos')} icon={Video} label="إدارة الفيديوهات" />
+          <SidebarLink active={activeTab === 'materials'} onClick={() => setActiveTab('materials')} icon={BookOpen} label="إدارة الملازم" />
+          <SidebarLink active={activeTab === 'exams'} onClick={() => setActiveTab('exams')} icon={ClipboardCheck} label="إدارة الامتحانات" />
+          <SidebarLink active={activeTab === 'bookings'} onClick={() => setActiveTab('bookings')} icon={TrendingUp} label="سجل الحجوزات" />
           <SidebarLink active={activeTab === 'admins'} onClick={() => setActiveTab('admins')} icon={ShieldCheck} label="إدارة المسؤولين" />
         </nav>
 
-        <div className="mt-auto pt-10">
-          <div className="bg-white/5 p-4 rounded-2xl mb-6">
+        <div className="mt-auto pt-6 border-t border-white/10 shrink-0">
+          <div className="bg-white/5 p-4 rounded-2xl mb-4">
             <p className="text-xs text-white/40 mb-1">المسؤول الحالي</p>
             <p className="text-sm font-bold truncate">{user?.email}</p>
           </div>
-          <button className="flex items-center gap-3 text-red-400 hover:text-red-300 font-bold transition-all p-2">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 text-red-100 bg-red-500/10 hover:bg-red-500/20 p-4 rounded-2xl font-bold transition-all"
+          >
             <LogOut className="w-5 h-5" />
             خروج من النظام
           </button>
@@ -73,26 +96,37 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Content Area */}
-      <main className="flex-grow p-4 md:p-10 pt-24 md:pt-10">
+      <main className="flex-grow p-4 md:p-10 pt-10 overflow-y-auto">
         <header className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-primary mb-2">أهلاً بك في غرفة القيادة 🚀</h1>
-            <p className="text-slate-500">من هنا يمكنك التحكم في كل ذرة في الموقع.</p>
+            <h1 className="text-3xl font-black text-primary mb-2">أهلاً بك في غرفة القيادة 🚀</h1>
+            <p className="text-slate-500 font-bold">كل التغييرات التي تجريها تظهر فوراً لجميع الطلاب.</p>
           </div>
           <div className="flex items-center gap-3">
-             <div className="bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-sm font-bold text-slate-600">النظام متصل</span>
+             <Link 
+               to="/portal"
+               className="bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-2 hover:bg-slate-50 transition-all font-black text-primary text-sm shadow-sm"
+             >
+                <Eye className="w-5 h-5 text-accent" />
+                مشاهدة كطالب
+             </Link>
+             <div className="bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs font-black text-slate-600">النظام متصل وبانتظارك</span>
              </div>
           </div>
         </header>
 
-        <div className="max-w-6xl">
+        <div className="max-w-7xl mx-auto">
           {activeTab === 'overview' && <OverviewView />}
           {activeTab === 'content' && <SiteEditor />}
           {activeTab === 'courses' && <CourseManager />}
           {activeTab === 'teachers' && <TeacherManager />}
           {activeTab === 'schedule' && <ScheduleManager />}
+          {activeTab === 'videos' && <VideoManager />}
+          {activeTab === 'materials' && <MaterialManager />}
+          {activeTab === 'exams' && <ExamManager />}
+          {activeTab === 'bookings' && <BookingManager />}
           {activeTab === 'admins' && <AdminManager />}
         </div>
       </main>
@@ -101,27 +135,48 @@ export default function AdminDashboard() {
 }
 
 function OverviewView() {
+  const [stats, setStats] = useState({ students: 0, exams: 0, bookings: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const u = await getDocs(collection(db, 'users'));
+      const e = await getDocs(collection(db, 'exams'));
+      const b = await getDocs(collection(db, 'bookings'));
+      setStats({
+        students: u.size,
+        exams: e.size,
+        bookings: b.size
+      });
+    };
+    fetchStats();
+  }, []);
+
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <StatBox label="إجمالي الطلاب" value="1,250" delta="+12%" icon={Users} color="bg-blue-500" />
-      <StatBox label="المواد المفعلة" value="24" delta="0%" icon={BookOpen} color="bg-accent" />
-      <StatBox label="زيارات اليوم" value="840" delta="+25%" icon={BarChart3} color="bg-green-500" />
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatBox label="إجمالي الطلاب" value={stats.students} delta="+12%" icon={Users} color="bg-blue-600" />
+        <StatBox label="الامتحانات المنشورة" value={stats.exams} delta="+5%" icon={ClipboardCheck} color="bg-accent" />
+        <StatBox label="إجمالي الحجوزات" value={stats.bookings} delta="+20%" icon={TrendingUp} color="bg-green-600" />
+      </div>
       
-      <div className="md:col-span-3 bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-         <h3 className="text-xl font-bold text-primary mb-6">آخر النشاطات</h3>
+      <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
+         <h3 className="text-xl font-black text-primary mb-8 border-b border-slate-50 pb-4 flex items-center gap-3">
+           <BarChart3 className="text-accent" />
+           آخر النشاطات في المنصة
+         </h3>
          <div className="space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
-                 <div className="flex items-center gap-4 text-right">
-                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-accent">
-                       {i === 1 ? <Plus className="w-5 h-5"/> : <Edit3 className="w-5 h-5"/>}
+              <div key={i} className="flex items-center justify-between p-6 bg-slate-50/50 hover:bg-slate-50 rounded-3xl transition-all border border-transparent hover:border-slate-100">
+                 <div className="flex items-center gap-5 text-right">
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-accent shadow-sm">
+                       {i === 1 ? <Plus className="w-6 h-6"/> : <Edit3 className="w-6 h-6"/>}
                     </div>
                     <div>
-                       <p className="font-bold text-primary">{i === 1 ? 'تم إضافة مدرس جديد: أ/ خالد يوسف' : 'تم تحديث جدول الصف الثالث الثانوي'}</p>
-                       <p className="text-xs text-slate-500">منذ {i * 10} دقائق</p>
+                       <p className="font-black text-primary text-lg">{i === 1 ? 'تم إضافة مدرس جديد: أ/ خالد يوسف' : 'تم تحديث جدول الصف الثالث الثانوي'}</p>
+                       <p className="text-xs text-slate-400 font-bold">منذ {i * 10} دقائق • بواسطة النظام الآلي</p>
                     </div>
                  </div>
-                 <ChevronRight className="w-5 h-5 text-slate-300" />
+                 <ChevronRight className="w-6 h-6 text-slate-200" />
               </div>
             ))}
          </div>
@@ -132,16 +187,16 @@ function OverviewView() {
 
 function StatBox({ label, value, delta, icon: Icon, color }: any) {
   return (
-    <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden group">
-      <div className={cn("absolute right-0 top-0 w-1.5 h-full transition-all group-hover:w-3", color)} />
-      <div className="flex justify-between items-start mb-4">
-        <div className={cn("p-4 rounded-2xl text-white", color)}>
-          <Icon className="w-6 h-6" />
+    <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden group">
+      <div className={cn("absolute right-0 top-0 w-2 h-full transition-all group-hover:w-4", color)} />
+      <div className="flex justify-between items-start mb-6">
+        <div className={cn("p-5 rounded-3xl text-white shadow-xl", color)}>
+          <Icon className="w-8 h-8" />
         </div>
-        <div className="text-green-500 text-sm font-bold bg-green-50 px-2 py-1 rounded-lg">{delta}</div>
+        <div className="text-green-600 text-xs font-black bg-green-50 px-3 py-1.5 rounded-full border border-green-100">{delta}</div>
       </div>
-      <h4 className="text-slate-500 font-medium mb-1">{label}</h4>
-      <p className="text-3xl font-bold text-primary">{value}</p>
+      <h4 className="text-slate-400 font-bold text-sm mb-1">{label}</h4>
+      <p className="text-4xl font-black text-primary tracking-tighter">{value}</p>
     </div>
   );
 }
@@ -151,30 +206,33 @@ function SidebarLink({ active, onClick, icon: Icon, label }: any) {
     <button 
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-4 p-4 rounded-xl font-bold mb-1 transition-all",
-        active ? "bg-accent text-white shadow-lg shadow-accent/20" : "text-white/60 hover:bg-white/5 hover:text-white"
+        "w-full flex items-center justify-start gap-4 p-4 rounded-2xl font-black text-sm mb-1.5 transition-all text-right",
+        active 
+          ? "bg-accent text-white shadow-xl shadow-accent/20 translate-x-1" 
+          : "text-white/50 hover:bg-white/10 hover:text-white"
       )}
     >
-      <Icon className="w-5 h-5" />
+      <Icon className={cn("w-5 h-5", active ? "text-white" : "text-white/30")} />
       <span>{label}</span>
+      {active && <motion.div layoutId="active-pill" className="w-1.5 h-1.5 bg-white rounded-full ml-auto" />}
     </button>
   );
 }
 
 function AdminAccessDenied() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6">
-      <div className="bg-white p-12 rounded-[40px] shadow-2xl text-center max-w-lg border-b-8 border-red-500">
-        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8">
-           <ShieldCheck className="w-10 h-10" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6 font-sans">
+      <div className="bg-white p-12 rounded-[50px] shadow-2xl text-center max-w-lg border-b-8 border-red-500">
+        <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-10 border-4 border-white shadow-xl">
+           <ShieldCheck className="w-12 h-12" />
         </div>
-        <h2 className="text-3xl font-bold text-primary mb-4">الدخول ممنوع 🚫</h2>
-        <p className="text-slate-500 mb-10 leading-relaxed text-lg">
-          أنت لا تملك صلاحيات المسؤول. هذا القسم مخصص لإدارة المركز فقط. إذا كنت تعتقد أن هناك خطأ، يرجى مراجعة مبرمج النظام.
+        <h2 className="text-4xl font-black text-primary mb-4 tracking-tight">الدخول ممنوع 🚫</h2>
+        <p className="text-slate-500 mb-12 leading-relaxed text-lg font-medium">
+          هذه المنطقة مخصصة بالكامل لمسؤولي المنصة. يرجى تسجيل الدخول بحساب المسؤول للوصول لهذه الإعدادات.
         </p>
         <button 
           onClick={() => window.location.href = '/'}
-          className="bg-primary text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-all"
+          className="bg-primary text-white px-12 py-5 rounded-[24px] font-black text-lg hover:shadow-2xl hover:bg-black transition-all"
         >
           العودة للمنطقة الآمنة
         </button>

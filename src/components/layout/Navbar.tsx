@@ -36,9 +36,9 @@ export default function Navbar() {
         )}
       >
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="bg-white rounded-xl p-1.5 flex items-center justify-center overflow-hidden shadow-sm">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <div className="bg-white rounded-xl p-1.5 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
               {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
               ) : (
@@ -46,7 +46,7 @@ export default function Navbar() {
               )}
             </div>
             <span className={cn(
-              "text-xl font-black tracking-tight",
+              "text-lg md:text-xl font-black tracking-tight truncate max-w-[120px] md:max-w-none",
               textColor
             )}>
               {settings?.siteName || 'QA EDUCATION'}
@@ -54,13 +54,13 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-6">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "text-sm font-bold transition-colors hover:text-accent",
+                  "text-sm font-black transition-colors hover:text-accent whitespace-nowrap",
                   location.pathname === link.href 
                     ? "text-accent" 
                     : textColor
@@ -72,27 +72,48 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className={cn(
-                "hidden md:flex items-center gap-2 border px-4 py-2 rounded-full text-xs font-bold transition-all",
-                scrolled || !isHomePage ? "border-primary text-primary hover:bg-primary hover:text-white" : "border-white text-white hover:bg-white hover:text-primary"
+        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+          {user ? (
+            <div className="flex items-center gap-2">
+              {isAdmin ? (
+                <>
+                  <Link
+                    to="/portal"
+                    className={cn(
+                      "hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black transition-all whitespace-nowrap",
+                      scrolled || !isHomePage ? "text-slate-500 hover:bg-slate-100" : "text-white/70 hover:bg-white/10"
+                    )}
+                  >
+                    بوابة الطالب
+                  </Link>
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl text-xs md:text-sm font-black shadow-lg shadow-accent/20 transition-all active:scale-95 whitespace-nowrap"
+                  >
+                    <Shield className="w-4 h-4 md:w-5 md:h-5 text-white/50" />
+                    <span className="hidden xs:inline">لوحة التحكم</span>
+                    <span className="xs:hidden">الادارة</span>
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  to="/portal"
+                  className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl text-xs md:text-sm font-black shadow-lg shadow-accent/20 transition-all active:scale-95 whitespace-nowrap"
+                >
+                  <GraduationCap className="w-4 h-4 md:w-5 md:h-5 text-white/50" />
+                  لوحة الطالب
+                </Link>
               )}
+            </div>
+          ) : (
+            <Link
+              to="/portal"
+              className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl text-xs md:text-sm font-black shadow-lg shadow-accent/20 transition-all active:scale-95 whitespace-nowrap"
             >
-              <Shield className="w-4 h-4" />
-              لوحة الإدارة
+              <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/50" />
+              دخول الطلاب
             </Link>
           )}
-
-          <Link
-            to="/portal"
-            className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-accent/20 transition-all active:scale-95"
-          >
-            <LogIn className="w-4 h-4" />
-            {user ? 'حسابي' : 'بوابة الطالب'}
-          </Link>
 
           {/* Mobile Toggle */}
           <button 
@@ -134,11 +155,11 @@ export default function Navbar() {
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className="flex items-center gap-3 bg-primary text-white p-4 rounded-2xl font-bold shadow-lg shadow-primary/20"
+                  className="flex items-center gap-3 bg-primary text-white p-5 rounded-2xl font-black shadow-lg shadow-primary/20"
                   onClick={() => setIsOpen(false)}
                 >
-                  <Shield className="w-5 h-5" />
-                  لوحة الإدارة
+                  <Shield className="w-6 h-6 text-accent" />
+                  لوحة التحكم والادارة
                 </Link>
               )}
               {NAV_LINKS.map((link) => (
@@ -146,7 +167,7 @@ export default function Navbar() {
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "text-lg font-bold p-3 rounded-xl transition-all",
+                    "text-lg font-black p-4 rounded-2xl transition-all",
                     location.pathname === link.href ? "text-accent bg-accent/5" : "text-slate-600 hover:bg-slate-50"
                   )}
                   onClick={() => setIsOpen(false)}
@@ -157,11 +178,11 @@ export default function Navbar() {
               <div className="mt-2 pt-4 border-t border-slate-100">
                 <Link
                   to="/portal"
-                  className="flex items-center justify-center gap-3 bg-accent text-white p-4 rounded-2xl font-bold shadow-lg shadow-accent/20"
+                  className="flex items-center justify-center gap-3 bg-accent text-white p-5 rounded-2xl font-black shadow-lg shadow-accent/20"
                   onClick={() => setIsOpen(false)}
                 >
-                  <LogIn className="w-5 h-5" />
-                  {user ? 'حسابي (بوابة الطالب)' : 'دخول الطلاب'}
+                  <GraduationCap className="w-6 h-6" />
+                  {user ? 'دخول لوحة الطالب' : 'تسجيل دخول الطلاب'}
                 </Link>
               </div>
             </div>

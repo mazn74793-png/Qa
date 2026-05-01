@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
-import { dataService } from '@/src/services/dataService';
+import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
+import { 
+  collection, 
+  onSnapshot,
+  query,
+  orderBy,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc
+} from 'firebase/firestore';
 import { Plus, Trash2, Edit3, CalendarPlus, Save, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -17,16 +27,32 @@ const DAYS = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 
 
 export default function ScheduleManager() {
   const [schedule, setSchedule] = useState<ScheduleSlot[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingSlot, setEditingSlot] = useState<ScheduleSlot | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = dataService.subscribeSchedule((data) => {
-      setSchedule(data);
+    const qSchedule = query(collection(db, 'schedule'), orderBy('day', 'asc'));
+    const unsubscribeSchedule = onSnapshot(qSchedule, (snapshot) => {
+      setSchedule(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleSlot)));
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'schedule');
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    const qTeachers = query(collection(db, 'teachers'), orderBy('name', 'asc'));
+    const unsubscribeTeachers = onSnapshot(qTeachers, (snapshot) => {
+      setTeachers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'teachers');
+    });
+
+    return () => {
+      unsubscribeSchedule();
+      unsubscribeTeachers();
+    };
   }, []);
 
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
@@ -40,10 +66,14 @@ export default function ScheduleManager() {
       grade: formData.get('grade') as string,
     };
 
-    if (editingSlot?.id) {
-      await dataService.updateSchedule(editingSlot.id, data);
-    } else {
-      await dataService.addSchedule(data);
+    try {
+      if (editingSlot?.id) {
+        await updateDoc(doc(db, 'schedule', editingSlot.id), data);
+      } else {
+        await addDoc(collection(db, 'schedule'), data);
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'schedule');
     }
     
     setEditingSlot(null);
@@ -52,7 +82,11 @@ export default function ScheduleManager() {
 
   const handleDelete = async (id: string) => {
     if (confirm('هل أنت متأكد من مسح هذه الحصة؟')) {
-      await dataService.deleteSchedule(id);
+      try {
+        await deleteDoc(doc(db, 'schedule', id));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, 'schedule');
+      }
     }
   };
 
@@ -103,9 +137,19 @@ export default function ScheduleManager() {
                   <label className="text-sm font-bold text-slate-600">المادة</label>
                   <input name="subject" defaultValue={editingSlot?.subject} required className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" />
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-slate-600">المدرس</label>
-                  <input name="teacher" defaultValue={editingSlot?.teacher} required className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" />
+                <div className="space-y-2 md:col-span-2 text-right">
+                  <label className="text-sm font-bold text-slate-600 block px-2">المدرس</label>
+                  <select 
+                    name="teacher" 
+                    defaultValue={editingSlot?.teacher} 
+                    required 
+                    className="w-full bg-slate-50 border-none rounded-xl p-4 text-right appearance-none cursor-pointer"
+                  >
+                    <option value="">-- اختر من طاقم التدريس --</option>
+                    {teachers.map(t => (
+                      <option key={t.id} value={t.name}>{t.name} ({t.subject})</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="flex gap-4">

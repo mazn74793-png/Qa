@@ -10,6 +10,7 @@ interface Teacher {
   subject: string;
   image: string;
   bio: string;
+  introVideoUrl?: string;
 }
 
 export default function TeacherManager() {
@@ -34,6 +35,7 @@ export default function TeacherManager() {
       subject: formData.get('subject') as string,
       image: formData.get('image') as string || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=1000&auto=format&fit=crop',
       bio: formData.get('bio') as string,
+      introVideoUrl: formData.get('introVideoUrl') as string,
     };
 
     if (editingTeacher?.id) {
@@ -88,6 +90,10 @@ export default function TeacherManager() {
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-bold text-slate-600">رابط الصورة (URL)</label>
                   <input name="image" defaultValue={editingTeacher?.image} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://..." />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-bold text-slate-600">رابط الفيديو التعريفي (YouTube URL)</label>
+                  <input name="introVideoUrl" defaultValue={editingTeacher?.introVideoUrl} className="w-full bg-slate-50 border-none rounded-xl p-4 text-left font-mono text-sm" placeholder="https://youtube.com/watch?v=..." />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-bold text-slate-600">نبذة تعريفية</label>

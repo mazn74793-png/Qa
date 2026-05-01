@@ -1,5 +1,18 @@
 {
   "entities": {
+    "Teacher": {
+      "title": "Teacher Profile",
+      "description": "Details about teaching staff.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "subject": { "type": "string" },
+        "image": { "type": "string" },
+        "bio": { "type": "string" },
+        "introVideoUrl": { "type": "string" }
+      },
+      "required": ["name", "subject"]
+    },
     "User": {
       "title": "User Profile",
       "description": "User account information for students, parents, and teachers.",
@@ -76,6 +89,19 @@
         "type": { "type": "string", "enum": ["pdf", "video", "link"] }
       }
     },
+    "Video": {
+      "title": "Video Lecture",
+      "description": "YouTube lectures linked to teachers.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "url": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "url", "teacherId"]
+    },
     "Exam": {
       "title": "Exam",
       "description": "Assessment created by teachers for specific groups of students.",
@@ -142,6 +168,8 @@
     "/submissions/{submissionId}": { "schema": "ExamSubmission", "description": "Exam results and answers" },
     "/bookings/{bookingId}": { "schema": "Booking", "description": "Student class registrations" },
     "/materials/{materialId}": { "schema": "Material", "description": "Study resources" },
+    "/teachers/{teacherId}": { "schema": "Teacher", "description": "Teaching staff profiles" },
+    "/videos/{videoId}": { "schema": "Video", "description": "Video lectures" },
     "/settings/{settingId}": { "schema": "SiteSettings", "description": "Global site settings" }
   }
 }

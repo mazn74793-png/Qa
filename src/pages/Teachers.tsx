@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { User, Star, Award, GraduationCap, ChevronLeft } from 'lucide-react';
+import { User, Star, Award, GraduationCap, ChevronLeft, Play, X } from 'lucide-react';
 import { dataService } from '@/src/services/dataService';
+import { AnimatePresence } from 'motion/react';
 
 export default function Teachers() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
 
   useEffect(() => {
     dataService.getTeachers().then(data => {
@@ -57,10 +59,21 @@ export default function Teachers() {
                     <p className="text-slate-600 mb-6 leading-relaxed">
                       {teacher.bio}
                     </p>
-                    <button className="text-primary font-bold flex items-center gap-2 hover:text-accent transition-colors">
-                      عرض الجدول الدراسي
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
+                    <div className="flex flex-wrap items-center gap-4">
+                      {teacher.introVideoUrl && (
+                        <button 
+                          onClick={() => setActiveVideo(teacher.introVideoUrl)}
+                          className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all shadow-lg shadow-primary/10"
+                        >
+                          <Play className="w-4 h-4" />
+                          نبذة فيديو
+                        </button>
+                      )}
+                      <button className="text-slate-500 font-bold flex items-center gap-2 hover:text-accent transition-colors">
+                        الجدول الدراسي
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -70,6 +83,35 @@ export default function Teachers() {
           )}
         </div>
       </section>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {activeVideo && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/95 backdrop-blur-md"
+            onClick={() => setActiveVideo(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+              className="relative w-full max-w-4xl aspect-video bg-black rounded-[40px] overflow-hidden shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setActiveVideo(null)}
+                className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl transition-all z-10"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <iframe
+                src={activeVideo.includes('v=') ? `https://www.youtube.com/embed/${activeVideo.split('v=')[1].split('&')[0]}` : activeVideo}
+                className="w-full h-full"
+                allowFullScreen
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

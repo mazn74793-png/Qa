@@ -15,7 +15,7 @@ import {
   where,
   getDocs
 } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -34,38 +34,59 @@ import {
   ClipboardCheck,
   Plus,
   CheckCircle2,
-  X
+  X,
+  Play,
+  Video,
+  ExternalLink,
+  Download,
+  Eye,
+  Settings2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
 export default function Portal() {
   const [user, loading] = useAuthState(auth);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials' | 'bookings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials' | 'bookings' | 'lectures'>('dashboard');
   const [userData, setUserData] = useState<any>(null);
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddExam, setShowAddExam] = useState(false);
   const [activeExam, setActiveExam] = useState<any>(null);
+  const [isStudentPreview, setIsStudentPreview] = useState(false);
+
+  useEffect(() => {
+    (window as any).showAddClassModal = () => setShowAddClass(true);
+    (window as any).showAddExamModal = () => setShowAddExam(true);
+    return () => {
+      delete (window as any).showAddClassModal;
+      delete (window as any).showAddExamModal;
+    };
+  }, []);
 
   useEffect(() => {
     if (user) {
-      // Explicitly check for admin email to ensure immediate access
       const isAdminEmail = user.email === 'motaem23y@gmail.com';
-      
       const userDocRef = doc(db, 'users', user.uid);
       getDocFromServer(userDocRef).then(docSnap => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setUserData(isAdminEmail ? { ...data, role: 'admin' } : data);
         } else if (isAdminEmail) {
-          // If admin logs in for the first time and doc doesn't exist
-          setUserData({ fullName: user.displayName || 'المدير', role: 'admin' });
+          setUserData({ fullName: user.displayName || 'المدير العام للمنصة', role: 'admin' });
         }
       });
     }
   }, [user]);
 
-  const isAdmin = userData?.role === 'admin' || user?.email === 'motaem23y@gmail.com';
+  const actualIsAdmin = user?.email === 'motaem23y@gmail.com' || userData?.role === 'admin' || (user as any).email === 'motaem23y@gmail.com';
+  const isAdmin = actualIsAdmin && !isStudentPreview;
+
+  // Force Admin Tab if specifically requested by state or user (optional but helpful)
+  useEffect(() => {
+    if (isAdmin && activeTab === 'grades') {
+      setActiveTab('bookings');
+    }
+  }, [isAdmin, activeTab]);
 
   if (loading) return (
     <div className="pt-32 pb-20 flex items-center justify-center min-h-screen">
@@ -73,15 +94,56 @@ export default function Portal() {
     </div>
   );
 
-  useEffect(() => {
-    (window as any).showAddExamModal = () => setShowAddExam(true);
-    (window as any).showAddClassModal = () => setShowAddClass(true);
-  }, []);
-
   if (!user) return <LoginView />;
+  const isAdminUser = user?.email === 'motaem23y@gmail.com' || userData?.role === 'admin';
 
   return (
-    <div className="pt-24 pb-20 min-h-screen bg-slate-50">
+    <div className={cn("pb-20 min-h-screen bg-slate-50", isAdminUser ? "pt-40 md:pt-48" : "pt-32")}>
+      {isAdminUser && (
+        <div className="fixed top-20 left-0 right-0 z-[40] transition-all">
+          <div className="bg-primary/95 backdrop-blur-md text-white py-3 shadow-xl border-b border-white/10">
+            <div className="container mx-auto px-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "p-1.5 rounded-lg border hidden sm:block",
+                  isStudentPreview ? "bg-green-500/20 border-green-500/30" : "bg-accent/20 border-accent/30"
+                )}>
+                  <Eye className={cn("w-4 h-4", isStudentPreview ? "text-green-400" : "text-accent")} />
+                </div>
+                <div>
+                  <span className="text-xs font-black text-white/90">
+                    {isStudentPreview ? 'أنت تشاهد الآن كطالب (وضع المعاينة)' : 'لوحة تحكم المشرف الذكية'}
+                  </span>
+                  <span className="text-[10px] text-white/40 block">
+                    {isStudentPreview ? 'الأزرار الإدارية مخفية تماماً' : 'لديك صلاحيات كاملة للتحرير والإضافة'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setIsStudentPreview(!isStudentPreview)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-black transition-all",
+                    isStudentPreview 
+                      ? "bg-white text-primary border border-white" 
+                      : "bg-white/10 hover:bg-white/20 border border-white/10"
+                  )}
+                >
+                  <Settings2 className="w-3.5 h-3.5" />
+                  {isStudentPreview ? 'العودة لوضع المشرف' : 'معاينة كطالب'}
+                </button>
+                <Link 
+                  to="/admin"
+                  className="hidden xs:flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 py-1.5 rounded-xl text-xs font-black transition-all shadow-lg shadow-accent/20"
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  لوحة التحكم
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="container mx-auto px-2 md:px-6">
         <div className="flex flex-col lg:flex-row gap-6">
           
@@ -121,7 +183,7 @@ export default function Portal() {
                 <TabButton 
                   active={activeTab === 'dashboard'} 
                   onClick={() => setActiveTab('dashboard')} 
-                  icon={LayoutDashboard} 
+                  icon={Shield} 
                   label="الرئيسية" 
                 />
                 <TabButton 
@@ -136,20 +198,27 @@ export default function Portal() {
                   icon={ClipboardCheck} 
                   label="الامتحانات" 
                 />
-                <TabButton 
-                  active={activeTab === 'grades'} 
-                  onClick={() => setActiveTab('grades')} 
-                  icon={TrendingUp} 
-                  label="نتائجي" 
-                />
-                {isAdmin && (
+                {isAdmin ? (
                   <TabButton 
                     active={activeTab === 'bookings'} 
                     onClick={() => setActiveTab('bookings')} 
                     icon={User} 
                     label="الحجوزات" 
                   />
+                ) : (
+                  <TabButton 
+                    active={activeTab === 'grades'} 
+                    onClick={() => setActiveTab('grades')} 
+                    icon={TrendingUp} 
+                    label="نتائجي" 
+                  />
                 )}
+                <TabButton 
+                  active={activeTab === 'lectures'} 
+                  onClick={() => setActiveTab('lectures')} 
+                  icon={Play} 
+                  label="المحاضرات" 
+                />
                 <TabButton 
                   active={activeTab === 'materials'} 
                   onClick={() => setActiveTab('materials')} 
@@ -160,9 +229,9 @@ export default function Portal() {
 
               <button 
                 onClick={() => logout()}
-                className="hidden lg:flex w-full mt-6 items-center gap-3 p-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-all border border-transparent hover:border-red-100"
+                className="hidden lg:flex w-full mt-6 items-center gap-3 p-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-all border border-red-50/50"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-5 h-5 text-red-400" />
                 خروج من النظام
               </button>
             </div>
@@ -170,7 +239,7 @@ export default function Portal() {
             {/* Mobile Logout Button */}
             <button 
               onClick={() => logout()}
-              className="lg:hidden w-full mt-4 flex items-center justify-center gap-2 p-3 text-red-500 font-bold bg-white rounded-2xl border border-red-50 text-sm"
+              className="lg:hidden w-full mt-4 flex items-center justify-center gap-2 p-3 text-red-500 font-bold bg-white rounded-2xl border border-red-100 text-sm shadow-sm"
             >
               <LogOut className="w-4 h-4" />
               <span>تسجيل الخروج</span>
@@ -184,10 +253,11 @@ export default function Portal() {
               ) : (
                 <AnimatePresence mode="wait">
                   {activeTab === 'dashboard' && <DashboardView user={user} userData={{...userData, role: isAdmin ? 'admin' : userData?.role}} />}
+                  {activeTab === 'lectures' && <LecturesView />}
+                  {activeTab === 'materials' && <MaterialsView />}
                   {activeTab === 'schedule' && <ScheduleView isAdmin={isAdmin} onAdd={() => setShowAddClass(true)} />}
                   {activeTab === 'exams' && <ExamsView isAdmin={isAdmin} onTake={(exam: any) => setActiveExam(exam)} onAdd={() => setShowAddExam(true)} />}
                   {activeTab === 'grades' && <GradesView />}
-                  {activeTab === 'materials' && <MaterialsView />}
                   {activeTab === 'bookings' && <BookingsView />}
                 </AnimatePresence>
               )}
@@ -417,6 +487,190 @@ function LoginView() {
   );
 }
 
+function MaterialsView() {
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, 'materials'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMaterials(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'materials');
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+      className="space-y-8 text-right pb-10"
+    >
+      <div>
+        <h2 className="text-2xl md:text-3xl font-black text-primary">المذكرات والملازم 📂</h2>
+        <p className="text-slate-500 font-bold">كل الملفات التي تحتاجها في رحلتك الدراسية</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {loading ? (
+          <div className="col-span-full p-20 text-center animate-pulse font-bold text-slate-300">جاري تحميل الملفات...</div>
+        ) : materials.length > 0 ? (
+          materials.map((mat) => (
+            <div key={mat.id} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm relative group hover:shadow-xl transition-all">
+               <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-3xl flex items-center justify-center mb-6 shadow-sm">
+                  <FileText className="w-8 h-8" />
+               </div>
+               <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="text-[10px] bg-accent/10 text-accent px-3 py-1 rounded-full font-black">{mat.subject}</span>
+               </div>
+               <h3 className="text-xl font-black text-primary mb-3 leading-tight">{mat.title}</h3>
+               <p className="text-slate-400 text-xs font-bold mb-6 flex items-center gap-2">
+                 <User className="w-3 h-3" /> {mat.teacherName}
+               </p>
+               <a 
+                 href={mat.url}
+                 target="_blank"
+                 rel="noreferrer"
+                 className="flex items-center justify-center gap-3 w-full p-4 bg-primary text-white rounded-3xl font-black hover:bg-accent transition-all shadow-lg shadow-primary/10"
+               >
+                 <Download className="w-5 h-5" />
+                 تحميل المذكرة
+               </a>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full bg-slate-100/50 p-20 rounded-[50px] text-center border-4 border-dashed border-slate-200">
+             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <FileText className="text-slate-300 w-10 h-10" />
+             </div>
+             <p className="text-slate-400 font-black italic text-lg">لا توجد مذكرات متاحة للتحميل حالياً</p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function LecturesView() {
+  const [videos, setVideos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState<any>(null);
+
+  useEffect(() => {
+    const q = query(collection(db, 'videos'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setVideos(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'videos');
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="space-y-8 text-right pb-10"
+    >
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-black text-primary">المحاضرات المرئية 📺</h2>
+          <p className="text-slate-500 font-bold">تابع دروسك وشروحات المدرسين في أي وقت</p>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {selectedVideo && (
+          <motion.div 
+             initial={{ opacity: 0, scale: 0.95 }}
+             animate={{ opacity: 1, scale: 1 }}
+             exit={{ opacity: 0, scale: 0.95 }}
+             className="bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl relative border-4 border-slate-800"
+          >
+             <button 
+                onClick={() => setSelectedVideo(null)}
+                className="absolute top-4 left-4 z-10 p-3 bg-black/50 text-white rounded-full hover:bg-black transition-all"
+             >
+                <X className="w-5 h-5" />
+             </button>
+             <div className="aspect-video">
+                <iframe 
+                   src={`https://www.youtube.com/embed/${selectedVideo.url}?autoplay=1`}
+                   className="w-full h-full"
+                   allow="autoplay; encrypted-media; picture-in-picture"
+                   allowFullScreen
+                ></iframe>
+             </div>
+             <div className="p-6 md:p-8 bg-slate-900 text-white border-t border-white/5">
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="text-[10px] bg-accent/20 text-accent px-3 py-1 rounded-full font-black border border-accent/20">{selectedVideo.subject}</span>
+                  <span className="text-[10px] bg-white/10 text-white/50 px-3 py-1 rounded-full font-black">{selectedVideo.teacherName}</span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-black mb-2">{selectedVideo.title}</h3>
+                <p className="text-white/40 text-sm leading-relaxed">{selectedVideo.description}</p>
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {loading ? (
+          <div className="col-span-full p-20 text-center animate-pulse font-bold text-slate-300">جاري تحميل المحاضرات...</div>
+        ) : videos.length > 0 ? (
+          videos.map((vid) => (
+            <button 
+              key={vid.id} 
+              onClick={() => {
+                setSelectedVideo(vid);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden group text-right hover:shadow-xl transition-all"
+            >
+               <div className="aspect-video bg-slate-100 relative overflow-hidden">
+                  <img 
+                    src={`https://img.youtube.com/vi/${vid.url}/mqdefault.jpg`} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                    alt={vid.title}
+                  />
+                  <div className="absolute inset-0 bg-primary/20 group-hover:bg-primary/0 transition-all" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-accent shadow-xl border-4 border-accent/10">
+                      <Play className="w-6 h-6 fill-current" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-black">
+                    {vid.subject}
+                  </div>
+               </div>
+               <div className="p-6">
+                  <h3 className="font-black text-primary mb-2 line-clamp-1 group-hover:text-accent transition-colors">{vid.title}</h3>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <div className="w-6 h-6 bg-slate-50 rounded-lg flex items-center justify-center">
+                      <User className="w-3 h-3" />
+                    </div>
+                    <span className="text-xs font-bold">{vid.teacherName}</span>
+                  </div>
+               </div>
+            </button>
+          ))
+        ) : (
+          <div className="col-span-full bg-slate-50 p-20 rounded-[40px] border border-dashed border-slate-200 text-center">
+             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <Video className="text-slate-300 w-8 h-8" />
+             </div>
+             <p className="text-slate-400 font-bold italic">لا توجد محاضرات منشورة بعد</p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 function DashboardView({ user, userData }: { user: any, userData: any }) {
   const isAdmin = userData?.role === 'admin';
   const [stats, setStats] = useState({ students: 0, exams: 0, bookings: 0 });
@@ -446,65 +700,81 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-6 md:space-y-10 text-right pb-10"
+      className="space-y-6 md:space-y-12 text-right pb-10"
     >
-      {/* Hero Welcome - Enhanced for Legibility */}
+      {/* Hero Welcome - Admin vs Student */}
       <div className={cn(
-        "rounded-[32px] md:rounded-[48px] p-8 md:p-16 text-white relative overflow-hidden shadow-2xl flex flex-col justify-center min-h-[220px] md:min-h-[300px]",
+        "rounded-[32px] md:rounded-[56px] p-8 md:p-20 text-white relative overflow-hidden shadow-2xl flex flex-col justify-center min-h-[250px] md:min-h-[350px]",
         isAdmin 
-          ? "bg-gradient-to-br from-slate-900 via-primary to-primary/90 shadow-primary/20" 
+          ? "bg-slate-900 border-4 border-accent/20 shadow-primary/30" 
           : "bg-gradient-to-br from-primary via-primary/95 to-accent/90 shadow-primary/10"
       )}>
-        {/* Decorative elements that don't overlap text */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white rounded-full blur-[140px] opacity-10 -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-accent rounded-full blur-[100px] opacity-10 translate-y-1/2 -translate-x-1/2" />
+        {/* Background Patterns */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[140px] -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
         
-        <div className="relative z-10 space-y-4">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl px-5 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider border border-white/10">
-            <Shield className="w-3.5 h-3.5 text-accent" />
-            {isAdmin ? 'الإدارة المركزية' : 'بوابة الطالب الذكية'}
+        <div className="relative z-10 space-y-6">
+          <div className="flex items-center gap-3">
+             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-2xl px-6 py-2.5 rounded-full text-[11px] md:text-sm font-black uppercase tracking-widest border border-white/20">
+               <Shield className={cn("w-4 h-4", isAdmin ? "text-accent" : "text-white")} />
+               {isAdmin ? 'الإدارة المركزية - التحكم الكامل' : 'بوابة الطالب الذكية'}
+             </div>
+             {isAdmin && <span className="text-[10px] bg-accent text-white px-3 py-1 rounded-full font-black animate-pulse shadow-lg shadow-accent/20">نشط الآن</span>}
           </div>
-          <h2 className="text-3xl md:text-6xl font-black mb-3 leading-tight tracking-tight">
-            أهلاً بك، {((user as any).displayName || userData?.fullName || 'أستاذ').split(' ')[0]} 👋
-          </h2>
-          <p className="text-white/70 text-base md:text-xl max-w-2xl leading-relaxed font-medium">
+
+          <h1 className="text-4xl md:text-7xl font-black mb-3 leading-tight tracking-tighter">
+            أهلاً، {((user as any).displayName || userData?.fullName || (isAdmin ? 'المدير' : 'طالبنا')).split(' ')[0]} 👋
+          </h1>
+          <p className="text-white/60 text-lg md:text-2xl max-w-3xl leading-relaxed font-bold">
             {isAdmin 
-              ? 'لديك اليوم كامل الصلاحيات لإدارة المحتوى التعليمي، متابعة الطلاب، وتنظيم المواعيد.'
-              : 'رحلتك التعليمية مستمرة اليوم. تفقد المهام المطلوبة منك وتابع تقدمك الدراسي.'}
+              ? 'مرحباً بك في مركز الإدارة. لقد قمنا بتحديث الواجهة وتحسين سرعة الوصول للبيانات.'
+              : 'منصتك التعليمية ترحب بك. تابع دروسك وامتحاناتك من هنا بكل سهولة.'}
           </p>
         </div>
       </div>
 
-      {/* Admin Quick Tools - Cleaner Layout */}
+      {/* Admin Quick Tools */}
       {isAdmin && (
-        <div className="bg-white p-2 rounded-[32px] border border-slate-100 shadow-sm flex flex-wrap gap-2 md:gap-4">
-           <div className="text-[10px] font-black text-slate-400 px-6 py-4 flex items-center border-l border-slate-50">أدوات سريعة</div>
-           <div className="flex flex-1 gap-2 md:gap-4 p-2">
-             <button 
-               onClick={() => (window as any).showAddExamModal()} 
-               className="flex-1 flex items-center justify-center gap-2 bg-accent/5 hover:bg-accent text-accent hover:text-white p-4 rounded-2xl text-sm font-black transition-all shadow-sm hover:shadow-accent/20"
-             >
-               <ClipboardCheck className="w-5 h-5 shrink-0" />
-               <span className="hidden sm:inline">إضافة امتحان</span>
-             </button>
-             <button 
-               onClick={() => (window as any).showAddClassModal()} 
-               className="flex-1 flex items-center justify-center gap-2 bg-primary/5 hover:bg-primary text-primary hover:text-white p-4 rounded-2xl text-sm font-black transition-all shadow-sm hover:shadow-primary/20"
-             >
-               <Calendar className="w-5 h-5 shrink-0" />
-               <span className="hidden sm:inline">إضافة حصة</span>
-             </button>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+           <button 
+             onClick={() => (window as any).showAddExamModal()} 
+             className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-accent transition-all flex flex-col items-center gap-3 group"
+           >
+             <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all">
+                <ClipboardCheck className="w-6 h-6" />
+             </div>
+             <span className="font-black text-xs text-primary">إضافة امتحان</span>
+           </button>
+           
+           <button 
+             onClick={() => (window as any).showAddClassModal()} 
+             className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-primary transition-all flex flex-col items-center gap-3 group"
+           >
+             <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                <Calendar className="w-6 h-6" />
+             </div>
+             <span className="font-black text-xs text-primary">إضافة حصة</span>
+           </button>
+
+           <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-200 border-dashed flex flex-col items-center justify-center gap-1 opacity-60">
+              <span className="text-[10px] font-black text-slate-400">إجمالي الطلاب</span>
+              <span className="text-2xl font-black text-primary">{stats.students}</span>
+           </div>
+
+           <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-200 border-dashed flex flex-col items-center justify-center gap-1 opacity-60">
+              <span className="text-[10px] font-black text-slate-400">حجوزات اليوم</span>
+              <span className="text-2xl font-black text-primary">{stats.bookings}</span>
            </div>
         </div>
       )}
 
-      {/* Stats Grid - Fixed Overlapping with Responsive Spacing */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
         {isAdmin ? (
           <>
-            <StatCard title="إجمالي الطلاب" value={stats.students} icon={User} color="bg-blue-600" desc="مسجلين حالياً" />
+            <StatCard title="الطلاب" value={stats.students} icon={User} color="bg-blue-600" desc="مسجلين حالياً" />
             <StatCard title="الامتحانات" value={stats.exams} icon={ClipboardCheck} color="bg-orange-500" desc="نشطة في النظام" />
-            <StatCard title="حجوزات جديدة" value={stats.bookings} icon={Calendar} color="bg-green-600" desc="هذا الشهر" />
+            <StatCard title="الحجوزات" value={stats.bookings} icon={Calendar} color="bg-green-600" desc="إجمالي التسجيلات" />
           </>
         ) : (
           <>
@@ -1049,39 +1319,6 @@ function ExamRunnerView({ exam, onFinish }: { exam: any, onFinish: () => void })
   );
 }
 
-function MaterialsView() {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-[32px] p-8 md:p-12 border border-slate-100 text-center shadow-sm"
-    >
-      <div className="w-20 h-20 bg-accent/5 rounded-full flex items-center justify-center mx-auto mb-6">
-        <BookOpen className="text-accent w-10 h-10" />
-      </div>
-      <h3 className="text-xl font-black text-primary mb-2">المكتبة والمذكرات</h3>
-      <p className="text-slate-500 max-w-sm mx-auto text-sm leading-relaxed mb-8">
-        بإمكانك تحميل مذكرات الحصص والملخصات بتنسيق PDF من هذا القسم.
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
-        {[1, 2].map((i) => (
-          <div key={i} className="p-5 border border-slate-50 bg-slate-50/50 rounded-2xl opacity-40 grayscale">
-            <div className="flex items-center gap-4">
-              <div className="bg-white p-3 rounded-xl shadow-sm">
-                <FileText className="w-6 h-6 text-slate-300" />
-              </div>
-              <div className="flex-1">
-                <div className="h-3 w-20 bg-slate-200 rounded mb-2" />
-                <div className="h-2 w-12 bg-slate-100 rounded" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
 
 // Admin Creation Modals
 function AddClassModal({ onClose }: { onClose: () => void }) {

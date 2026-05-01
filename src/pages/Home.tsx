@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, CheckCircle2, TrendingUp, Users, BookOpen, Clock, Heart, Edit2, Save, X, Settings, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, TrendingUp, Users, BookOpen, Clock, Heart, Edit2, Save, X, Settings, ShieldCheck, Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getSiteSettings, updateSiteSettings, SiteSettings } from '@/src/services/siteService';
 import { useAdmin } from '@/src/hooks/useAdmin';
@@ -129,11 +129,18 @@ export default function Home() {
               </p>
               
               <div className="flex flex-wrap items-center gap-4 justify-end">
-                <Link to="/portal" className="bg-accent hover:bg-accent/90 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-xl shadow-accent/20 transition-all flex items-center gap-2">
-                  سجل الآن مجاناً
-                  <ArrowLeft className="w-5 h-5" />
-                </Link>
-                <Link to="/courses" className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-bold text-lg border border-white/20 backdrop-blur-md transition-all">
+                {isAdmin ? (
+                  <Link to="/admin" className="bg-accent hover:bg-accent/90 text-white px-8 py-4 rounded-xl font-black text-lg shadow-xl shadow-accent/20 transition-all flex items-center gap-2">
+                    لوحة التحكم والادارة
+                    <ShieldCheck className="w-6 h-6" />
+                  </Link>
+                ) : (
+                  <Link to="/portal" className="bg-accent hover:bg-accent/90 text-white px-8 py-4 rounded-xl font-black text-lg shadow-xl shadow-accent/20 transition-all flex items-center gap-2">
+                    سجل الآن مجاناً
+                    <ArrowLeft className="w-5 h-5" />
+                  </Link>
+                )}
+                <Link to="/courses" className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-black text-lg border border-white/20 backdrop-blur-md transition-all">
                   استعرض المواد الدراسية
                 </Link>
               </div>
