@@ -83,11 +83,11 @@ export default function Portal() {
   useEffect(() => {
     console.log("Portal State Updated:", { 
       hasUser: !!user, 
-      loading, 
+      loading: adminLoading, 
       error: error ? error.message : "None",
       domain: window.location.hostname
     });
-  }, [user, loading, error]);
+  }, [user, adminLoading, error]);
 
   useEffect(() => {
     if (user) {
@@ -124,12 +124,20 @@ export default function Portal() {
       {longLoading && (
         <div className="mt-8 text-center animate-in fade-in slide-in-from-bottom-4">
           <p className="text-slate-500 text-sm mb-4">يبدو أن التحميل يستغرق وقتاً طويلاً...</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="text-accent underline font-bold"
-          >
-            إعادة تحميل الصفحة
-          </button>
+          <div className="flex flex-col gap-2">
+            <button 
+              onClick={() => window.location.reload()}
+              className="text-accent underline font-bold"
+            >
+              إعادة تحميل الصفحة
+            </button>
+            <button 
+              onClick={() => logout()}
+              className="text-slate-400 text-xs hover:text-red-500 transition-colors"
+            >
+              إعادة تعيين الجلسة (تسجيل الخروج)
+            </button>
+          </div>
         </div>
       )}
     </div>

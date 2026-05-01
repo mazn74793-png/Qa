@@ -10,72 +10,92 @@ export function useAdmin() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function checkAdmin() {
-      if (authLoading) return;
+    // When auth state is still loading, we just wait
+    if (authLoading) return;
 
-      if (!user) {
-        setIsAdmin(false);
-        setLoading(false);
-        return;
-      }
+    // Handle logout or no user state
+    if (!user) {
+      setIsAdmin(false);
+      setIsAdminStatusSet(true);
+      setLoading(false);
+      return;
+    }
 
-      // 1. Check hardcoded super-admin
+    // We have a user, start checking admin status
+    let isMounted = true;
+    
+    // Set loading states before starting the async check
+    setLoading(true);
+    setIsAdminStatusSet(false);
+
+    const checkAdmin = async () => {
+      // 1. Check hardcoded super-admin (synchronous check)
       const isSuperAdmin = user.email === 'motaem23y@gmail.com' || user.email === 'admin@qa.com';
       
       if (isSuperAdmin) {
-        setIsAdmin(true);
-        setIsAdminStatusSet(true);
-        setLoading(false);
+        if (isMounted) {
+          setIsAdmin(true);
+          setIsAdminStatusSet(true);
+          setLoading(false);
+        }
         return;
       }
 
-      // 2. Check Database for admin role
+      // 2. Check Database for admin status
       try {
-        // Quick check by UID first (safest method)
+        // Priority 1: Check by UID in 'admins' collection
         if (user.uid) {
           const adminDoc = await getDoc(doc(db, 'admins', user.uid));
           if (adminDoc.exists()) {
-            setIsAdmin(true);
-            setIsAdminStatusSet(true);
-            setLoading(false);
+            if (isMounted) {
+              setIsAdmin(true);
+              setIsAdminStatusSet(true);
+              setLoading(false);
+            }
             return;
           }
         }
 
-        // Search by Email (new method) - more error prone if indices aren't ready
+        // Priority 2: Query by Email in 'admins' collection
         if (user.email) {
-          try {
-            const q = query(
-              collection(db, 'admins'), 
-              where('email', '==', user.email.toLowerCase()),
-              limit(1)
-            );
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
+          const q = query(
+            collection(db, 'admins'), 
+            where('email', '==', user.email.toLowerCase()),
+            limit(1)
+          );
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            if (isMounted) {
               setIsAdmin(true);
               setIsAdminStatusSet(true);
               setLoading(false);
-              return;
             }
-          } catch (qError) {
-            console.error("Email query failed (check Firebase indexes):", qError);
+            return;
           }
         }
 
-        // Check user profile for role
+        // Priority 3: Check 'role' field in user profile
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        setIsAdmin(userDoc.exists() && userDoc.data()?.role === 'admin');
+        if (isMounted) {
+          setIsAdmin(userDoc.exists() && userDoc.data()?.role === 'admin');
+        }
         
       } catch (error) {
-        console.error("Admin check failed:", error);
-        setIsAdmin(false);
+        console.error("Admin verification failed:", error);
+        if (isMounted) setIsAdmin(false);
       } finally {
-        setIsAdminStatusSet(true);
-        setLoading(false);
+        if (isMounted) {
+          setIsAdminStatusSet(true);
+          setLoading(false);
+        }
       }
     };
 
     checkAdmin();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user, authLoading]);
 
   // Combined loading state
