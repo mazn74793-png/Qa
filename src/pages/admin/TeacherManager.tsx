@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
-import type { FormEvent } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { FormEvent, ChangeEvent } from 'react';
 import { dataService } from '@/src/services/dataService';
-import { Plus, Trash2, Edit3, UserPlus, Image as ImageIcon, Save, X } from 'lucide-react';
+import { Plus, Trash2, Edit3, UserPlus, Image as ImageIcon, Save, X, Video, Upload, CheckCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { storage } from '@/src/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { cn } from '@/src/lib/utils';
 
 interface Teacher {
   id?: string;
@@ -11,6 +14,7 @@ interface Teacher {
   image: string;
   bio: string;
   introVideoUrl?: string;
+  videoType?: 'youtube' | 'upload';
 }
 
 export default function TeacherManager() {
@@ -18,6 +22,10 @@ export default function TeacherManager() {
   const [loading, setLoading] = useState(true);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const unsubscribe = dataService.subscribeTeachers((data) => {
@@ -27,15 +35,63 @@ export default function TeacherManager() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (editingTeacher) {
+      setUploadedVideoUrl(editingTeacher.videoType === 'upload' ? editingTeacher.introVideoUrl || null : null);
+    } else {
+      setUploadedVideoUrl(null);
+    }
+  }, [editingTeacher]);
+
+  const handleVideoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('video/')) {
+      alert('الرجاء اختيار ملف فيديو فقط');
+      return;
+    }
+
+    // Check size (max 50MB for now)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('حجم الفيديو كبير جداً (الحد الأقصى 50 ميجابايت)');
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(10); // Start progress
+
+    try {
+      const storageRef = ref(storage, `teacher-videos/${Date.now()}-${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(snapshot.ref);
+      setUploadedVideoUrl(url);
+      setUploadProgress(100);
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert('فشل رفع الفيديو، يرجى المحاولة لاحقاً');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const youtubeUrl = formData.get('introVideoUrl') as string;
+    
+    // Logic: If we have an uploaded URL, use it. Otherwise use YouTube.
+    const finalVideoUrl = uploadedVideoUrl || youtubeUrl;
+    const videoType = uploadedVideoUrl ? 'upload' : (youtubeUrl ? 'youtube' : undefined);
+
     const data = {
       name: formData.get('name') as string,
       subject: formData.get('subject') as string,
       image: formData.get('image') as string || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=1000&auto=format&fit=crop',
       bio: formData.get('bio') as string,
-      introVideoUrl: formData.get('introVideoUrl') as string,
+      introVideoUrl: finalVideoUrl,
+      videoType
     };
 
     if (editingTeacher?.id) {
@@ -92,8 +148,80 @@ export default function TeacherManager() {
                   <input name="image" defaultValue={editingTeacher?.image} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://..." />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-slate-600">رابط الفيديو التعريفي (YouTube URL)</label>
-                  <input name="introVideoUrl" defaultValue={editingTeacher?.introVideoUrl} className="w-full bg-slate-50 border-none rounded-xl p-4 text-left font-mono text-sm" placeholder="https://youtube.com/watch?v=..." />
+                  <label className="text-sm font-bold text-slate-600 block">فيديو تعريفي (اختر طريقة واحدة)</label>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                    {/* YouTube Choice */}
+                    <div className={cn(
+                      "p-4 rounded-2xl border-2 transition-all",
+                      !uploadedVideoUrl ? "border-accent/40 bg-accent/5" : "border-slate-100 opacity-50"
+                    )}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Video className="w-4 h-4 text-red-500" />
+                        <span className="text-xs font-black">رابط يوتيوب</span>
+                      </div>
+                      <input 
+                        name="introVideoUrl" 
+                        defaultValue={editingTeacher?.videoType === 'youtube' ? editingTeacher?.introVideoUrl : ''} 
+                        className="w-full bg-white border border-slate-200 rounded-xl p-3 text-left font-mono text-xs" 
+                        placeholder="https://youtube.com/watch?v=..." 
+                        disabled={!!uploadedVideoUrl}
+                      />
+                    </div>
+
+                    {/* Upload Choice */}
+                    <div className={cn(
+                      "p-4 rounded-2xl border-2 transition-all relative overflow-hidden",
+                      uploadedVideoUrl ? "border-accent/40 bg-accent/5" : "border-slate-100"
+                    )}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Upload className="w-4 h-4 text-blue-500" />
+                          <span className="text-xs font-black">رفع من الجهاز</span>
+                        </div>
+                        {uploadedVideoUrl && (
+                          <button 
+                            type="button"
+                            onClick={() => { setUploadedVideoUrl(null); if(fileInputRef.current) fileInputRef.current.value = ''; }}
+                            className="text-[10px] text-red-500 font-bold hover:underline"
+                          >
+                            مسح
+                          </button>
+                        )}
+                      </div>
+
+                      <input 
+                        type="file" 
+                        ref={fileInputRef}
+                        onChange={handleVideoUpload}
+                        className="hidden" 
+                        accept="video/*"
+                      />
+
+                      {uploading ? (
+                        <div className="flex flex-col items-center justify-center py-2 h-[42px]">
+                          <Loader2 className="w-4 h-4 animate-spin text-accent mb-1" />
+                          <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-accent transition-all" style={{ width: `${uploadProgress}%` }} />
+                          </div>
+                        </div>
+                      ) : uploadedVideoUrl ? (
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-accent/20">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <span className="text-[10px] text-slate-600 truncate flex-1">تم رفع الفيديو بنجاح</span>
+                        </div>
+                      ) : (
+                        <button 
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full py-3 border border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-100 transition-all text-xs text-slate-500 font-bold"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          اختر ملفاً
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-bold text-slate-600">نبذة تعريفية</label>

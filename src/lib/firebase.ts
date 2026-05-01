@@ -22,6 +22,7 @@ import {
   serverTimestamp,
   orderBy
 } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import firebaseConfigFile from '@/firebase-applet-config.json';
 
 // Use environment variables if available (for Vercel/Production), otherwise fallback to the config file
@@ -40,6 +41,7 @@ const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseConfigFi
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, databaseId);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 // Providers
 export const googleProvider = new GoogleAuthProvider();

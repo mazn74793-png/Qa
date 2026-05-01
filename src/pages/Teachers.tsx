@@ -15,7 +15,7 @@ function getYoutubeUrl(url: string) {
 export default function Teachers() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeVideo, setActiveVideo] = useState<string | null>(null);
+  const [activeVideo, setActiveVideo] = useState<{ url: string, type?: 'youtube' | 'upload' } | null>(null);
 
   useEffect(() => {
     dataService.getTeachers().then(data => {
@@ -70,7 +70,7 @@ export default function Teachers() {
                     <div className="flex flex-wrap items-center gap-4">
                       {teacher.introVideoUrl && (
                         <button 
-                          onClick={() => setActiveVideo(teacher.introVideoUrl)}
+                          onClick={() => setActiveVideo({ url: teacher.introVideoUrl, type: teacher.videoType })}
                           className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all shadow-lg shadow-primary/10"
                         >
                           <Play className="w-4 h-4" />
@@ -111,12 +111,22 @@ export default function Teachers() {
               >
                 <X className="w-6 h-6" />
               </button>
-              <iframe
-                src={getYoutubeUrl(activeVideo)}
-                className="w-full h-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              
+              {activeVideo.type === 'upload' || (!activeVideo.url.includes('youtube.com') && !activeVideo.url.includes('youtu.be')) ? (
+                <video 
+                  src={activeVideo.url} 
+                  controls 
+                  autoPlay 
+                  className="w-full h-full"
+                />
+              ) : (
+                <iframe
+                  src={getYoutubeUrl(activeVideo.url)}
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              )}
             </motion.div>
           </motion.div>
         )}
