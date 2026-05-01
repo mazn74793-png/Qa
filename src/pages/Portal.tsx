@@ -50,13 +50,20 @@ export default function Portal() {
                   className="w-12 h-12 md:w-14 md:h-14 rounded-2xl object-cover"
                 />
                 <div className="text-right flex-1 min-w-0">
-                  <h3 className="font-bold text-primary truncate">{user.displayName}</h3>
-                  <div className="flex flex-col">
-                    <p className="text-xs text-slate-500">طالب</p>
-                    <p className="text-[9px] text-slate-400 font-mono mt-1 opacity-60 flex items-center gap-1">
-                      <span>UID:</span>
-                      <span className="select-all cursor-copy truncate">{user.uid}</span>
-                    </p>
+                  <h3 className="font-bold text-primary truncate leading-tight">{(user as any).displayName || (user as any).fullName || 'طالب متميز'}</h3>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[10px] text-slate-500 font-bold">طالب النظام</p>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(user.uid);
+                      }}
+                      className="text-[9px] text-slate-400 font-mono opacity-60 flex items-center gap-1 hover:text-accent hover:opacity-100 transition-all group"
+                      title="اضغط لنسخ الرقم التعريفي"
+                    >
+                      <span className="bg-slate-100 px-1 rounded uppercase">ID:</span>
+                      <span className="truncate max-w-[80px]">{user.uid}</span>
+                      <span className="hidden group-hover:inline">📋</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -112,9 +119,9 @@ export default function Portal() {
           <main className="lg:w-3/4">
             <AnimatePresence mode="wait">
               {activeTab === 'dashboard' && <DashboardView user={user} />}
-              {activeTab === 'schedule' && <SchedulePlaceholder />}
-              {activeTab === 'grades' && <GradesPlaceholder />}
-              {activeTab === 'materials' && <MaterialsPlaceholder />}
+              {activeTab === 'schedule' && <ScheduleView />}
+              {activeTab === 'grades' && <GradesView />}
+              {activeTab === 'materials' && <MaterialsView />}
             </AnimatePresence>
           </main>
         </div>
@@ -349,7 +356,7 @@ function DashboardView({ user }: { user: any }) {
             <Clock className="w-3.5 h-3.5 text-accent" />
             آخر حصة: السبت القادم 10:00 ص
           </div>
-          <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight">أهلاً بك يا {user.displayName?.split(' ')[0]} 👋</h2>
+          <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight">أهلاً بك يا {((user as any).displayName || (user as any).fullName || '').split(' ')[0]} 👋</h2>
           <p className="text-white/60 text-lg md:text-xl max-w-xl leading-relaxed">نتمنى لك رحلة ممتعة ومثمرة اليوم في منصتك التعليمية المتكاملة.</p>
         </div>
       </div>
@@ -461,25 +468,84 @@ function TabButton({ active, onClick, icon: Icon, label }: any) {
   );
 }
 
-// Simple Placeholders
-function SchedulePlaceholder() { return <PlaceholderView title="جدول حصصي" desc="قائمة بحصصك المسجلة والمواعيد القادمة." />; }
-function GradesPlaceholder() { return <PlaceholderView title="الدرجات والنتائج" desc="تحليل لمستواك الدراسي ودرجات الامتحانات الدورية." />; }
-function MaterialsPlaceholder() { return <PlaceholderView title="المذكرات والمحاضرات" desc="تحميل ملفات الـ PDF والروابط التعليمية الخاصة بموادك." />; }
-
-function PlaceholderView({ title, desc }: any) {
+function ScheduleView() {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-[32px] p-12 text-center border border-slate-100 shadow-sm"
+      exit={{ opacity: 0, y: -20 }}
+      className="bg-white rounded-[32px] p-8 md:p-12 border border-slate-100 text-center shadow-sm"
     >
-      <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-        <FileText className="w-10 h-10 text-slate-300" />
+      <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+        <Calendar className="text-blue-500 w-10 h-10" />
       </div>
-      <h3 className="text-2xl font-bold text-primary mb-3">{title}</h3>
-      <p className="text-slate-500 mb-8">{desc}</p>
-      <div className="max-w-md mx-auto p-6 bg-slate-50 rounded-2xl text-slate-400 text-sm italic">
-        "هذا القسم سيتم ربطه بالبيانات الحقيقية لقاعدة البيانات بمجرد اكتمال تسجيلك في الدورات التدريبية المتاحة بالمركز."
+      <h3 className="text-xl font-black text-primary mb-2">جدول الحصص الأسبوعي</h3>
+      <p className="text-slate-500 max-w-sm mx-auto text-sm leading-relaxed mb-8">
+        لا يوجد حصص مسجلة في جدولك حالياً. تأكد من إتمام اشتراكك في المجموعات الدراسية.
+      </p>
+      <div className="space-y-3 max-w-md mx-auto">
+        {['السبت', 'الأحد', 'الاثنين'].map((day) => (
+          <div key={day} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl opacity-40">
+            <span className="font-bold text-slate-400">{day}</span>
+            <span className="text-xs text-slate-300 italic">لا يوجد محاضرات</span>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function GradesView() {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="bg-white rounded-[32px] p-8 md:p-12 border border-slate-100 text-center shadow-sm"
+    >
+      <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+        <TrendingUp className="text-green-500 w-10 h-10" />
+      </div>
+      <h3 className="text-xl font-black text-primary mb-2">سجل الدرجات والتقييم</h3>
+      <p className="text-slate-500 max-w-sm mx-auto text-sm leading-relaxed mb-8">
+        درجاتك في الامتحانات الدورية والتقييمات الشهرية ستظهر هنا فور تصحيحها.
+      </p>
+      <div className="p-8 border-2 border-dashed border-slate-100 rounded-[32px] text-slate-300 font-bold italic text-sm">
+        قريباً: عرض بياني لمستواك الدراسي
+      </div>
+    </motion.div>
+  );
+}
+
+function MaterialsView() {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="bg-white rounded-[32px] p-8 md:p-12 border border-slate-100 text-center shadow-sm"
+    >
+      <div className="w-20 h-20 bg-accent/5 rounded-full flex items-center justify-center mx-auto mb-6">
+        <BookOpen className="text-accent w-10 h-10" />
+      </div>
+      <h3 className="text-xl font-black text-primary mb-2">المكتبة والمذكرات</h3>
+      <p className="text-slate-500 max-w-sm mx-auto text-sm leading-relaxed mb-8">
+        بإمكانك تحميل مذكرات الحصص والملخصات بتنسيق PDF من هذا القسم.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
+        {[1, 2].map((i) => (
+          <div key={i} className="p-5 border border-slate-50 bg-slate-50/50 rounded-2xl opacity-40 grayscale">
+            <div className="flex items-center gap-4">
+              <div className="bg-white p-3 rounded-xl shadow-sm">
+                <FileText className="w-6 h-6 text-slate-300" />
+              </div>
+              <div className="flex-1">
+                <div className="h-3 w-20 bg-slate-200 rounded mb-2" />
+                <div className="h-2 w-12 bg-slate-100 rounded" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </motion.div>
   );
