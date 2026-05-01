@@ -56,6 +56,7 @@ export default function Portal() {
   const [isStudentPreview, setIsStudentPreview] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
 
+  // Restore modal functions
   useEffect(() => {
     (window as any).showAddClassModal = () => setShowAddClass(true);
     (window as any).showAddExamModal = () => setShowAddExam(true);
@@ -64,6 +65,16 @@ export default function Portal() {
       delete (window as any).showAddExamModal;
     };
   }, []);
+
+  // Debugging logs for production troubleshooting
+  useEffect(() => {
+    console.log("Portal State Updated:", { 
+      hasUser: !!user, 
+      loading, 
+      error: error ? error.message : "None",
+      domain: window.location.hostname
+    });
+  }, [user, loading, error]);
 
   useEffect(() => {
     if (user) {
@@ -83,7 +94,7 @@ export default function Portal() {
     }
   }, [user]);
 
-  const actualIsAdmin = user?.email === 'motaem23y@gmail.com' || userData?.role === 'admin' || (user as any).email === 'motaem23y@gmail.com';
+  const actualIsAdmin = user?.email === 'motaem23y@gmail.com' || userData?.role === 'admin';
   const isAdmin = actualIsAdmin && !isStudentPreview;
 
   // Force Admin Tab if specifically requested by state or user (optional but helpful)
@@ -107,9 +118,12 @@ export default function Portal() {
           <AlertCircle className="w-8 h-8" />
         </div>
         <h3 className="text-xl font-black text-primary mb-2">عذراً، حدث خطأ في الاتصال</h3>
-        <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-          {error?.message || initError || 'يوجد مشكلة في الاتصال بخدمات النظام. يرجى التأكد من إضافة الدومين الجديد في إعدادات Firebase.'}
+        <p className="text-slate-500 text-sm mb-4 leading-relaxed">
+          {error?.message || initError || 'يوجد مشكلة في الاتصال بخدمات النظام.'}
         </p>
+        <div className="bg-red-50 p-4 rounded-xl text-[10px] text-red-600 font-mono mb-6 text-left overflow-auto max-h-32">
+          {error ? JSON.stringify(error, null, 2) : 'No specific error details available.'}
+        </div>
         <button 
           onClick={() => window.location.reload()}
           className="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
@@ -120,7 +134,7 @@ export default function Portal() {
     </div>
   );
 
-  if (!user) return <LoginView />;
+  if (!user && !loading) return <LoginView />;
   const isAdminUser = user?.email === 'motaem23y@gmail.com' || userData?.role === 'admin';
 
   return (
@@ -179,25 +193,25 @@ export default function Portal() {
               <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
                 <div className="relative">
                   <img 
-                    src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} 
-                    alt={user.displayName || 'User'} 
+                    src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.email}`} 
+                    alt={user?.displayName || 'User'} 
                     className="w-12 h-12 md:w-14 md:h-14 rounded-2xl object-cover border-2 border-slate-50"
                   />
                   {isAdmin && <div className="absolute -top-1 -right-1 bg-accent text-white p-1 rounded-lg border-2 border-white shadow-sm"><Shield className="w-2.5 h-2.5" /></div>}
                 </div>
                 <div className="text-right flex-1 min-w-0">
-                  <h3 className="font-bold text-primary truncate leading-tight text-sm md:text-base">{(user as any).displayName || userData?.fullName || 'مستخدم النظام'}</h3>
+                  <h3 className="font-bold text-primary truncate leading-tight text-sm md:text-base">{user?.displayName || userData?.fullName || 'مستخدم النظام'}</h3>
                   <div className="flex flex-col gap-0.5">
                     <p className="text-[9px] md:text-[10px] text-slate-500 font-black">{isAdmin ? 'المدير العام للمنصة' : 'طالب النظام'}</p>
                     <button 
                       onClick={() => {
-                        navigator.clipboard.writeText(user.uid);
+                        if (user?.uid) navigator.clipboard.writeText(user.uid);
                       }}
                       className="text-[8px] md:text-[9px] text-slate-400 font-mono opacity-60 flex items-center gap-1 hover:text-accent hover:opacity-100 transition-all group"
                       title="اضغط لنسخ الرقم التعريفي"
                     >
                       <span className="bg-slate-100 px-1 rounded uppercase">ID:</span>
-                      <span className="truncate max-w-[60px] md:max-w-none">{user.uid}</span>
+                      <span className="truncate max-w-[60px] md:max-w-none">{user?.uid}</span>
                       <span className="hidden group-hover:inline">📋</span>
                     </button>
                   </div>
@@ -455,8 +469,22 @@ function LoginView() {
               </div>
 
               <button 
-                onClick={() => loginWithGoogle()}
-                className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-accent p-4 rounded-2xl font-bold text-slate-700 transition-all hover:bg-slate-50"
+                onClick={async () => {
+                  setError('');
+                  setLoading(true);
+                  try {
+                    console.log("Attempting Google Login...");
+                    await loginWithGoogle();
+                    console.log("Google Login Successfully completed");
+                  } catch (err: any) {
+                    console.error("Google Login Exception:", err);
+                    setError(err.message || "حدث خطأ أثناء الاتصال بجوجل. تأكد من السماح للدومين الجديد في Firebase.");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-accent p-4 rounded-2xl font-bold text-slate-700 transition-all hover:bg-slate-50 disabled:opacity-50"
               >
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
                 الدخول السريع باستخدام جوجل
@@ -749,7 +777,7 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
           </div>
 
           <h1 className="text-4xl md:text-7xl font-black mb-3 leading-tight tracking-tighter">
-            أهلاً، {((user as any).displayName || userData?.fullName || (isAdmin ? 'المدير' : 'طالبنا')).split(' ')[0]} 👋
+            أهلاً، {(user?.displayName || userData?.fullName || (isAdmin ? 'المدير' : 'طالبنا')).split(' ')[0]} 👋
           </h1>
           <p className="text-white/60 text-lg md:text-2xl max-w-3xl leading-relaxed font-bold">
             {isAdmin 

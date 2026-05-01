@@ -37,7 +37,19 @@ const firebaseConfig = {
 
 const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseConfigFile.firestoreDatabaseId;
 
-const app = initializeApp(firebaseConfig);
+// Debug log for troubleshooting (only showing keys, not values for security)
+if (import.meta.env.DEV) {
+  console.log("Firebase Config Keys:", Object.keys(firebaseConfig).filter(k => !!(firebaseConfig as any)[k]));
+}
+
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (e) {
+  console.error("Firebase App initialization failed:", e);
+  app = { } as any; // Fallback to avoid crash
+}
+
 export const db = getFirestore(app, databaseId);
 export const auth = getAuth(app);
 
