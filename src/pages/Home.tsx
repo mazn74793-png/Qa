@@ -109,7 +109,7 @@ export default function Home() {
                 suppressContentEditableWarning={true}
                 onBlur={(e) => updateField('heroTitle', e.currentTarget.textContent || '')}
                 className={cn(
-                  "text-5xl md:text-7xl font-bold mb-6 leading-[1.1] whitespace-pre-line focus:outline-none focus:ring-2 focus:ring-accent rounded-lg",
+                  "text-3xl sm:text-5xl md:text-7xl font-bold mb-4 md:mb-6 leading-[1.15] md:leading-[1.1] whitespace-pre-line focus:outline-none focus:ring-2 focus:ring-accent rounded-lg",
                   isEditing && "bg-white/5 cursor-text ring-1 ring-white/20"
                 )}
               >
@@ -121,27 +121,27 @@ export default function Home() {
                 suppressContentEditableWarning={true}
                 onBlur={(e) => updateField('heroSubtitle', e.currentTarget.textContent || '')}
                 className={cn(
-                  "text-xl text-white/70 mb-10 max-w-xl md:ml-auto leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent rounded-lg",
+                  "text-base md:text-xl text-white/70 mb-8 md:mb-10 max-w-xl md:ml-auto leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent rounded-lg",
                   isEditing && "bg-white/5 cursor-text ring-1 ring-white/20"
                 )}
               >
                 {currentData.heroSubtitle}
               </p>
               
-              <div className="flex flex-wrap items-center gap-4 justify-end">
+              <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-4 justify-center lg:justify-end">
                 {isAdmin ? (
-                  <Link to="/admin" className="bg-accent hover:bg-accent/90 text-white px-8 py-4 rounded-xl font-black text-lg shadow-xl shadow-accent/20 transition-all flex items-center gap-2">
+                  <Link to="/admin" className="w-full sm:w-auto justify-center bg-accent hover:bg-accent/90 text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-black text-base md:text-lg shadow-xl shadow-accent/20 transition-all flex items-center gap-2">
                     لوحة التحكم والادارة
-                    <ShieldCheck className="w-6 h-6" />
+                    <ShieldCheck className="w-5 h-5 md:w-6 md:h-6" />
                   </Link>
                 ) : (
-                  <Link to="/portal" className="bg-accent hover:bg-accent/90 text-white px-8 py-4 rounded-xl font-black text-lg shadow-xl shadow-accent/20 transition-all flex items-center gap-2">
+                  <Link to="/portal" className="w-full sm:w-auto justify-center bg-accent hover:bg-accent/90 text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-black text-base md:text-lg shadow-xl shadow-accent/20 transition-all flex items-center gap-2">
                     سجل الآن مجاناً
                     <ArrowLeft className="w-5 h-5" />
                   </Link>
                 )}
-                <Link to="/courses" className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-black text-lg border border-white/20 backdrop-blur-md transition-all">
-                  استعرض المواد الدراسية
+                <Link to="/courses" className="w-full sm:w-auto justify-center bg-white/10 hover:bg-white/20 text-white px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-black text-base md:text-lg border border-white/20 backdrop-blur-md transition-all text-center">
+                  استعرض المواد
                 </Link>
               </div>
             </motion.div>

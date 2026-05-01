@@ -80,7 +80,7 @@ export default function Navbar() {
                   <Link
                     to="/portal"
                     className={cn(
-                      "hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black transition-all whitespace-nowrap",
+                      "hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black transition-all whitespace-nowrap",
                       scrolled || !isHomePage ? "text-slate-500 hover:bg-slate-100" : "text-white/70 hover:bg-white/10"
                     )}
                   >
@@ -88,9 +88,9 @@ export default function Navbar() {
                   </Link>
                   <Link
                     to="/admin"
-                    className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl text-xs md:text-sm font-black shadow-lg shadow-accent/20 transition-all active:scale-95 whitespace-nowrap"
+                    className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-3 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-2xl text-[10px] md:text-sm font-black shadow-lg shadow-accent/20 transition-all active:scale-95 whitespace-nowrap"
                   >
-                    <Shield className="w-4 h-4 md:w-5 md:h-5 text-white/50" />
+                    <Shield className="w-3.5 h-3.5 md:w-5 h-5 text-white/50" />
                     <span className="hidden xs:inline">لوحة التحكم</span>
                     <span className="xs:hidden">الادارة</span>
                   </Link>
@@ -118,13 +118,13 @@ export default function Navbar() {
           {/* Mobile Toggle */}
           <button 
             className={cn(
-              "md:hidden p-2.5 rounded-xl transition-all shadow-sm",
-              scrolled || !isHomePage ? "bg-white text-primary" : "bg-primary text-white"
+              "lg:hidden p-2 md:p-2.5 rounded-lg md:rounded-xl transition-all shadow-sm",
+              scrolled || !isHomePage ? "bg-white text-primary border border-slate-100" : "bg-white/10 text-white border border-white/20"
             )}
             onClick={() => setIsOpen(!isOpen)}
             id="mobile-menu-toggle"
           >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isOpen ? <X className="w-5 h-5 md:w-6 md:h-6" /> : <Menu className="w-5 h-5 md:w-6 md:h-6" />}
           </button>
         </div>
       </div>
@@ -133,56 +133,60 @@ export default function Navbar() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-b overflow-hidden shadow-2xl relative z-[70]"
+            initial={{ opacity: 0, scale: 0.95, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -20 }}
+            className="lg:hidden bg-white border-b overflow-hidden shadow-2xl relative z-[70] mx-4 mt-2 rounded-[32px] border border-slate-100"
             id="mobile-menu"
           >
-            <div className="flex flex-col p-6 gap-4">
+            <div className="flex flex-col p-6 gap-3">
               {/* Mobile Contact Quick Links */}
-              <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-slate-100">
-                <a href={`tel:${settings?.contactPhone}`} className="flex flex-col items-center gap-2 p-3 bg-slate-50 rounded-2xl text-primary hover:bg-accent hover:text-white transition-all">
+              <div className="grid grid-cols-2 gap-3 mb-2 pb-4 border-b border-slate-100">
+                <a href={`tel:${settings?.contactPhone}`} className="flex flex-col items-center gap-2 p-3 bg-slate-50 rounded-2xl text-primary hover:bg-accent hover:text-white transition-all shadow-sm">
                   <Phone className="w-5 h-5" />
-                  <span className="text-[10px] font-bold">اتصل بنا</span>
+                  <span className="text-[10px] font-black uppercase">اتصل بنا</span>
                 </a>
-                <a href={`https://wa.me/${settings?.whatsappUrl}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-3 bg-green-50 rounded-2xl text-green-600 hover:bg-green-600 hover:text-white transition-all">
+                <a href={`https://wa.me/${settings?.whatsappUrl}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-3 bg-green-50 rounded-2xl text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm">
                   <MessageCircle className="w-5 h-5" />
-                  <span className="text-[10px] font-bold">واتساب</span>
+                  <span className="text-[10px] font-black uppercase">واتساب</span>
                 </a>
               </div>
 
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className="flex items-center gap-3 bg-primary text-white p-5 rounded-2xl font-black shadow-lg shadow-primary/20"
+                  className="flex items-center gap-3 bg-primary text-white p-4 rounded-2xl font-black shadow-lg shadow-primary/20"
                   onClick={() => setIsOpen(false)}
                 >
-                  <Shield className="w-6 h-6 text-accent" />
+                  <Shield className="w-5 h-5 text-accent" />
                   لوحة التحكم والادارة
                 </Link>
               )}
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className={cn(
-                    "text-lg font-black p-4 rounded-2xl transition-all",
-                    location.pathname === link.href ? "text-accent bg-accent/5" : "text-slate-600 hover:bg-slate-50"
-                  )}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              ))}
+              
+              <div className="space-y-1">
+                {NAV_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className={cn(
+                      "text-base font-black px-4 py-3.5 rounded-xl transition-all flex items-center justify-between",
+                      location.pathname === link.href ? "text-accent bg-accent/5 ring-1 ring-accent/10" : "text-slate-600 hover:bg-slate-50"
+                    )}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
+
               <div className="mt-2 pt-4 border-t border-slate-100">
                 <Link
                   to="/portal"
-                  className="flex items-center justify-center gap-3 bg-accent text-white p-5 rounded-2xl font-black shadow-lg shadow-accent/20"
+                  className="flex items-center justify-center gap-3 bg-accent text-white p-4 rounded-2xl font-black shadow-lg shadow-accent/20"
                   onClick={() => setIsOpen(false)}
                 >
-                  <GraduationCap className="w-6 h-6" />
-                  {user ? 'دخول لوحة الطالب' : 'تسجيل دخول الطلاب'}
+                  <GraduationCap className="w-6 h-6 shrink-0" />
+                  {user ? 'لوحة الطالب' : 'تسجيل دخول الطلاب'}
                 </Link>
               </div>
             </div>

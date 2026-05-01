@@ -34,25 +34,25 @@ export default function Teachers() {
   if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold">جاري تحميل المعلمين...</div>;
 
   return (
-    <div id="teachers-page" className="pt-24 min-h-screen">
-      <section className="bg-primary text-white py-20">
-        <div className="container mx-auto px-4 md:px-6 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white text-center">نخبة المدرسين</h1>
-          <p className="text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
+    <div id="teachers-page" className="pt-20 md:pt-24 min-h-screen">
+      <section className="bg-primary text-white py-12 md:py-20 px-4">
+        <div className="container mx-auto text-center">
+          <h1 className="text-3xl md:text-5xl font-black mb-4 md:mb-6 text-white text-center">نخبة المدرسين</h1>
+          <p className="text-base md:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
             نفخر بوجود أفضل الكوادر التعليمية في مصر، مدرسون يجمعون بين الخبرة الطويلة والأساليب التربوية الحديثة.
           </p>
         </div>
       </section>
 
-      <section className="py-20 bg-slate-50">
+      <section className="py-12 md:py-20 bg-slate-50">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-wrap justify-center gap-3 mb-16">
+          <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-10 md:mb-16">
             {subjects.map(s => (
               <button 
                 key={s}
                 onClick={() => setFilter(s)}
                 className={cn(
-                  "px-6 py-2 rounded-2xl font-bold transition-all border",
+                  "px-4 md:px-6 py-2 rounded-xl md:rounded-2xl text-xs md:text-sm font-black transition-all border",
                   filter === s 
                     ? "bg-accent text-white border-accent shadow-lg shadow-accent/20" 
                     : "bg-white text-slate-500 border-slate-100 hover:border-accent hover:text-accent"
@@ -64,7 +64,7 @@ export default function Teachers() {
           </div>
 
           {filteredTeachers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
               {filteredTeachers.map((teacher, i) => (
                 <motion.div 
                   key={teacher.id || i}
@@ -72,38 +72,38 @@ export default function Teachers() {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-white rounded-[40px] p-8 flex flex-col md:flex-row gap-8 items-center border border-slate-100 shadow-sm hover:shadow-xl transition-all"
+                  className="bg-white rounded-[24px] md:rounded-[40px] p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8 items-center border border-slate-100 shadow-sm hover:shadow-xl transition-all"
                 >
                   <div className="relative shrink-0">
-                    <div className="w-40 h-40 rounded-[32px] overflow-hidden border-4 border-slate-50 shadow-inner">
+                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-[24px] md:rounded-[32px] overflow-hidden border-4 border-slate-50 shadow-inner">
                       <img src={teacher.image || 'https://i.pravatar.cc/150'} alt={teacher.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
-                    <div className="absolute -bottom-2 -right-2 bg-accent text-white p-2 rounded-xl shadow-lg">
-                      <Star className="w-5 h-5 fill-current" />
+                    <div className="absolute -bottom-1 -right-1 bg-accent text-white p-1.5 md:p-2 rounded-lg md:rounded-xl shadow-lg">
+                      <Star className="w-4 h-4 md:w-5 md:h-5 fill-current" />
                     </div>
                   </div>
 
-                  <div className="text-right flex-grow">
-                    <div className="inline-block px-3 py-1 bg-accent/10 text-accent rounded-lg text-sm font-bold mb-3">
+                  <div className="text-right flex-grow w-full">
+                    <div className="inline-block px-3 py-1 bg-accent/10 text-accent rounded-lg text-[10px] md:text-xs font-black mb-2 md:mb-3 uppercase">
                       {teacher.subject}
                     </div>
-                    <h3 className="text-2xl font-bold text-primary mb-2">{teacher.name}</h3>
-                    <p className="text-slate-600 mb-6 leading-relaxed">
+                    <h3 className="text-xl md:text-2xl font-black text-primary mb-1 md:mb-2">{teacher.name}</h3>
+                    <p className="text-sm text-slate-600 mb-4 md:mb-6 leading-relaxed line-clamp-3">
                       {teacher.bio}
                     </p>
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
                       {teacher.introVideoUrl && (
                         <button 
                           onClick={() => setActiveVideo(teacher.introVideoUrl)}
-                          className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all shadow-lg shadow-primary/10"
+                          className="w-full sm:w-auto bg-primary text-white px-6 py-2.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg shadow-primary/10"
                         >
-                          <Play className="w-4 h-4" />
+                          <Play className="w-3.5 h-3.5" />
                           نبذة فيديو
                         </button>
                       )}
-                      <button className="text-slate-500 font-bold flex items-center gap-2 hover:text-accent transition-colors">
+                      <button className="w-full sm:w-auto text-slate-500 font-black text-xs md:text-sm flex items-center justify-center gap-2 hover:text-accent transition-colors py-2">
                         الجدول الدراسي
-                        <ChevronLeft className="w-5 h-5" />
+                        <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
                     </div>
                   </div>
@@ -111,7 +111,7 @@ export default function Teachers() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 text-slate-400">سيتم الإعلان عن طاقم التدريس قريباً.</div>
+            <div className="text-center py-20 text-slate-400 font-bold">سيتم الإعلان عن طاقم التدريس قريباً.</div>
           )}
         </div>
       </section>

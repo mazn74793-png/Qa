@@ -73,9 +73,11 @@ export default function Portal() {
   useEffect(() => {
     (window as any).showAddClassModal = () => setShowAddClass(true);
     (window as any).showAddExamModal = () => setShowAddExam(true);
+    (window as any).setActiveTab = (tab: any) => setActiveTab(tab);
     return () => {
       delete (window as any).showAddClassModal;
       delete (window as any).showAddExamModal;
+      delete (window as any).setActiveTab;
     };
   }, []);
 
@@ -118,7 +120,7 @@ export default function Portal() {
   }, [isAdmin, activeTab]);
 
   if (adminLoading) return (
-    <div className="pt-32 pb-20 flex flex-col items-center justify-center min-h-screen bg-slate-50">
+    <div className="pt-20 md:pt-32 pb-20 flex flex-col items-center justify-center min-h-screen bg-slate-50 px-6">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>
       <p className="text-slate-400 font-bold animate-pulse">جاري التحميل...</p>
       {longLoading && (
@@ -170,64 +172,64 @@ export default function Portal() {
   const isAdminUser = !!actualIsAdmin;
 
   return (
-    <div className={cn("pb-20 min-h-screen bg-slate-50", isAdminUser ? "pt-40 md:pt-48" : "pt-32")}>
+    <div className={cn("pb-20 min-h-screen bg-slate-50", isAdminUser ? "pt-32 md:pt-48" : "pt-24 md:pt-32")}>
       {isAdminUser && (
-        <div className="fixed top-20 left-0 right-0 z-[40] transition-all">
-          <div className="bg-primary/95 backdrop-blur-md text-white py-3 shadow-xl border-b border-white/10">
+        <div className="fixed top-16 md:top-20 left-0 right-0 z-[40] transition-all">
+          <div className="bg-primary/95 backdrop-blur-md text-white py-2 md:py-3 shadow-xl border-b border-white/10">
             <div className="container mx-auto px-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <div className={cn(
-                  "p-1.5 rounded-lg border hidden sm:block",
+                  "p-1 rounded-lg border hidden sm:block",
                   isStudentPreview ? "bg-green-500/20 border-green-500/30" : "bg-accent/20 border-accent/30"
                 )}>
-                  <Eye className={cn("w-4 h-4", isStudentPreview ? "text-green-400" : "text-accent")} />
+                  <Eye className={cn("w-3.5 h-3.5", isStudentPreview ? "text-green-400" : "text-accent")} />
                 </div>
                 <div>
-                  <span className="text-xs font-black text-white/90">
-                    {isStudentPreview ? 'أنت تشاهد الآن كطالب (وضع المعاينة)' : 'لوحة تحكم المشرف الذكية'}
+                  <span className="text-[10px] md:text-xs font-black text-white/90">
+                    {isStudentPreview ? 'معاينة كطالب' : 'لوحة تحكم المشرف'}
                   </span>
-                  <span className="text-[10px] text-white/40 block">
-                    {isStudentPreview ? 'الأزرار الإدارية مخفية تماماً' : 'لديك صلاحيات كاملة للتحرير والإضافة'}
+                  <span className="text-[8px] md:text-[10px] text-white/40 block">
+                    {isStudentPreview ? 'الأزرار الإدارية مخفية' : 'صلاحيات كاملة'}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <button 
                   onClick={() => setIsStudentPreview(!isStudentPreview)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-1.5 rounded-xl text-xs font-black transition-all",
+                    "flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black transition-all",
                     isStudentPreview 
-                      ? "bg-white text-primary border border-white" 
+                      ? "bg-white text-primary" 
                       : "bg-white/10 hover:bg-white/20 border border-white/10"
                   )}
                 >
-                  <Settings2 className="w-3.5 h-3.5" />
-                  {isStudentPreview ? 'العودة لوضع المشرف' : 'معاينة كطالب'}
+                  <Settings2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                  {isStudentPreview ? 'وضع المشرف' : 'معاينة'}
                 </button>
                 <Link 
                   to="/admin"
-                  className="hidden xs:flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 py-1.5 rounded-xl text-xs font-black transition-all shadow-lg shadow-accent/20"
+                  className="hidden xs:flex items-center gap-1.5 md:gap-2 bg-accent hover:bg-accent/90 text-white px-3 md:px-4 py-1 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black transition-all shadow-lg shadow-accent/20"
                 >
-                  <Shield className="w-3.5 h-3.5" />
-                  لوحة التحكم
+                  <Shield className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                  التحكم
                 </Link>
               </div>
             </div>
           </div>
         </div>
       )}
-      <div className="container mx-auto px-2 md:px-6">
-        <div className="flex flex-col lg:flex-row gap-6">
+      <div className="container mx-auto px-3 md:px-6">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
           
           {/* Navigation - Mobile: Horizontal Scroll, Desktop: Sidebar */}
           <aside className="lg:w-1/4">
-            <div className="bg-white rounded-[32px] p-4 md:p-6 border border-slate-100 shadow-sm lg:sticky lg:top-24">
-              <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                <div className="relative">
+            <div className="bg-white rounded-2xl md:rounded-[32px] p-4 md:p-6 border border-slate-100 shadow-sm lg:sticky lg:top-24">
+              <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 pb-4 md:pb-6 border-b border-slate-100">
+                <div className="relative shrink-0">
                   <img 
                     src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.email}`} 
                     alt={user?.displayName || 'User'} 
-                    className="w-12 h-12 md:w-14 md:h-14 rounded-2xl object-cover border-2 border-slate-50"
+                    className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl object-cover border-2 border-slate-50"
                   />
                   {isAdmin && <div className="absolute -top-1 -right-1 bg-accent text-white p-1 rounded-lg border-2 border-white shadow-sm"><Shield className="w-2.5 h-2.5" /></div>}
                 </div>
@@ -428,19 +430,19 @@ function LoginView() {
 
         <motion.div 
           key={mode + studentAction}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[40px] p-8 md:p-10 shadow-2xl shadow-slate-200/50 text-center border border-slate-100"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-3xl md:rounded-[40px] p-6 md:p-10 shadow-2xl shadow-slate-200/50 text-center border border-slate-100"
         >
-          <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <GraduationCap className={cn("w-8 h-8", mode === 'student' ? "text-primary" : "text-accent")} />
+          <div className="w-14 h-14 md:w-16 md:h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
+            <GraduationCap className={cn("w-7 h-7 md:w-8 md:h-8", mode === 'student' ? "text-primary" : "text-accent")} />
           </div>
-          <h2 className="text-2xl font-bold text-primary mb-2">
+          <h2 className="text-xl md:text-2xl font-bold text-primary mb-2">
              {mode === 'student' 
                ? (studentAction === 'login' ? 'دخول الطلاب' : 'حساب جديد للطالب') 
                : 'دخول المدرسين والإدارة'}
           </h2>
-          <p className="text-slate-500 mb-8 text-sm">
+          <p className="text-slate-500 mb-6 md:mb-8 text-xs md:text-sm">
             {mode === 'student' 
               ? (studentAction === 'login' ? 'ادخل بياناتك لمتابعة مذكراتك ومواعيدك.' : 'سجل بياناتك للانضمام للمركز والاستفادة من خدماتنا.')
               : 'سجل دخولك بصفتك مسؤولاً للتحكم في محتوى المركز.'}
@@ -747,10 +749,10 @@ function LecturesView() {
           ))
         ) : (
           <div className="col-span-full bg-slate-50 p-20 rounded-[40px] border border-dashed border-slate-200 text-center">
-             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
                 <Video className="text-slate-300 w-8 h-8" />
              </div>
-             <p className="text-slate-400 font-bold italic">لا توجد محاضرات منشورة بعد</p>
+             <p className="text-slate-400 font-black italic">لا توجد محاضرات منشورة حالياً</p>
           </div>
         )}
       </div>
@@ -763,58 +765,52 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
   const [stats, setStats] = useState({ students: 0, exams: 0, bookings: 0 });
 
   useEffect(() => {
-    if (isAdmin) {
-      const fetchStats = async () => {
-        try {
-          const uSnap = await getDocs(collection(db, 'users'));
-          const eSnap = await getDocs(collection(db, 'exams'));
-          const bSnap = await getDocs(collection(db, 'bookings'));
-          setStats({
-            students: uSnap.size,
-            exams: eSnap.size,
-            bookings: bSnap.size
-          });
-        } catch (error) {
-          console.error("Error fetching stats:", error);
-        }
-      };
-      fetchStats();
-    }
-  }, [isAdmin]);
+    const fetchData = async () => {
+      const studentSnap = await getDocs(collection(db, 'users'));
+      const examSnap = await getDocs(collection(db, 'exams'));
+      const bookingSnap = await getDocs(collection(db, 'bookings'));
+      setStats({
+        students: studentSnap.size,
+        exams: examSnap.size,
+        bookings: bookingSnap.size
+      });
+    };
+    fetchData();
+  }, []);
 
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-6 md:space-y-12 text-right pb-10"
+      className="space-y-6 md:space-y-10 text-right pb-10"
     >
-      {/* Hero Welcome - Admin vs Student */}
+      {/* Hero Welcome Area */}
       <div className={cn(
-        "rounded-[32px] md:rounded-[56px] p-8 md:p-20 text-white relative overflow-hidden shadow-2xl flex flex-col justify-center min-h-[250px] md:min-h-[350px]",
+        "rounded-2xl md:rounded-[56px] p-6 md:p-20 text-white relative overflow-hidden shadow-2xl flex flex-col justify-center min-h-[180px] md:min-h-[350px]",
         isAdmin 
-          ? "bg-slate-900 border-4 border-accent/20 shadow-primary/30" 
+          ? "bg-slate-900 border-2 md:border-4 border-accent/20 shadow-primary/30" 
           : "bg-gradient-to-br from-primary via-primary/95 to-accent/90 shadow-primary/10"
       )}>
         {/* Background Patterns */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[140px] -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
         
-        <div className="relative z-10 space-y-6">
-          <div className="flex items-center gap-3">
-             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-2xl px-6 py-2.5 rounded-full text-[11px] md:text-sm font-black uppercase tracking-widest border border-white/20">
-               <Shield className={cn("w-4 h-4", isAdmin ? "text-accent" : "text-white")} />
-               {isAdmin ? 'الإدارة المركزية - التحكم الكامل' : 'بوابة الطالب الذكية'}
+        <div className="relative z-10 space-y-4 md:space-y-6">
+          <div className="flex items-center gap-2 md:gap-3">
+             <div className="inline-flex items-center gap-1.5 md:gap-2 bg-white/10 backdrop-blur-2xl px-4 md:px-6 py-1.5 md:py-2.5 rounded-full text-[9px] md:text-sm font-black uppercase tracking-widest border border-white/20">
+               <Shield className={cn("w-3 h-3 md:w-4 md:h-4", isAdmin ? "text-accent" : "text-white")} />
+               {isAdmin ? 'الإدارة المركزية' : 'بوابة الطالب'}
              </div>
-             {isAdmin && <span className="text-[10px] bg-accent text-white px-3 py-1 rounded-full font-black animate-pulse shadow-lg shadow-accent/20">نشط الآن</span>}
+             {isAdmin && <span className="text-[8px] md:text-[10px] bg-accent text-white px-2 md:px-3 py-0.5 md:py-1 rounded-full font-black animate-pulse shadow-lg shadow-accent/20">نشط</span>}
           </div>
 
-          <h1 className="text-4xl md:text-7xl font-black mb-3 leading-tight tracking-tighter">
+          <h1 className="text-2xl md:text-7xl font-black mb-1 md:mb-3 leading-tight tracking-tighter">
             أهلاً، {(user?.displayName || userData?.fullName || (isAdmin ? 'المدير' : 'طالبنا')).split(' ')[0]} 👋
           </h1>
-          <p className="text-white/60 text-lg md:text-2xl max-w-3xl leading-relaxed font-bold">
+          <p className="text-white/60 text-sm md:text-2xl max-w-2xl leading-relaxed font-bold">
             {isAdmin 
-              ? 'مرحباً بك في مركز الإدارة. لقد قمنا بتحديث الواجهة وتحسين سرعة الوصول للبيانات.'
+              ? 'مرحباً بك في مركز الإدارة. لقد قمنا بتحديث الواجهة وتحسين سرعة الوصول.'
               : 'منصتك التعليمية ترحب بك. تابع دروسك وامتحاناتك من هنا بكل سهولة.'}
           </p>
         </div>
@@ -822,35 +818,35 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
 
       {/* Admin Quick Tools */}
       {isAdmin && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
            <button 
              onClick={() => (window as any).showAddExamModal()} 
-             className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-accent transition-all flex flex-col items-center gap-3 group"
+             className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-accent transition-all flex flex-col items-center gap-2 md:gap-3 group"
            >
-             <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all">
-                <ClipboardCheck className="w-6 h-6" />
+             <div className="w-10 h-10 md:w-12 md:h-12 bg-accent/10 rounded-xl md:rounded-2xl flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all">
+                <ClipboardCheck className="w-5 h-5 md:w-6 md:h-6" />
              </div>
-             <span className="font-black text-xs text-primary">إضافة امتحان</span>
+             <span className="font-black text-[10px] md:text-xs text-primary">إضافة امتحان</span>
            </button>
            
            <button 
              onClick={() => (window as any).showAddClassModal()} 
-             className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-primary transition-all flex flex-col items-center gap-3 group"
+             className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-primary transition-all flex flex-col items-center gap-2 md:gap-3 group"
            >
-             <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                <Calendar className="w-6 h-6" />
+             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-xl md:rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                <Calendar className="w-5 h-5 md:w-6 md:h-6" />
              </div>
-             <span className="font-black text-xs text-primary">إضافة حصة</span>
+             <span className="font-black text-[10px] md:text-xs text-primary">إضافة حصة</span>
            </button>
 
-           <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-200 border-dashed flex flex-col items-center justify-center gap-1 opacity-60">
-              <span className="text-[10px] font-black text-slate-400">إجمالي الطلاب</span>
-              <span className="text-2xl font-black text-primary">{stats.students}</span>
+           <div className="bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-200 border-dashed flex flex-col items-center justify-center gap-0.5 md:gap-1 opacity-60">
+              <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase">إجمالي الطلاب</span>
+              <span className="text-xl md:text-2xl font-black text-primary">{stats.students}</span>
            </div>
 
-           <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-200 border-dashed flex flex-col items-center justify-center gap-1 opacity-60">
-              <span className="text-[10px] font-black text-slate-400">حجوزات اليوم</span>
-              <span className="text-2xl font-black text-primary">{stats.bookings}</span>
+           <div className="bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-200 border-dashed flex flex-col items-center justify-center gap-0.5 md:gap-1 opacity-60">
+              <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase">حجوزات اليوم</span>
+              <span className="text-xl md:text-2xl font-black text-primary">{stats.bookings}</span>
            </div>
         </div>
       )}
@@ -912,11 +908,11 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
               <p className="text-slate-500 text-sm leading-relaxed mb-8">يمكنك البدء بمراجعة آخر حصة مسجلة أو تحميل مذكرات الأسبوع الجديد.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-               <button className="flex flex-col items-center gap-3 p-6 bg-white border border-slate-100 rounded-3xl hover:border-accent hover:shadow-lg transition-all group">
+               <button onClick={() => (window as any).setActiveTab?.('materials')} className="flex flex-col items-center gap-3 p-6 bg-white border border-slate-100 rounded-3xl hover:border-accent hover:shadow-lg transition-all group">
                   <BookOpen className="w-6 h-6 text-accent group-hover:scale-110 transition-transform" />
                   <span className="text-[10px] font-black text-primary uppercase">المذكرات</span>
                </button>
-               <button className="flex flex-col items-center gap-3 p-6 bg-white border border-slate-100 rounded-3xl hover:border-primary hover:shadow-lg transition-all group">
+               <button onClick={() => (window as any).setActiveTab?.('schedule')} className="flex flex-col items-center gap-3 p-6 bg-white border border-slate-100 rounded-3xl hover:border-primary hover:shadow-lg transition-all group">
                   <Calendar className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
                   <span className="text-[10px] font-black text-primary uppercase">الأيام</span>
                </button>
@@ -928,16 +924,17 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
   );
 }
 
+
 function StatCard({ title, value, icon: Icon, color, desc }: any) {
   return (
-    <div className="bg-white p-5 md:p-6 rounded-[32px] border border-slate-100 shadow-sm hover:translate-y-[-5px] transition-all group">
-      <div className={cn("w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-current/20", color)}>
-        <Icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
+    <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-100 shadow-sm hover:translate-y-[-5px] transition-all group">
+      <div className={cn("w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center text-white mb-3 md:mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-current/20", color)}>
+        <Icon className="w-5 h-5 md:w-7 md:h-7 text-white" />
       </div>
       <div className="text-right">
-        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">{title}</p>
-        <p className="text-2xl font-black text-primary">{value}</p>
-        <p className="text-[9px] text-slate-300 mt-1">{desc}</p>
+        <p className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5 md:mb-1">{title}</p>
+        <p className="text-xl md:text-2xl font-black text-primary">{value}</p>
+        <p className="text-[8px] md:text-[9px] text-slate-300 mt-1">{desc}</p>
       </div>
     </div>
   );
@@ -961,13 +958,13 @@ function TabButton({ active, onClick, icon: Icon, label }: any) {
     <button 
       onClick={onClick}
       className={cn(
-        "flex flex-shrink-0 items-center gap-2 px-6 lg:px-4 py-3 lg:py-4 rounded-2xl font-bold transition-all whitespace-nowrap",
+        "flex flex-shrink-0 items-center gap-1.5 md:gap-2 px-4 md:px-4 py-2.5 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all whitespace-nowrap text-xs md:text-sm",
         active 
-          ? "bg-accent text-white shadow-lg shadow-accent/20" 
+          ? "bg-accent text-white shadow-lg shadow-accent/20 scale-[1.02]" 
           : "text-slate-600 hover:bg-slate-50"
       )}
     >
-      <Icon className="w-5 h-5" />
+      <Icon className="w-4 h-4 md:w-5 md:h-5" />
       <span>{label}</span>
       {active && <ChevronRight className="hidden lg:block w-4 h-4 rotate-180" />}
     </button>
@@ -1019,21 +1016,21 @@ function ScheduleView({ isAdmin, onAdd }: { isAdmin: boolean, onAdd: () => void 
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6 text-right"
     >
-      <div className="flex items-center justify-between bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-        <div className="text-right">
-          <h3 className="text-xl font-black text-primary">جداول الحصص</h3>
-          <p className="text-slate-500 text-xs mt-1">تصفح واحجز مكانك في المجموعات المتاحة</p>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-5 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-100 shadow-sm">
+        <div className="text-right w-full sm:w-auto">
+          <h3 className="text-lg md:text-xl font-black text-primary">جداول الحصص</h3>
+          <p className="text-slate-500 text-[10px] md:text-xs mt-1">تصفح واحجز مكانك في المجموعات المتاحة</p>
         </div>
         {isAdmin ? (
           <button 
             onClick={onAdd}
-            className="bg-accent text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-accent/20"
+            className="w-full sm:w-auto bg-accent text-white px-6 py-3 rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-accent/20 text-sm"
           >
             إضافة حصة <Plus className="w-4 h-4" />
           </button>
         ) : (
-          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
-            <Calendar className="w-6 h-6" />
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-50 rounded-xl md:rounded-2xl flex items-center justify-center text-blue-500 shrink-0">
+            <Calendar className="w-5 h-5 md:w-6 md:h-6" />
           </div>
         )}
       </div>
@@ -1167,13 +1164,13 @@ function ExamsView({ isAdmin, onAdd, onTake }: { isAdmin: boolean, onAdd: () => 
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-        <div className="text-right">
-          <h3 className="text-xl font-black text-primary">الامتحانات والتقييمات</h3>
-          <p className="text-slate-500 text-xs mt-1">اختبر معلوماتك وتابع مستواك الدراسي</p>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-5 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-100 shadow-sm">
+        <div className="text-right w-full sm:w-auto">
+          <h3 className="text-lg md:text-xl font-black text-primary">الامتحانات والتقييمات</h3>
+          <p className="text-slate-500 text-[10px] md:text-xs mt-1">اختبر معلوماتك وتابع مستواك الدراسي</p>
         </div>
-        <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent">
-          <ClipboardCheck className="w-6 h-6" />
+        <div className="w-10 h-10 md:w-12 md:h-12 bg-accent/10 rounded-xl md:rounded-2xl flex items-center justify-center text-accent shrink-0">
+          <ClipboardCheck className="w-5 h-5 md:w-6 md:h-6" />
         </div>
       </div>
 
@@ -1182,17 +1179,17 @@ function ExamsView({ isAdmin, onAdd, onTake }: { isAdmin: boolean, onAdd: () => 
           [1, 2].map(i => <div key={i} className="h-24 bg-white rounded-3xl animate-pulse border border-slate-100" />)
         ) : exams.length > 0 ? (
           exams.map((exam) => (
-            <div key={exam.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center justify-between">
+            <div key={exam.id} className="bg-white p-5 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="text-right">
-                <h4 className="font-black text-primary">{exam.title}</h4>
-                <div className="flex items-center gap-4 mt-1 text-[10px] text-slate-400 font-bold uppercase">
-                  <span className="flex items-center gap-1"><User className="w-3 h-3" /> {exam.teacherName || 'الإدارة'}</span>
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {exam.durationMinutes} دقيقة</span>
+                <h4 className="font-black text-primary text-sm md:text-base">{exam.title}</h4>
+                <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-1 text-[9px] md:text-[10px] text-slate-400 font-bold uppercase">
+                  <span className="flex items-center gap-1"><User className="w-2.5 h-2.5 md:w-3 md:h-3" /> {exam.teacherName || 'الإدارة'}</span>
+                  <span className="flex items-center gap-1"><Clock className="w-2.5 h-2.5 md:w-3 md:h-3" /> {exam.durationMinutes} دقيقة</span>
                 </div>
               </div>
               <button 
                 onClick={() => isAdmin ? null : onTake(exam)}
-                className="bg-accent text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all"
+                className="w-full sm:w-auto bg-accent text-white px-6 py-2 rounded-xl font-bold text-xs md:text-sm shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all text-center"
               >
                 {isAdmin ? 'تعديل' : 'بدء الامتحان'}
               </button>
