@@ -47,13 +47,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
 export default function Portal() {
-  const [user, loading] = useAuthState(auth);
+  const [user, loading, error] = useAuthState(auth);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials' | 'bookings' | 'lectures'>('dashboard');
   const [userData, setUserData] = useState<any>(null);
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddExam, setShowAddExam] = useState(false);
   const [activeExam, setActiveExam] = useState<any>(null);
   const [isStudentPreview, setIsStudentPreview] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
     (window as any).showAddClassModal = () => setShowAddClass(true);
@@ -66,7 +67,7 @@ export default function Portal() {
 
   useEffect(() => {
     if (user) {
-      const isAdminEmail = user.email === 'motaem23y@gmail.com';
+      const isAdminEmail = user.email === 'motaem23y@gmail.com' || user.email === 'admin@qa.com';
       const userDocRef = doc(db, 'users', user.uid);
       getDocFromServer(userDocRef).then(docSnap => {
         if (docSnap.exists()) {
@@ -75,6 +76,9 @@ export default function Portal() {
         } else if (isAdminEmail) {
           setUserData({ fullName: user.displayName || 'المدير العام للمنصة', role: 'admin' });
         }
+      }).catch(err => {
+        console.error("Error fetching user data:", err);
+        // Don't set error here, just log, but we could set a transient error
       });
     }
   }, [user]);
@@ -90,8 +94,29 @@ export default function Portal() {
   }, [isAdmin, activeTab]);
 
   if (loading) return (
-    <div className="pt-32 pb-20 flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+    <div className="pt-32 pb-20 flex flex-col items-center justify-center min-h-screen bg-slate-50">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>
+      <p className="text-slate-400 font-bold animate-pulse">جاري التحميل...</p>
+    </div>
+  );
+
+  if (error || initError) return (
+    <div className="pt-32 pb-20 flex items-center justify-center min-h-screen bg-slate-50 px-4">
+      <div className="bg-white p-8 rounded-[32px] shadow-xl border border-red-50 text-center max-w-md">
+        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h3 className="text-xl font-black text-primary mb-2">عذراً، حدث خطأ في الاتصال</h3>
+        <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+          {error?.message || initError || 'يوجد مشكلة في الاتصال بخدمات النظام. يرجى التأكد من إضافة الدومين الجديد في إعدادات Firebase.'}
+        </p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
+        >
+          إعادة تحميل الصفحة
+        </button>
+      </div>
     </div>
   );
 
