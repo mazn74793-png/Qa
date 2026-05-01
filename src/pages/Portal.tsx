@@ -49,14 +49,23 @@ export default function Portal() {
 
   useEffect(() => {
     if (user) {
+      // Explicitly check for admin email to ensure immediate access
+      const isAdminEmail = user.email === 'motaem23y@gmail.com';
+      
       const userDocRef = doc(db, 'users', user.uid);
       getDocFromServer(userDocRef).then(docSnap => {
         if (docSnap.exists()) {
-          setUserData(docSnap.data());
+          const data = docSnap.data();
+          setUserData(isAdminEmail ? { ...data, role: 'admin' } : data);
+        } else if (isAdminEmail) {
+          // If admin logs in for the first time and doc doesn't exist
+          setUserData({ fullName: user.displayName || 'المدير', role: 'admin' });
         }
       });
     }
   }, [user]);
+
+  const isAdmin = userData?.role === 'admin' || user?.email === 'motaem23y@gmail.com';
 
   if (loading) return (
     <div className="pt-32 pb-20 flex items-center justify-center min-h-screen">
@@ -64,7 +73,10 @@ export default function Portal() {
     </div>
   );
 
-  if (!user) return <LoginView />;
+  useEffect(() => {
+    (window as any).showAddExamModal = () => setShowAddExam(true);
+    (window as any).showAddClassModal = () => setShowAddClass(true);
+  }, []);
 
   return (
     <div className="pt-32 pb-20 min-h-screen bg-slate-50">
@@ -83,7 +95,7 @@ export default function Portal() {
                 <div className="text-right flex-1 min-w-0">
                   <h3 className="font-bold text-primary truncate leading-tight">{(user as any).displayName || (user as any).fullName || 'طالب متميز'}</h3>
                   <div className="flex flex-col gap-0.5">
-                    <p className="text-[10px] text-slate-500 font-bold">{userData?.role === 'admin' ? 'مدير النظام' : 'طالب النظام'}</p>
+                    <p className="text-[10px] text-slate-500 font-bold">{isAdmin ? 'المدير العام للمنصة' : 'طالب النظام'}</p>
                     <button 
                       onClick={() => {
                         navigator.clipboard.writeText(user.uid);
@@ -131,12 +143,12 @@ export default function Portal() {
                   icon={BookOpen} 
                   label="المذكرات" 
                 />
-                {userData?.role === 'admin' && (
+                {isAdmin && (
                   <TabButton 
                     active={activeTab === 'bookings'} 
                     onClick={() => setActiveTab('bookings')} 
                     icon={User} 
-                    label="الحجوزات" 
+                    label="سجل الحجوزات" 
                   />
                 )}
               </div>
@@ -166,9 +178,9 @@ export default function Portal() {
                 <ExamRunnerView exam={activeExam} onFinish={() => setActiveExam(null)} />
               ) : (
                 <AnimatePresence mode="wait">
-                  {activeTab === 'dashboard' && <DashboardView user={user} userData={userData} />}
-                  {activeTab === 'schedule' && <ScheduleView isAdmin={userData?.role === 'admin'} onAdd={() => setShowAddClass(true)} />}
-                  {activeTab === 'exams' && <ExamsView isAdmin={userData?.role === 'admin'} onTake={(exam) => setActiveExam(exam)} onAdd={() => setShowAddExam(true)} />}
+                  {activeTab === 'dashboard' && <DashboardView user={user} userData={{...userData, role: isAdmin ? 'admin' : userData?.role}} />}
+                  {activeTab === 'schedule' && <ScheduleView isAdmin={isAdmin} onAdd={() => setShowAddClass(true)} />}
+                  {activeTab === 'exams' && <ExamsView isAdmin={isAdmin} onTake={(exam: any) => setActiveExam(exam)} onAdd={() => setShowAddExam(true)} />}
                   {activeTab === 'grades' && <GradesView />}
                   {activeTab === 'materials' && <MaterialsView />}
                   {activeTab === 'bookings' && <BookingsView />}
@@ -406,10 +418,21 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
 
   useEffect(() => {
     if (isAdmin) {
-      // Mock stats for now or fetch real ones
-      getDocs(collection(db, 'users')).then(snap => setStats(s => ({ ...s, students: snap.size })));
-      getDocs(collection(db, 'exams')).then(snap => setStats(s => ({ ...s, exams: snap.size })));
-      getDocs(collection(db, 'bookings')).then(snap => setStats(s => ({ ...s, bookings: snap.size })));
+      const fetchStats = async () => {
+        try {
+          const uSnap = await getDocs(collection(db, 'users'));
+          const eSnap = await getDocs(collection(db, 'exams'));
+          const bSnap = await getDocs(collection(db, 'bookings'));
+          setStats({
+            students: uSnap.size,
+            exams: eSnap.size,
+            bookings: bSnap.size
+          });
+        } catch (error) {
+          console.error("Error fetching stats:", error);
+        }
+      };
+      fetchStats();
     }
   }, [isAdmin]);
 
@@ -418,31 +441,46 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-8 text-right"
+      className="space-y-6 md:space-y-8 text-right pb-10"
     >
       {/* Hero Welcome */}
       <div className={cn(
-        "rounded-[40px] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-primary/20",
-        isAdmin ? "bg-accent" : "bg-primary"
+        "rounded-[32px] md:rounded-[40px] p-6 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-primary/20",
+        isAdmin ? "bg-gradient-to-br from-accent to-accent/80" : "bg-gradient-to-br from-primary to-primary/80"
       )}>
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white rounded-full blur-[100px] opacity-10 -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-64 md:w-80 h-64 md:h-80 bg-white rounded-full blur-[100px] opacity-10 -translate-y-1/2 translate-x-1/2" />
         
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-6">
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-4 md:mb-6">
             <Shield className="w-3.5 h-3.5 text-white" />
-            {isAdmin ? 'مركز التحكم في النظام' : 'منصة الطالب الذكية'}
+            {isAdmin ? 'الإدارة العامة' : 'حسابك الشخصي'}
           </div>
-          <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight">أهلاً بك يا {((user as any).displayName || (user as any).fullName || '').split(' ')[0]} 👋</h2>
-          <p className="text-white/80 text-lg md:text-xl max-w-xl leading-relaxed">
+          <h2 className="text-2xl md:text-5xl font-black mb-3 md:mb-4 leading-tight">
+            أهلاً بك يا {((user as any).displayName || userData?.fullName || '').split(' ')[0]} 👋
+          </h2>
+          <p className="text-white/80 text-sm md:text-xl max-w-xl leading-relaxed">
             {isAdmin 
-              ? 'لديك اليوم صلاحيات كاملة لإدارة المعلمين، الطلاب، والامتحانات. راقب النشاط العام الآن.'
-              : 'نتمنى لك رحلة ممتعة ومثمرة اليوم في منصتك التعليمية المتكاملة.'}
+              ? 'لديك الصلاحية الكاملة لإدارة كافة أقسام المنصة ومتابعة أداء الطلاب والمعلمين.'
+              : 'يسعدنا تواجدك اليوم. تابع آخر التحديثات والمذاكرات المرفوعة لك بانتظام.'}
           </p>
         </div>
       </div>
 
+      {/* Admin Quick Tools */}
+      {isAdmin && (
+        <div className="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm overflow-hidden whitespace-nowrap overflow-x-auto scrollbar-hide flex gap-3">
+           <div className="text-xs font-black text-slate-300 px-4 py-2 border-l border-slate-50 flex items-center">أدوات سريعة</div>
+           <button onClick={() => (window as any).showAddExamModal()} className="flex items-center gap-2 bg-slate-50 hover:bg-accent hover:text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all shrink-0">
+             <ClipboardCheck className="w-4 h-4" /> إضافة امتحان
+           </button>
+           <button onClick={() => (window as any).showAddClassModal()} className="flex items-center gap-2 bg-slate-50 hover:bg-primary hover:text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all shrink-0">
+             <Calendar className="w-4 h-4" /> إضافة حصة
+           </button>
+        </div>
+      )}
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {isAdmin ? (
           <>
             <StatCard title="إجمالي الطلاب" value={stats.students} icon={User} color="bg-blue-500" desc="مسجلين في النظام" />
@@ -1127,8 +1165,13 @@ function BookingsView() {
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const data = await Promise.all(snapshot.docs.map(async (d) => {
         const booking = { id: d.id, ...d.data() };
-        // Try to fetch context for the booking
-        return booking;
+        // Fetch student name
+        try {
+          const uDoc = await getDocFromServer(doc(db, 'users', booking.studentId));
+          return { ...booking, studentName: uDoc.exists() ? uDoc.data().fullName : 'طالب غير مسجل' };
+        } catch {
+          return { ...booking, studentName: 'خطأ في التحميل' };
+        }
       }));
       setBookings(data);
       setLoading(false);
@@ -1143,34 +1186,36 @@ function BookingsView() {
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
       className="space-y-6 text-right"
     >
-      <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+      <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
         <h3 className="text-xl font-black text-primary">سجل الحجوزات</h3>
-        <p className="text-slate-500 text-xs mt-1">قائمة بالطلاب الذين قامو بحجز حصص تعليمية</p>
+        <p className="text-slate-500 text-xs mt-1">تتبع كافة الطلاب الذين قامو بالتسجيل في الحصص المختلفة</p>
       </div>
 
       <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-right border-collapse">
+          <table className="w-full text-right border-collapse min-w-[600px]">
             <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase font-black">
               <tr>
-                <th className="p-4">رقم الطالب (UID)</th>
-                <th className="p-4">رقم الحصة</th>
+                <th className="p-4">اسم الطالب</th>
+                <th className="p-4">الحصة / الكورس</th>
+                <th className="p-4">رقم الطالب الفريد</th>
                 <th className="p-4">تاريخ الحجز</th>
               </tr>
             </thead>
             <tbody className="text-sm">
               {loading ? (
-                <tr><td colSpan={3} className="p-10 text-center animate-pulse">جاري التحميل...</td></tr>
+                <tr><td colSpan={4} className="p-10 text-center animate-pulse font-bold text-slate-300">جاري تحميل سجلات الحجز...</td></tr>
               ) : bookings.length > 0 ? (
                 bookings.map((b) => (
                   <tr key={b.id} className="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 font-mono text-[10px] text-slate-400">{b.studentId}</td>
-                    <td className="p-4 font-bold text-primary">{b.slotId}</td>
+                    <td className="p-4 font-black text-primary">{b.studentName}</td>
+                    <td className="p-4 font-bold text-accent">{b.slotId}</td>
+                    <td className="p-4 font-mono text-[9px] text-slate-400">{b.studentId}</td>
                     <td className="p-4 text-slate-500">{(b.createdAt as any)?.toDate ? (b.createdAt as any).toDate().toLocaleString('ar-EG') : 'قيد المعالجة'}</td>
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan={3} className="p-10 text-center text-slate-300 italic">لا توجد حجوزات مسجلة</td></tr>
+                <tr><td colSpan={4} className="p-20 text-center text-slate-200 font-black italic">لا توجد حجوزات حتى اللحظة</td></tr>
               )}
             </tbody>
           </table>
