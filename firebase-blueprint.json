@@ -76,6 +76,47 @@
         "type": { "type": "string", "enum": ["pdf", "video", "link"] }
       }
     },
+    "Exam": {
+      "title": "Exam",
+      "description": "Assessment created by teachers for specific groups of students.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "courseId": { "type": "string" },
+        "questions": { "type": "array" },
+        "durationMinutes": { "type": "number" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "teacherId", "questions"]
+    },
+    "ExamSubmission": {
+      "title": "Exam Submission",
+      "description": "Student attempts and answers for an exam.",
+      "type": "object",
+      "properties": {
+        "examId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "answers": { "type": "object" },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "submittedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["examId", "studentId", "answers"]
+    },
+    "Booking": {
+      "title": "Class Booking",
+      "description": "Student registration for a specific class slot.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "slotId": { "type": "string" },
+        "courseId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "slotId"]
+    },
     "SiteSettings": {
       "title": "Site Settings",
       "description": "Global configuration for site content (hero text, stats, etc.)",
@@ -96,6 +137,9 @@
     "/schedule/{slotId}": { "schema": "Schedule", "description": "Weekly class timings" },
     "/attendance/{recordId}": { "schema": "Attendance", "description": "Student attendance logs" },
     "/grades/{gradeId}": { "schema": "Grade", "description": "Exam results" },
+    "/exams/{examId}": { "schema": "Exam", "description": "Teacher created exams" },
+    "/submissions/{submissionId}": { "schema": "ExamSubmission", "description": "Exam results and answers" },
+    "/bookings/{bookingId}": { "schema": "Booking", "description": "Student class registrations" },
     "/materials/{materialId}": { "schema": "Material", "description": "Study resources" },
     "/settings/{settingId}": { "schema": "SiteSettings", "description": "Global site settings" }
   }

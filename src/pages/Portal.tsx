@@ -1,8 +1,18 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, loginWithGoogle, logout, db, handleFirestoreError, OperationType, registerWithEmail, loginWithEmail } from '@/src/lib/firebase';
+import { auth, loginWithGoogle, logout, db, handleFirestoreError, OperationType, registerWithEmail, loginWithEmail, bookClass, submitExam } from '@/src/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { 
+  collection, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  doc, 
+  getDocFromServer,
+  addDoc,
+  serverTimestamp
+} from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -18,14 +28,32 @@ import {
   Shield,
   LogIn,
   UserPlus,
-  Clock
+  Clock,
+  ClipboardCheck,
+  Plus,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
 export default function Portal() {
   const [user, loading] = useAuthState(auth);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'grades' | 'materials'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials'>('dashboard');
+  const [userData, setUserData] = useState<any>(null);
+  const [showAddClass, setShowAddClass] = useState(false);
+  const [showAddExam, setShowAddExam] = useState(false);
+  const [activeExam, setActiveExam] = useState<any>(null);
+
+  useEffect(() => {
+    if (user) {
+      const userDocRef = doc(db, 'users', user.uid);
+      getDocFromServer(userDocRef).then(docSnap => {
+        if (docSnap.exists()) {
+          setUserData(docSnap.data());
+        }
+      });
+    }
+  }, [user]);
 
   if (loading) return (
     <div className="pt-32 pb-20 flex items-center justify-center min-h-screen">
@@ -52,7 +80,7 @@ export default function Portal() {
                 <div className="text-right flex-1 min-w-0">
                   <h3 className="font-bold text-primary truncate leading-tight">{(user as any).displayName || (user as any).fullName || 'طالب متميز'}</h3>
                   <div className="flex flex-col gap-0.5">
-                    <p className="text-[10px] text-slate-500 font-bold">طالب النظام</p>
+                    <p className="text-[10px] text-slate-500 font-bold">{userData?.role === 'admin' ? 'مدير النظام' : 'طالب النظام'}</p>
                     <button 
                       onClick={() => {
                         navigator.clipboard.writeText(user.uid);
@@ -81,6 +109,12 @@ export default function Portal() {
                   onClick={() => setActiveTab('schedule')} 
                   icon={Calendar} 
                   label="جداولي" 
+                />
+                <TabButton 
+                  active={activeTab === 'exams'} 
+                  onClick={() => setActiveTab('exams')} 
+                  icon={ClipboardCheck} 
+                  label="الامتحانات" 
                 />
                 <TabButton 
                   active={activeTab === 'grades'} 
@@ -115,16 +149,32 @@ export default function Portal() {
             </button>
           </aside>
 
-          {/* Main Content */}
           <main className="lg:w-3/4">
             <AnimatePresence mode="wait">
-              {activeTab === 'dashboard' && <DashboardView user={user} />}
-              {activeTab === 'schedule' && <ScheduleView />}
-              {activeTab === 'grades' && <GradesView />}
-              {activeTab === 'materials' && <MaterialsView />}
+              {activeExam ? (
+                <ExamRunnerView exam={activeExam} onFinish={() => setActiveExam(null)} />
+              ) : (
+                <AnimatePresence mode="wait">
+                  {activeTab === 'dashboard' && <DashboardView user={user} />}
+                  {activeTab === 'schedule' && <ScheduleView isAdmin={userData?.role === 'admin'} onAdd={() => setShowAddClass(true)} />}
+                  {activeTab === 'exams' && <ExamsView isAdmin={userData?.role === 'admin'} onTake={(exam) => setActiveExam(exam)} onAdd={() => setShowAddExam(true)} />}
+                  {activeTab === 'grades' && <GradesView />}
+                  {activeTab === 'materials' && <MaterialsView />}
+                </AnimatePresence>
+              )}
             </AnimatePresence>
           </main>
         </div>
+
+        {/* Admin Modals */}
+        <AnimatePresence>
+          {showAddClass && (
+            <AddClassModal onClose={() => setShowAddClass(false)} />
+          )}
+          {showAddExam && (
+            <AddExamModal onClose={() => setShowAddExam(false)} />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -468,29 +518,188 @@ function TabButton({ active, onClick, icon: Icon, label }: any) {
   );
 }
 
-function ScheduleView() {
+function ScheduleView({ isAdmin, onAdd }: { isAdmin: boolean, onAdd: () => void }) {
+  const [slots, setSlots] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const q = query(collection(db, 'schedule'), orderBy('day'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setSlots(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'schedule');
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleBook = async (slotId: string, courseId: string) => {
+    try {
+      setBookingId(slotId);
+      await bookClass(slotId, courseId);
+      alert('تم الحجز بنجاح!');
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setBookingId(null);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-[32px] p-8 md:p-12 border border-slate-100 text-center shadow-sm"
+      className="space-y-6"
     >
-      <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
-        <Calendar className="text-blue-500 w-10 h-10" />
+      <div className="flex items-center justify-between bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+        <div className="text-right">
+          <h3 className="text-xl font-black text-primary">جداول الحصص</h3>
+          <p className="text-slate-500 text-xs mt-1">تصفح واحجز مكانك في المجموعات المتاحة</p>
+        </div>
+        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
+          <Calendar className="w-6 h-6" />
+        </div>
       </div>
-      <h3 className="text-xl font-black text-primary mb-2">جدول الحصص الأسبوعي</h3>
-      <p className="text-slate-500 max-w-sm mx-auto text-sm leading-relaxed mb-8">
-        لا يوجد حصص مسجلة في جدولك حالياً. تأكد من إتمام اشتراكك في المجموعات الدراسية.
-      </p>
-      <div className="space-y-3 max-w-md mx-auto">
-        {['السبت', 'الأحد', 'الاثنين'].map((day) => (
-          <div key={day} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl opacity-40">
-            <span className="font-bold text-slate-400">{day}</span>
-            <span className="text-xs text-slate-300 italic">لا يوجد محاضرات</span>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {loading ? (
+          [1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white rounded-3xl animate-pulse border border-slate-100" />)
+        ) : slots.length > 0 ? (
+          slots.map((slot) => (
+            <div key={slot.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 transition-all flex flex-col justify-between group">
+              <div className="flex justify-between items-start mb-4">
+                <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black">{slot.day}</span>
+                <span className="text-slate-400 font-mono text-[10px]">{slot.time}</span>
+              </div>
+              <h4 className="text-lg font-black text-primary mb-1 uppercase tracking-tight">{slot.courseName || 'حصة تعليمية'}</h4>
+              <p className="text-slate-500 text-xs mb-6">المدرس: {slot.teacherName || 'مدرس المادة'}</p>
+              
+              {!isAdmin && (
+                <button 
+                  onClick={() => handleBook(slot.id, slot.courseId)}
+                  disabled={bookingId === slot.id}
+                  className="w-full bg-slate-50 hover:bg-primary hover:text-white p-3 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2"
+                >
+                  {bookingId === slot.id ? 'جاري الحجز...' : 'احجز الآن'}
+                  <ChevronRight className="w-3 h-3 rotate-180" />
+                </button>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full py-20 text-center text-slate-400 font-bold italic">
+            لا توجد حصص مجدولة حالياً
           </div>
-        ))}
+        )}
       </div>
+
+      {isAdmin && (
+        <button 
+          onClick={onAdd}
+          className="w-full bg-accent text-white p-4 rounded-2xl font-bold shadow-lg shadow-accent/20 flex items-center justify-center gap-2"
+        >
+          <Plus className="w-5 h-5" />
+          إضافة حصة جديدة للجدول
+        </button>
+      )}
+    </motion.div>
+  );
+}
+
+function ExamsView({ isAdmin, onAdd, onTake }: { isAdmin: boolean, onAdd: () => void, onTake: (exam: any) => void }) {
+  const [exams, setExams] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [bookings, setBookings] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      const q = query(collection(db, 'bookings'), where('studentId', '==', auth.currentUser?.uid));
+      getDocs(q).then(snap => {
+        setBookings(snap.docs.map(d => d.data().courseId || d.data().slotId));
+      });
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'exams'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Filter for student: only show exams for classes they are in
+      if (!isAdmin) {
+        data = data.filter(exam => {
+          // If the exam isn't linked to a course, show it (global/general tests)
+          // Otherwise check if student is in that course
+          if (!exam.courseId && !exam.teacherName) return true; 
+          // Simple logic: if teacher name matches or courseId matches a booking
+          return true; // Keeping it visible for now as "teacherName" is string-based
+        });
+      }
+
+      setExams(data);
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'exams');
+    });
+    return unsubscribe;
+  }, [isAdmin, bookings]);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center justify-between bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+        <div className="text-right">
+          <h3 className="text-xl font-black text-primary">الامتحانات والتقييمات</h3>
+          <p className="text-slate-500 text-xs mt-1">اختبر معلوماتك وتابع مستواك الدراسي</p>
+        </div>
+        <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent">
+          <ClipboardCheck className="w-6 h-6" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        {loading ? (
+          [1, 2].map(i => <div key={i} className="h-24 bg-white rounded-3xl animate-pulse border border-slate-100" />)
+        ) : exams.length > 0 ? (
+          exams.map((exam) => (
+            <div key={exam.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center justify-between">
+              <div className="text-right">
+                <h4 className="font-black text-primary">{exam.title}</h4>
+                <div className="flex items-center gap-4 mt-1 text-[10px] text-slate-400 font-bold uppercase">
+                  <span className="flex items-center gap-1"><User className="w-3 h-3" /> {exam.teacherName || 'الإدارة'}</span>
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {exam.durationMinutes} دقيقة</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => isAdmin ? null : onTake(exam)}
+                className="bg-accent text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all"
+              >
+                {isAdmin ? 'تعديل' : 'بدء الامتحان'}
+              </button>
+            </div>
+          ))
+        ) : (
+          <div className="py-20 text-center text-slate-400 font-bold italic bg-white rounded-[32px] border border-slate-100">
+             لا يوجد امتحانات متاحة حالياً
+          </div>
+        )}
+      </div>
+
+      {isAdmin && (
+        <button 
+          onClick={onAdd}
+          className="w-full bg-primary text-white p-4 rounded-2xl font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+        >
+          <Plus className="w-5 h-5" />
+          إنشاء امتحان جديد
+        </button>
+      )}
     </motion.div>
   );
 }
@@ -512,6 +721,106 @@ function GradesView() {
       </p>
       <div className="p-8 border-2 border-dashed border-slate-100 rounded-[32px] text-slate-300 font-bold italic text-sm">
         قريباً: عرض بياني لمستواك الدراسي
+      </div>
+    </motion.div>
+  );
+}
+
+function ExamRunnerView({ exam, onFinish }: { exam: any, onFinish: () => void }) {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState<any>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const questions = exam.questions || [
+    { q: 'ما هي عاصمة مصر؟', options: ['الاسكندرية', 'القاهرة', 'الجيزة', 'الأسوان'], correct: 1 },
+    { q: 'ناتج جمع 5 + 7؟', options: ['10', '11', '12', '13'], correct: 2 }
+  ];
+
+  const handleFinish = async () => {
+    setSubmitting(true);
+    try {
+      let score = 0;
+      questions.forEach((q: any, idx: number) => {
+        if (answers[idx] === q.correct) score++;
+      });
+      await submitExam(exam.id, answers, score, questions.length);
+      alert(`تم الانتهاء! درجتك: ${score}/${questions.length}`);
+      onFinish();
+    } catch (error) {
+      alert('خطأ في إرسال الإجابات');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-white rounded-[40px] p-8 md:p-12 border border-slate-100 shadow-xl"
+    >
+      <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-50">
+        <button onClick={onFinish} className="text-slate-400 hover:text-red-500 font-bold text-sm">انسحاب</button>
+        <div className="text-right">
+          <h3 className="text-xl font-black text-primary">{exam.title}</h3>
+          <p className="text-slate-400 text-xs">سؤال {currentStep + 1} من {questions.length}</p>
+        </div>
+      </div>
+
+      <div className="mb-12 text-right">
+        <h4 className="text-2xl font-bold text-primary mb-8">{questions[currentStep].q}</h4>
+        <div className="grid grid-cols-1 gap-3">
+          {questions[currentStep].options.map((opt: string, idx: number) => (
+            <button 
+              key={idx}
+              onClick={() => setAnswers({...answers, [currentStep]: idx})}
+              className={cn(
+                "w-full p-5 rounded-2xl border-2 text-right font-bold transition-all",
+                answers[currentStep] === idx 
+                  ? "border-accent bg-accent/5 text-accent shadow-md shadow-accent/10" 
+                  : "border-slate-50 bg-slate-50 hover:border-slate-200 text-slate-600"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <span>{opt}</span>
+                <div className={cn(
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                  answers[currentStep] === idx ? "border-accent bg-accent" : "border-slate-300"
+                )}>
+                  {answers[currentStep] === idx && <div className="w-2 h-2 bg-white rounded-full" />}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        {currentStep < questions.length - 1 ? (
+          <button 
+            onClick={() => setCurrentStep(currentStep + 1)}
+            disabled={answers[currentStep] === undefined}
+            className="flex-1 bg-primary text-white p-4 rounded-2xl font-bold shadow-lg shadow-primary/20 disabled:opacity-50 transition-all"
+          >
+            السؤال التالي
+          </button>
+        ) : (
+          <button 
+            onClick={handleFinish}
+            disabled={submitting || answers[currentStep] === undefined}
+            className="flex-1 bg-green-600 text-white p-4 rounded-2xl font-bold shadow-lg shadow-green-600/20 disabled:opacity-50 transition-all"
+          >
+            {submitting ? 'جاري الإرسال...' : 'إنهاء وإرسال'}
+          </button>
+        )}
+        {currentStep > 0 && (
+          <button 
+            onClick={() => setCurrentStep(currentStep - 1)}
+            className="px-8 bg-slate-100 text-slate-600 p-4 rounded-2xl font-bold"
+          >
+            سابق
+          </button>
+        )}
       </div>
     </motion.div>
   );
@@ -547,6 +856,178 @@ function MaterialsView() {
           </div>
         ))}
       </div>
+    </motion.div>
+  );
+}
+
+// Admin Creation Modals
+function AddClassModal({ onClose }: { onClose: () => void }) {
+  const [day, setDay] = useState('السبت');
+  const [time, setTime] = useState('');
+  const [courseName, setCourseName] = useState('');
+  const [teacherName, setTeacherName] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await addDoc(collection(db, 'schedule'), {
+        day,
+        time,
+        courseName,
+        teacherName,
+        createdAt: serverTimestamp()
+      });
+      alert('تم إضافة الحصة بنجاح');
+      onClose();
+    } catch (err) {
+      alert('خطأ في إضافة الحصة');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm"
+    >
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-white rounded-[40px] w-full max-w-lg p-8 relative overflow-hidden text-right"
+      >
+        <button onClick={onClose} className="absolute top-6 left-6 p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors">
+          <X className="w-5 h-5 text-slate-500" />
+        </button>
+        
+        <h3 className="text-2xl font-black text-primary mb-6 flex items-center gap-2 justify-end">
+          إضافة حصة جديدة
+          <Calendar className="text-accent" />
+        </h3>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">الوقت</label>
+              <input 
+                type="text" placeholder="مثلاً 10:00 صباحاً" 
+                value={time} onChange={(e) => setTime(e.target.value)}
+                className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">اليوم</label>
+              <select 
+                value={day} onChange={(e) => setDay(e.target.value)}
+                className="w-full bg-slate-50 border-none rounded-xl p-4 text-right"
+              >
+                {['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'].map(d => <option key={d}>{d}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">اسم المادة / المجموعة</label>
+            <input 
+              type="text" value={courseName} onChange={(e) => setCourseName(e.target.value)}
+              className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">اسم المدرس</label>
+            <input 
+              type="text" value={teacherName} onChange={(e) => setTeacherName(e.target.value)}
+              className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
+            />
+          </div>
+          <button 
+            type="submit" disabled={loading}
+            className="w-full bg-accent text-white p-4 rounded-xl font-black shadow-lg shadow-accent/20 flex items-center justify-center gap-2"
+          >
+            {loading ? 'جاري الحفظ...' : 'تأكيد الإضافة'}
+          </button>
+        </form>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function AddExamModal({ onClose }: { onClose: () => void }) {
+  const [title, setTitle] = useState('');
+  const [teacherName, setTeacherName] = useState('');
+  const [duration, setDuration] = useState('60');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await addDoc(collection(db, 'exams'), {
+        title,
+        teacherName,
+        durationMinutes: parseInt(duration),
+        questions: [], 
+        createdAt: serverTimestamp(),
+        active: true
+      });
+      alert('تم إنشاء الامتحان بنجاح!');
+      onClose();
+    } catch (err) {
+      alert('خطأ في إنشاء الامتحان');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm"
+    >
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-white rounded-[40px] w-full max-w-lg p-8 relative overflow-hidden text-right"
+      >
+        <button onClick={onClose} className="absolute top-6 left-6 p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors">
+          <X className="w-5 h-5 text-slate-500" />
+        </button>
+        
+        <h3 className="text-2xl font-black text-primary mb-6 flex items-center gap-2 justify-end">
+          إنشاء امتحان جديد
+          <ClipboardCheck className="text-accent" />
+        </h3>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">عنوان الامتحان</label>
+            <input 
+              type="text" placeholder="مثلاً: اختبار الفيزياء - الفصل الأول" 
+              value={title} onChange={(e) => setTitle(e.target.value)}
+              className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">المدرس المسؤول</label>
+            <input 
+              type="text" value={teacherName} onChange={(e) => setTeacherName(e.target.value)}
+              className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">مدة الامتحان (بالدقائق)</label>
+            <input 
+              type="number" value={duration} onChange={(e) => setDuration(e.target.value)}
+              className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
+            />
+          </div>
+          <button 
+            type="submit" disabled={loading}
+            className="w-full bg-primary text-white p-4 rounded-xl font-black shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+          >
+            {loading ? 'جاري الإنشاء...' : 'بدء إنشاء الامتحان'}
+          </button>
+        </form>
+      </motion.div>
     </motion.div>
   );
 }

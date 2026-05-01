@@ -8,7 +8,20 @@ import {
   signInWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer, setDoc } from 'firebase/firestore';
+import { 
+  getFirestore, 
+  doc, 
+  getDocFromServer, 
+  setDoc, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  deleteDoc,
+  serverTimestamp,
+  orderBy
+} from 'firebase/firestore';
 import firebaseConfigFile from '@/firebase-applet-config.json';
 
 // Use environment variables if available (for Vercel/Production), otherwise fallback to the config file
@@ -148,5 +161,72 @@ export const logout = async () => {
   } catch (error) {
     console.error("Logout failed:", error);
     throw error;
+  }
+};
+
+// --- Booking Helpers ---
+export const bookClass = async (slotId: string, courseId: string) => {
+  if (!auth.currentUser) throw new Error('يجب تسجيل الدخول أولاً');
+  const path = 'bookings';
+  try {
+    const q = query(
+      collection(db, path), 
+      where('studentId', '==', auth.currentUser.uid),
+      where('slotId', '==', slotId)
+    );
+    const existing = await getDocs(q);
+    if (!existing.empty) throw new Error('أنت مسجل بالفعل في هذه الحصة');
+
+    await addDoc(collection(db, path), {
+      studentId: auth.currentUser.uid,
+      slotId,
+      courseId,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+export const getStudentBookings = async () => {
+  if (!auth.currentUser) return [];
+  const path = 'bookings';
+  try {
+    const q = query(collection(db, path), where('studentId', '==', auth.currentUser.uid));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+    return [];
+  }
+};
+
+// --- Exam Helpers ---
+export const submitExam = async (examId: string, answers: any, score: number, maxScore: number) => {
+  if (!auth.currentUser) throw new Error('يجب تسجيل الدخول أولاً');
+  const path = 'submissions';
+  try {
+    await addDoc(collection(db, path), {
+      examId,
+      studentId: auth.currentUser.uid,
+      answers,
+      score,
+      maxScore,
+      submittedAt: serverTimestamp()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+export const getAvailableExams = async () => {
+  const path = 'exams';
+  try {
+    const q = query(collection(db, path));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+    return [];
   }
 };
