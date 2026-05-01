@@ -43,10 +43,11 @@ service cloud.firestore {
     function isValidUser(data) {
       return data.keys().hasAll(['uid', 'fullName', 'role', 'email']) &&
              data.uid == request.auth.uid &&
-             data.fullName is string && data.fullName.size() <= 100 &&
+             (data.fullName == null || (data.fullName is string && data.fullName.size() <= 100)) &&
              data.role in ['student', 'parent', 'teacher', 'admin'] &&
              data.email is string && data.email.size() <= 100 &&
-             (data.phone == null || (data.phone is string && data.phone.size() <= 20));
+             (data.phone == null || (data.phone is string && data.phone.size() <= 20)) &&
+             (data.createdAt == null || data.createdAt is string);
     }
 
     function isValidCourse(data) {
@@ -89,7 +90,7 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if isOwner(userId) && isValidUser(incoming());
       allow update: if isOwner(userId) && isValidUser(incoming()) && 
-                    incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'gradeLevel', 'parentId']);
+                    incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'gradeLevel', 'parentId', 'lastLogin', 'createdAt']);
     }
 
     match /courses/{courseId} {

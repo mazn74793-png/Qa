@@ -124,7 +124,7 @@ export const loginWithGoogle = async () => {
     // Create/update user document if needed
     await setDoc(doc(db, 'users', result.user.uid), {
       uid: result.user.uid,
-      fullName: result.user.displayName,
+      fullName: result.user.displayName || 'مستخدم جديد',
       email: result.user.email,
       role: 'student', // Default role
       createdAt: new Date().toISOString()
