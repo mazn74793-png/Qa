@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { useAdmin } from '@/src/hooks/useAdmin';
 import { auth, loginWithGoogle, logout, db, handleFirestoreError, OperationType, registerWithEmail, loginWithEmail, bookClass, submitExam } from '@/src/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { 
@@ -47,7 +48,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
 export default function Portal() {
-  const [user, loading, error] = useAuthState(auth);
+  const { isAdmin: isSystemAdmin, loading: adminLoading, user } = useAdmin();
+  const [_, __, error] = useAuthState(auth);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials' | 'bookings' | 'lectures'>('dashboard');
   const [userData, setUserData] = useState<any>(null);
   const [showAddClass, setShowAddClass] = useState(false);
@@ -94,17 +96,17 @@ export default function Portal() {
     }
   }, [user]);
 
-  const actualIsAdmin = user?.email === 'motaem23y@gmail.com' || userData?.role === 'admin';
+  const actualIsAdmin = !!isSystemAdmin;
   const isAdmin = actualIsAdmin && !isStudentPreview;
 
-  // Force Admin Tab if specifically requested by state or user (optional but helpful)
+  // Tab management
   useEffect(() => {
     if (isAdmin && activeTab === 'grades') {
       setActiveTab('bookings');
     }
   }, [isAdmin, activeTab]);
 
-  if (loading) return (
+  if (adminLoading) return (
     <div className="pt-32 pb-20 flex flex-col items-center justify-center min-h-screen bg-slate-50">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>
       <p className="text-slate-400 font-bold animate-pulse">جاري التحميل...</p>
@@ -134,8 +136,8 @@ export default function Portal() {
     </div>
   );
 
-  if (!user && !loading) return <LoginView />;
-  const isAdminUser = user?.email === 'motaem23y@gmail.com' || userData?.role === 'admin';
+  if (!user && !adminLoading) return <LoginView />;
+  const isAdminUser = !!actualIsAdmin;
 
   return (
     <div className={cn("pb-20 min-h-screen bg-slate-50", isAdminUser ? "pt-40 md:pt-48" : "pt-32")}>
