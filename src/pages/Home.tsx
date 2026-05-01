@@ -42,42 +42,42 @@ export default function Home() {
         <div className="fixed bottom-6 left-6 z-[100] flex flex-col gap-2">
            <Link 
              to="/admin/settings"
-             className="bg-primary text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all flex items-center gap-2 font-bold"
+             className="bg-primary text-white p-3 md:p-4 rounded-full shadow-2xl hover:scale-110 transition-all flex items-center gap-2 font-bold"
            >
-             <Settings className="w-6 h-6" />
-             <span>الإعدادات الكاملة</span>
+             <Settings className="w-5 h-5 md:w-6 md:h-6" />
+             <span className="text-xs md:text-base">الإعدادات الكاملة</span>
            </Link>
           {isEditing ? (
             <>
               <button 
                 onClick={handleSave}
-                className="bg-green-600 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all flex items-center gap-2 font-bold"
+                className="bg-green-600 text-white p-3 md:p-4 rounded-full shadow-2xl hover:scale-110 transition-all flex items-center gap-2 font-bold"
               >
-                <Save className="w-6 h-6" />
-                <span>حفظ التعديلات</span>
+                <Save className="w-5 h-5 md:w-6 md:h-6" />
+                <span className="text-xs md:text-base">حفظ</span>
               </button>
               <button 
                 onClick={() => { setIsEditing(false); setEditData(settings); }}
-                className="bg-red-500 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all flex items-center gap-2 font-bold"
+                className="bg-red-500 text-white p-3 md:p-4 rounded-full shadow-2xl hover:scale-110 transition-all flex items-center gap-2 font-bold"
               >
-                <X className="w-6 h-6" />
-                <span>إلغاء</span>
+                <X className="w-5 h-5 md:w-6 md:h-6" />
+                <span className="text-xs md:text-base">إلغاء</span>
               </button>
             </>
           ) : (
             <button 
               onClick={() => setIsEditing(true)}
-              className="bg-accent text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all flex items-center gap-2 font-bold"
+              className="bg-accent text-white p-3 md:p-4 rounded-full shadow-2xl hover:scale-110 transition-all flex items-center gap-2 font-bold"
             >
-              <Edit2 className="w-6 h-6" />
-              <span>تعديل نصوص الصفحة</span>
+              <Edit2 className="w-5 h-5 md:w-6 md:h-6" />
+              <span className="text-xs md:text-base">تعديل النصوص</span>
             </button>
           )}
         </div>
       )}
 
       {/* Hero Section */}
-      <section id="hero" className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-primary">
+      <section id="hero" className="relative min-h-screen flex items-center pt-32 lg:pt-20 overflow-hidden bg-primary">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-accent/10 skew-x-12 -translate-y-20 origin-top" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2" />
         

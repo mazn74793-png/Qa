@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, GraduationCap, LogIn, Settings, Shield, Phone, Mail, MapPin } from 'lucide-react';
+import { Menu, X, GraduationCap, LogIn, Settings, Shield, Phone, Mail, MapPin, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NAV_LINKS } from '@/src/constants';
 import { cn } from '@/src/lib/utils';
@@ -23,7 +23,8 @@ export default function Navbar() {
   }, []);
 
   const textColor = scrolled ? "text-primary" : (isHomePage ? "text-white" : "text-primary");
-  const logoBg = scrolled ? "bg-primary" : (isHomePage ? "bg-primary" : "bg-primary");
+  const iconColor = scrolled || !isHomePage ? "text-primary" : "text-white";
+  const logoBg = "bg-white";
 
   return (
     <>
@@ -118,8 +119,9 @@ export default function Navbar() {
           {/* Mobile Toggle */}
           <button 
             className={cn(
-              "md:hidden p-2 rounded-lg",
-              scrolled ? "text-primary hover:bg-slate-100" : "text-white hover:bg-white/10"
+              "md:hidden p-2 rounded-lg transition-colors",
+              iconColor,
+              "hover:bg-slate-100/10"
             )}
             onClick={() => setIsOpen(!isOpen)}
             id="mobile-menu-toggle"
@@ -136,14 +138,26 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-b overflow-hidden shadow-xl"
+            className="md:hidden bg-white border-b overflow-hidden shadow-2xl relative z-[70]"
             id="mobile-menu"
           >
-            <div className="flex flex-col p-4 gap-4">
+            <div className="flex flex-col p-6 gap-4">
+              {/* Mobile Contact Quick Links */}
+              <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-slate-100">
+                <a href={`tel:${settings?.contactPhone}`} className="flex flex-col items-center gap-2 p-3 bg-slate-50 rounded-2xl text-primary hover:bg-accent hover:text-white transition-all">
+                  <Phone className="w-5 h-5" />
+                  <span className="text-[10px] font-bold">اتصل بنا</span>
+                </a>
+                <a href={`https://wa.me/${settings?.whatsappUrl}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-3 bg-green-50 rounded-2xl text-green-600 hover:bg-green-600 hover:text-white transition-all">
+                  <MessageCircle className="w-5 h-5" />
+                  <span className="text-[10px] font-bold">واتساب</span>
+                </a>
+              </div>
+
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className="flex items-center gap-2 bg-primary text-white p-3 rounded-xl font-bold"
+                  className="flex items-center gap-3 bg-primary text-white p-4 rounded-2xl font-bold shadow-lg shadow-primary/20"
                   onClick={() => setIsOpen(false)}
                 >
                   <Shield className="w-5 h-5" />
@@ -155,22 +169,24 @@ export default function Navbar() {
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "text-lg font-medium p-2 rounded-lg",
-                    location.pathname === link.href ? "text-accent bg-accent/5" : "text-slate-600"
+                    "text-lg font-bold p-3 rounded-xl transition-all",
+                    location.pathname === link.href ? "text-accent bg-accent/5" : "text-slate-600 hover:bg-slate-50"
                   )}
                   onClick={() => setIsOpen(false)}
                 >
                   {link.name}
                 </Link>
               ))}
-              <Link
-                to="/portal"
-                className="flex items-center justify-center gap-2 bg-accent text-white p-3 rounded-xl font-bold"
-                onClick={() => setIsOpen(false)}
-              >
-                <LogIn className="w-5 h-5" />
-                {user ? 'حسابي' : 'بوابة الطلاب'}
-              </Link>
+              <div className="mt-2 pt-4 border-t border-slate-100">
+                <Link
+                  to="/portal"
+                  className="flex items-center justify-center gap-3 bg-accent text-white p-4 rounded-2xl font-bold shadow-lg shadow-accent/20"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <LogIn className="w-5 h-5" />
+                  {user ? 'حسابي (بوابة الطالب)' : 'دخول الطلاب'}
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}

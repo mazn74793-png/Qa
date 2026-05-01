@@ -38,28 +38,29 @@ export default function Portal() {
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* Sidebar */}
+          {/* Navigation - Mobile: Horizontal Scroll, Desktop: Sidebar */}
           <aside className="lg:w-1/4">
-            <div className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm sticky top-32">
-              <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-100">
+            <div className="bg-white rounded-[32px] p-4 md:p-6 border border-slate-100 shadow-sm lg:sticky lg:top-32">
+              <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
                 <img 
                   src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`} 
                   alt={user.displayName || 'User'} 
-                  className="w-14 h-14 rounded-2xl object-cover"
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-2xl object-cover"
                 />
-                <div className="text-right">
-                  <h3 className="font-bold text-primary truncate max-w-[150px]">{user.displayName}</h3>
+                <div className="text-right flex-1 min-w-0">
+                  <h3 className="font-bold text-primary truncate">{user.displayName}</h3>
                   <div className="flex flex-col">
                     <p className="text-xs text-slate-500">طالب</p>
-                    <p className="text-[9px] text-slate-400 font-mono mt-1 opacity-60 hover:opacity-100 transition-opacity flex items-center gap-1">
+                    <p className="text-[9px] text-slate-400 font-mono mt-1 opacity-60 flex items-center gap-1">
                       <span>UID:</span>
-                      <span className="select-all cursor-copy">{user.uid}</span>
+                      <span className="select-all cursor-copy truncate">{user.uid}</span>
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
+              {/* Tabs Wrapper */}
+              <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-hide -mx-2 px-2 lg:mx-0 lg:px-0">
                 <TabButton 
                   active={activeTab === 'dashboard'} 
                   onClick={() => setActiveTab('dashboard')} 
@@ -76,24 +77,33 @@ export default function Portal() {
                   active={activeTab === 'grades'} 
                   onClick={() => setActiveTab('grades')} 
                   icon={TrendingUp} 
-                  label="الدرجات والنتائج" 
+                  label="الدرجات" 
                 />
                 <TabButton 
                   active={activeTab === 'materials'} 
                   onClick={() => setActiveTab('materials')} 
                   icon={BookOpen} 
-                  label="المذكرات والمحاضرات" 
+                  label="المذكرات" 
                 />
               </div>
 
               <button 
                 onClick={() => logout()}
-                className="w-full mt-8 flex items-center gap-3 p-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-all"
+                className="hidden lg:flex w-full mt-8 items-center gap-3 p-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-all"
               >
                 <LogOut className="w-5 h-5" />
                 تسجيل الخروج
               </button>
             </div>
+            
+            {/* Mobile Logout Button */}
+            <button 
+              onClick={() => logout()}
+              className="lg:hidden w-full mt-4 flex items-center justify-center gap-2 p-4 text-red-500 font-bold bg-white rounded-2xl border border-red-50"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>تسجيل الخروج</span>
+            </button>
           </aside>
 
           {/* Main Content */}
@@ -293,15 +303,15 @@ function TabButton({ active, onClick, icon: Icon, label }: any) {
     <button 
       onClick={onClick}
       className={cn(
-        "w-full flex items-center justify-between p-4 rounded-2xl font-bold transition-all",
-        active ? "bg-accent text-white shadow-lg shadow-accent/20" : "text-slate-600 hover:bg-slate-50"
+        "flex flex-shrink-0 items-center gap-2 px-6 lg:px-4 py-3 lg:py-4 rounded-2xl font-bold transition-all whitespace-nowrap",
+        active 
+          ? "bg-accent text-white shadow-lg shadow-accent/20" 
+          : "text-slate-600 hover:bg-slate-50"
       )}
     >
-      <div className="flex items-center gap-3">
-        <Icon className="w-5 h-5" />
-        <span>{label}</span>
-      </div>
-      {active && <ChevronRight className="w-4 h-4 rotate-180" />}
+      <Icon className="w-5 h-5" />
+      <span>{label}</span>
+      {active && <ChevronRight className="hidden lg:block w-4 h-4 rotate-180" />}
     </button>
   );
 }
