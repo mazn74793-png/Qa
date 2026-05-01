@@ -28,47 +28,25 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Top Bar info */}
-      {!scrolled && isHomePage && (
-        <div className="fixed top-0 w-full z-[60] bg-primary/20 backdrop-blur-sm border-b border-white/10 hidden md:block">
-          <div className="container mx-auto px-4 py-1.5 flex justify-between items-center text-[10px] font-bold text-white/80">
-            <div className="flex items-center gap-6">
-              <a href={`tel:${settings?.contactPhone}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                <Phone className="w-3 h-3 text-accent" />
-                {settings?.contactPhone}
-              </a>
-              <a href={`mailto:${settings?.contactEmail}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                <Mail className="w-3 h-3 text-accent" />
-                {settings?.contactEmail}
-              </a>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="opacity-60">{settings?.contactAddress}</span>
-              <MapPin className="w-3 h-3 text-accent" />
-            </div>
-          </div>
-        </div>
-      )}
-
       <nav 
         id="main-nav"
         className={cn(
           "fixed top-0 w-full z-50 transition-all duration-300",
-          scrolled ? "bg-white/80 backdrop-blur-md shadow-sm py-2" : (isHomePage ? "bg-transparent py-4 mt-8" : "bg-white py-2 shadow-sm")
+          scrolled ? "bg-white/80 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-4"
         )}
       >
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2">
-            <div className="bg-white rounded-lg p-1.5 flex items-center justify-center overflow-hidden">
+            <div className="bg-white rounded-xl p-1.5 flex items-center justify-center overflow-hidden shadow-sm">
               {settings?.logoUrl ? (
-                <img src={settings.logoUrl} alt="Logo" className="w-6 h-6 object-contain" />
+                <img src={settings.logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
               ) : (
-                <GraduationCap className="w-6 h-6 text-white" />
+                <GraduationCap className="w-8 h-8 text-primary" />
               )}
             </div>
             <span className={cn(
-              "text-xl font-bold tracking-tight",
+              "text-xl font-black tracking-tight",
               textColor
             )}>
               {settings?.siteName || 'QA EDUCATION'}
@@ -82,7 +60,7 @@ export default function Navbar() {
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-accent",
+                  "text-sm font-bold transition-colors hover:text-accent",
                   location.pathname === link.href 
                     ? "text-accent" 
                     : textColor
@@ -99,34 +77,33 @@ export default function Navbar() {
             <Link
               to="/admin"
               className={cn(
-                "hidden md:flex items-center gap-2 border px-4 py-1.5 rounded-full text-xs font-bold transition-all",
+                "hidden md:flex items-center gap-2 border px-4 py-2 rounded-full text-xs font-bold transition-all",
                 scrolled || !isHomePage ? "border-primary text-primary hover:bg-primary hover:text-white" : "border-white text-white hover:bg-white hover:text-primary"
               )}
             >
-              <Shield className="w-3.5 h-3.5" />
+              <Shield className="w-4 h-4" />
               لوحة الإدارة
             </Link>
           )}
 
           <Link
             to="/portal"
-            className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-5 py-2 rounded-full text-sm font-bold shadow-lg shadow-accent/20 transition-all"
+            className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-accent/20 transition-all active:scale-95"
           >
             <LogIn className="w-4 h-4" />
-            {user ? 'حسابي' : 'بوابة الطلاب'}
+            {user ? 'حسابي' : 'بوابة الطالب'}
           </Link>
 
           {/* Mobile Toggle */}
           <button 
             className={cn(
-              "md:hidden p-2 rounded-lg transition-colors",
-              iconColor,
-              "hover:bg-slate-100/10"
+              "md:hidden p-2.5 rounded-xl transition-all shadow-sm",
+              scrolled || !isHomePage ? "bg-white text-primary" : "bg-primary text-white"
             )}
             onClick={() => setIsOpen(!isOpen)}
             id="mobile-menu-toggle"
           >
-            {isOpen ? <X /> : <Menu />}
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>

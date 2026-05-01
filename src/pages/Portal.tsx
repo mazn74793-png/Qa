@@ -17,7 +17,8 @@ import {
   AlertCircle,
   Shield,
   LogIn,
-  UserPlus
+  UserPlus,
+  Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -333,38 +334,80 @@ function LoginView() {
 function DashboardView({ user }: { user: any }) {
   return (
     <motion.div 
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
       className="space-y-8"
     >
-      <div className="bg-primary rounded-[32px] p-10 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-[80px]" />
+      {/* Hero Welcome */}
+      <div className="bg-primary rounded-[40px] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-primary/20">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-accent rounded-full blur-[100px] opacity-20 -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-white rounded-full blur-[80px] opacity-10 translate-y-1/2 -translate-x-1/2" />
+        
         <div className="relative z-10">
-          <h2 className="text-3xl font-bold mb-4">أهلاً بك، {user.displayName?.split(' ')[0]}! 👋</h2>
-          <p className="text-white/60 text-lg">نتمنى لك يوماً دراسياً موفقاً ومليئاً بالإنجازات.</p>
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-6">
+            <Clock className="w-3.5 h-3.5 text-accent" />
+            آخر حصة: السبت القادم 10:00 ص
+          </div>
+          <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight">أهلاً بك يا {user.displayName?.split(' ')[0]} 👋</h2>
+          <p className="text-white/60 text-lg md:text-xl max-w-xl leading-relaxed">نتمنى لك رحلة ممتعة ومثمرة اليوم في منصتك التعليمية المتكاملة.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="الحصص القادمة" value="3" icon={Calendar} color="bg-blue-500" />
-        <StatCard title="آخر نتيجة" value="18/20" icon={TrendingUp} color="bg-green-500" />
-        <StatCard title="المذكرات الجديدة" value="5" icon={BookOpen} color="bg-accent" />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+        <StatCard title="الحصص القادمة" value="3" icon={Calendar} color="bg-blue-500" desc="لهذا الأسبوع" />
+        <StatCard title="الدرجات" value="18/20" icon={TrendingUp} color="bg-green-500" desc="آخر اختبار" />
+        <StatCard title="المذكرات" value="5" icon={BookOpen} color="bg-accent" desc="تحميلات متبقية" />
       </div>
 
-      <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
-        <h3 className="text-xl font-bold text-primary mb-6 flex items-center gap-2">
-          <AlertCircle className="text-accent" />
-          تنبيهات هامة
-        </h3>
-        <div className="space-y-4">
-          <div className="p-4 bg-orange-50 border-r-4 border-orange-400 rounded-xl">
-            <p className="font-bold text-primary mb-1">امتحان الفيزياء الدوري</p>
-            <p className="text-sm text-slate-600 font-medium">يوم السبت القادم الساعة 10 صباحاً في قاعة 1. يرجى الحضور مبكراً.</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Notifications */}
+        <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm transition-all hover:shadow-xl hover:shadow-slate-200/20">
+          <h3 className="text-xl font-black text-primary mb-8 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <AlertCircle className="text-accent w-5 h-5" />
+              تنبيهات هامة
+            </span>
+            <span className="text-xs bg-red-50 text-red-500 px-2.5 py-1 rounded-full">جديد</span>
+          </h3>
+          <div className="space-y-6">
+            <ActivityItem 
+              title="امتحان الفيزياء الدوري" 
+              desc="السبت القادم 10 ص - قاعة 1" 
+              type="alert" 
+              color="text-orange-500"
+            />
+            <ActivityItem 
+              title="مذكرة البلاغة الجديدة" 
+              desc="تم رفع الجزء الثالث الآن" 
+              type="file" 
+              color="text-blue-500"
+            />
+            <ActivityItem 
+              title="تقييم الشهر الماضي" 
+              desc="درجتك 19/20 - ممتاز!" 
+              type="exam" 
+              color="text-green-500"
+            />
           </div>
-          <div className="p-4 bg-blue-50 border-r-4 border-blue-400 rounded-xl">
-            <p className="font-bold text-primary mb-1">رفع مذكرة البلاغة الجديدة</p>
-            <p className="text-sm text-slate-600 font-medium">تمت إضافة الجزء الثالث من مذكرة البلاغة بقسم المذكرات والتحميلات.</p>
+        </div>
+
+        {/* Quick Links / Next Step */}
+        <div className="bg-gradient-to-br from-white to-slate-50 rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-black text-primary mb-4 italic">ماذا تريد أن تنجز الآن؟</h3>
+            <p className="text-slate-500 text-sm leading-relaxed mb-8">يمكنك البدء بمراجعة آخر حصة مسجلة أو تحميل مذكرات الأسبوع الجديد.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+             <button className="flex flex-col items-center gap-3 p-6 bg-white border border-slate-100 rounded-3xl hover:border-accent hover:shadow-lg transition-all group">
+                <BookOpen className="w-6 h-6 text-accent group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-black text-primary uppercase">المذكرات</span>
+             </button>
+             <button className="flex flex-col items-center gap-3 p-6 bg-white border border-slate-100 rounded-3xl hover:border-primary hover:shadow-lg transition-all group">
+                <Calendar className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-black text-primary uppercase">الأيام</span>
+             </button>
           </div>
         </div>
       </div>
@@ -372,16 +415,30 @@ function DashboardView({ user }: { user: any }) {
   );
 }
 
-function StatCard({ title, value, icon: Icon, color }: any) {
+function StatCard({ title, value, icon: Icon, color, desc }: any) {
   return (
-    <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex items-center gap-6">
-      <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white", color)}>
-        <Icon className="w-7 h-7" />
+    <div className="bg-white p-5 md:p-6 rounded-[32px] border border-slate-100 shadow-sm hover:translate-y-[-5px] transition-all group">
+      <div className={cn("w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-current/20", color)}>
+        <Icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
       </div>
       <div className="text-right">
-        <p className="text-sm text-slate-500 font-medium">{title}</p>
-        <p className="text-2xl font-bold text-primary">{value}</p>
+        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">{title}</p>
+        <p className="text-2xl font-black text-primary">{value}</p>
+        <p className="text-[9px] text-slate-300 mt-1">{desc}</p>
       </div>
+    </div>
+  );
+}
+
+function ActivityItem({ title, desc, color }: any) {
+  return (
+    <div className="flex items-start gap-4 group cursor-pointer">
+      <div className={cn("mt-1.5 w-2 h-2 rounded-full", color.replace('text-', 'bg-'))} />
+      <div className="flex-1">
+        <h4 className="text-primary font-bold text-sm mb-0.5 group-hover:text-accent transition-colors">{title}</h4>
+        <p className="text-[11px] text-slate-500 font-medium">{desc}</p>
+      </div>
+      <ChevronRight className="w-4 h-4 text-slate-300 rotate-180 self-center group-hover:translate-x-[-3px] transition-transform" />
     </div>
   );
 }
