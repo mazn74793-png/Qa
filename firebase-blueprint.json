@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information for students, parents, and teachers.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "parent", "teacher", "admin"] },
+        "phone": { "type": "string" },
+        "gradeLevel": { "type": "string" },
+        "parentId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "fullName", "role", "email"]
+    },
+    "Course": {
+      "title": "Course",
+      "description": "Educational subjects and packages.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "teacherName": { "type": "string" },
+        "gradeLevel": { "type": "string" },
+        "price": { "type": "number" },
+        "description": { "type": "string" }
+      },
+      "required": ["name", "teacherName", "gradeLevel", "price"]
+    },
+    "Schedule": {
+      "title": "Schedule Slot",
+      "description": "Timing for specific classes.",
+      "type": "object",
+      "properties": {
+        "day": { "type": "string" },
+        "time": { "type": "string" },
+        "courseId": { "type": "string" },
+        "room": { "type": "string" }
+      }
+    },
+    "Attendance": {
+      "title": "Attendance record",
+      "description": "Tracking student attendance for classes.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "courseId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["present", "absent", "late"] }
+      }
+    },
+    "Grade": {
+      "title": "Grade",
+      "description": "Student grades in exams.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "examId": { "type": "string" },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "comments": { "type": "string" },
+        "date": { "type": "string", "format": "date" }
+      }
+    },
+    "Material": {
+      "title": "Learning Material",
+      "description": "PDFs and notes for courses.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "courseId": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "type": { "type": "string", "enum": ["pdf", "video", "link"] }
+      }
+    },
+    "SiteSettings": {
+      "title": "Site Settings",
+      "description": "Global configuration for site content (hero text, stats, etc.)",
+      "type": "object",
+      "properties": {
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "stats": { "type": "array" },
+        "contactPhone": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "contactAddress": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "Users of the system" },
+    "/courses/{courseId}": { "schema": "Course", "description": "Available courses" },
+    "/schedule/{slotId}": { "schema": "Schedule", "description": "Weekly class timings" },
+    "/attendance/{recordId}": { "schema": "Attendance", "description": "Student attendance logs" },
+    "/grades/{gradeId}": { "schema": "Grade", "description": "Exam results" },
+    "/materials/{materialId}": { "schema": "Material", "description": "Study resources" },
+    "/settings/{settingId}": { "schema": "SiteSettings", "description": "Global site settings" }
+  }
+}
