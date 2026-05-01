@@ -82,12 +82,15 @@ export const dataService = {
       callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => handleFirestoreError(error, OperationType.GET, 'admins'));
   },
-  async addAdmin(userId: string, email: string) {
-    return setDoc(doc(db, 'admins', userId), { email, addedAt: new Date().toISOString() })
-      .catch(e => handleFirestoreError(e, OperationType.WRITE, `admins/${userId}`));
+  async addAdmin(email: string) {
+    return addDoc(collection(db, 'admins'), { 
+      email, 
+      role: 'admin',
+      addedAt: new Date().toISOString() 
+    }).catch(e => handleFirestoreError(e, OperationType.WRITE, 'admins'));
   },
-  async deleteAdmin(userId: string) {
-    return deleteDoc(doc(db, 'admins', userId))
-      .catch(e => handleFirestoreError(e, OperationType.DELETE, `admins/${userId}`));
+  async deleteAdmin(docId: string) {
+    return deleteDoc(doc(db, 'admins', docId))
+      .catch(e => handleFirestoreError(e, OperationType.DELETE, `admins/${docId}`));
   }
 };

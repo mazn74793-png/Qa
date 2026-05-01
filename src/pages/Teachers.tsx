@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { User, Star, Award, GraduationCap, ChevronLeft, Play, X } from 'lucide-react';
 import { dataService } from '@/src/services/dataService';
 import { AnimatePresence } from 'motion/react';
+import { cn } from '@/src/lib/utils';
 
 function getYoutubeUrl(url: string) {
   if (!url) return '';
@@ -15,7 +16,8 @@ function getYoutubeUrl(url: string) {
 export default function Teachers() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeVideo, setActiveVideo] = useState<{ url: string, type?: 'youtube' | 'upload' } | null>(null);
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
+  const [filter, setFilter] = useState('الكل');
 
   useEffect(() => {
     dataService.getTeachers().then(data => {
@@ -23,6 +25,11 @@ export default function Teachers() {
       setLoading(false);
     });
   }, []);
+
+  const subjects = ['الكل', ...new Set(teachers.map(t => t.subject).filter(Boolean))];
+  const filteredTeachers = filter === 'الكل' 
+    ? teachers 
+    : teachers.filter(t => t.subject === filter);
 
   if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold">جاري تحميل المعلمين...</div>;
 
@@ -39,9 +46,26 @@ export default function Teachers() {
 
       <section className="py-20 bg-slate-50">
         <div className="container mx-auto px-4 md:px-6">
-          {teachers.length > 0 ? (
+          <div className="flex flex-wrap justify-center gap-3 mb-16">
+            {subjects.map(s => (
+              <button 
+                key={s}
+                onClick={() => setFilter(s)}
+                className={cn(
+                  "px-6 py-2 rounded-2xl font-bold transition-all border",
+                  filter === s 
+                    ? "bg-accent text-white border-accent shadow-lg shadow-accent/20" 
+                    : "bg-white text-slate-500 border-slate-100 hover:border-accent hover:text-accent"
+                )}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+
+          {filteredTeachers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {teachers.map((teacher, i) => (
+              {filteredTeachers.map((teacher, i) => (
                 <motion.div 
                   key={teacher.id || i}
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -70,7 +94,7 @@ export default function Teachers() {
                     <div className="flex flex-wrap items-center gap-4">
                       {teacher.introVideoUrl && (
                         <button 
-                          onClick={() => setActiveVideo({ url: teacher.introVideoUrl, type: teacher.videoType })}
+                          onClick={() => setActiveVideo(teacher.introVideoUrl)}
                           className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-black transition-all shadow-lg shadow-primary/10"
                         >
                           <Play className="w-4 h-4" />
@@ -111,22 +135,12 @@ export default function Teachers() {
               >
                 <X className="w-6 h-6" />
               </button>
-              
-              {activeVideo.type === 'upload' || (!activeVideo.url.includes('youtube.com') && !activeVideo.url.includes('youtu.be')) ? (
-                <video 
-                  src={activeVideo.url} 
-                  controls 
-                  autoPlay 
-                  className="w-full h-full"
-                />
-              ) : (
-                <iframe
-                  src={getYoutubeUrl(activeVideo.url)}
-                  className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              )}
+              <iframe
+                src={getYoutubeUrl(activeVideo)}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </motion.div>
           </motion.div>
         )}

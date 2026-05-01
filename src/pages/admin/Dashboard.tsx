@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAdmin } from '@/src/hooks/useAdmin';
+import { useSearchParams } from 'react-router-dom';
 import { 
   BarChart3, 
   Settings2, 
@@ -15,7 +16,8 @@ import {
   Plus,
   Edit3,
   Video,
-  Eye
+  Eye,
+  Clock
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -36,7 +38,21 @@ type AdminTab = 'overview' | 'content' | 'courses' | 'teachers' | 'schedule' | '
 
 export default function AdminDashboard() {
   const { isAdmin, loading, user } = useAdmin();
-  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as AdminTab) || 'overview';
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
+
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab') as AdminTab;
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: AdminTab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50">
@@ -68,16 +84,16 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="space-y-1 overflow-y-auto scrollbar-hide flex-1">
-          <SidebarLink active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={LayoutDashboard} label="نظرة عامة" />
-          <SidebarLink active={activeTab === 'content'} onClick={() => setActiveTab('content')} icon={Settings2} label="محتوى الموقع" />
-          <SidebarLink active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} icon={BookOpen} label="إدارة المواد" />
-          <SidebarLink active={activeTab === 'teachers'} onClick={() => setActiveTab('teachers')} icon={Users} label="إدارة المدرسين" />
-          <SidebarLink active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={Calendar} label="إدارة الجدول" />
-          <SidebarLink active={activeTab === 'videos'} onClick={() => setActiveTab('videos')} icon={Video} label="إدارة الفيديوهات" />
-          <SidebarLink active={activeTab === 'materials'} onClick={() => setActiveTab('materials')} icon={BookOpen} label="إدارة الملازم" />
-          <SidebarLink active={activeTab === 'exams'} onClick={() => setActiveTab('exams')} icon={ClipboardCheck} label="إدارة الامتحانات" />
-          <SidebarLink active={activeTab === 'bookings'} onClick={() => setActiveTab('bookings')} icon={TrendingUp} label="سجل الحجوزات" />
-          <SidebarLink active={activeTab === 'admins'} onClick={() => setActiveTab('admins')} icon={ShieldCheck} label="إدارة المسؤولين" />
+          <SidebarLink active={activeTab === 'overview'} onClick={() => handleTabChange('overview')} icon={LayoutDashboard} label="نظرة عامة" />
+          <SidebarLink active={activeTab === 'content'} onClick={() => handleTabChange('content')} icon={Settings2} label="محتوى الموقع" />
+          <SidebarLink active={activeTab === 'courses'} onClick={() => handleTabChange('courses')} icon={BookOpen} label="إدارة المواد" />
+          <SidebarLink active={activeTab === 'teachers'} onClick={() => handleTabChange('teachers')} icon={Users} label="إدارة المدرسين" />
+          <SidebarLink active={activeTab === 'schedule'} onClick={() => handleTabChange('schedule')} icon={Calendar} label="إدارة الجدول" />
+          <SidebarLink active={activeTab === 'videos'} onClick={() => handleTabChange('videos')} icon={Video} label="إدارة الفيديوهات" />
+          <SidebarLink active={activeTab === 'materials'} onClick={() => handleTabChange('materials')} icon={BookOpen} label="إدارة الملازم" />
+          <SidebarLink active={activeTab === 'exams'} onClick={() => handleTabChange('exams')} icon={ClipboardCheck} label="إدارة الامتحانات" />
+          <SidebarLink active={activeTab === 'bookings'} onClick={() => handleTabChange('bookings')} icon={TrendingUp} label="سجل الحجوزات" />
+          <SidebarLink active={activeTab === 'admins'} onClick={() => handleTabChange('admins')} icon={ShieldCheck} label="إدارة المسؤولين" />
         </nav>
 
         <div className="mt-auto pt-6 border-t border-white/10 shrink-0">
@@ -136,6 +152,7 @@ export default function AdminDashboard() {
 
 function OverviewView() {
   const [stats, setStats] = useState({ students: 0, exams: 0, bookings: 0 });
+  const [activities, setActivities] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -148,7 +165,22 @@ function OverviewView() {
         bookings: b.size
       });
     };
+    
+    // Fetch real recent activities (last 5 users)
+    const activitiesQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'), limit(5));
+    const unsubscribeUsers = onSnapshot(activitiesQuery, (snap) => {
+      const userActs = snap.docs.map(doc => ({
+        id: doc.id,
+        type: 'user',
+        title: `طالب جديد: ${doc.data().fullName || doc.data().email}`,
+        time: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate() : new Date(),
+        icon: Users
+      }));
+      setActivities(userActs);
+    });
+
     fetchStats();
+    return () => unsubscribeUsers();
   }, []);
 
   return (
@@ -165,20 +197,25 @@ function OverviewView() {
            آخر النشاطات في المنصة
          </h3>
          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="flex items-center justify-between p-6 bg-slate-50/50 hover:bg-slate-50 rounded-3xl transition-all border border-transparent hover:border-slate-100">
+            {activities.length > 0 ? activities.map((act, i) => (
+              <div key={act.id} className="flex items-center justify-between p-6 bg-slate-50/50 hover:bg-slate-50 rounded-3xl transition-all border border-transparent hover:border-slate-100">
                  <div className="flex items-center gap-5 text-right">
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-accent shadow-sm">
-                       {i === 1 ? <Plus className="w-6 h-6"/> : <Edit3 className="w-6 h-6"/>}
+                       <act.icon className="w-6 h-6"/>
                     </div>
                     <div>
-                       <p className="font-black text-primary text-lg">{i === 1 ? 'تم إضافة مدرس جديد: أ/ خالد يوسف' : 'تم تحديث جدول الصف الثالث الثانوي'}</p>
-                       <p className="text-xs text-slate-400 font-bold">منذ {i * 10} دقائق • بواسطة النظام الآلي</p>
+                       <p className="font-black text-primary text-lg">{act.title}</p>
+                       <p className="text-xs text-slate-400 font-bold flex items-center gap-1 justify-end">
+                         <span>{new Date(act.time).toLocaleString('ar-EG')}</span>
+                         <Clock className="w-3 h-3" />
+                       </p>
                     </div>
                  </div>
                  <ChevronRight className="w-6 h-6 text-slate-200" />
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-10 text-slate-300 font-bold italic">لا توجد نشاطات مؤخراً</div>
+            )}
          </div>
       </div>
     </motion.div>

@@ -18,17 +18,16 @@ export default function AdminManager() {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
-    const userId = formData.get('userId') as string;
     const email = formData.get('email') as string;
 
-    if (!userId || !email) {
-      alert("يرجى إدخال معرف المستخدم والبريد الإلكتروني");
+    if (!email) {
+      alert("يرجى إدخال البريد الإلكتروني");
       setLoading(false);
       return;
     }
 
     try {
-      await dataService.addAdmin(userId, email);
+      await dataService.addAdmin(email);
       setIsAdding(false);
     } catch (err) {
       console.error(err);
@@ -86,7 +85,7 @@ export default function AdminManager() {
               
               <form onSubmit={handleAdd} className="space-y-6">
                 <div className="space-y-2 text-right">
-                  <label className="text-sm font-bold text-slate-700">البريد الإلكتروني للزميل</label>
+                  <label className="text-sm font-bold text-slate-700">البريد الإلكتروني للمسؤول الجديد</label>
                   <input 
                     name="email" 
                     type="email"
@@ -94,30 +93,14 @@ export default function AdminManager() {
                     className="w-full bg-slate-50 border-transparent focus:border-accent focus:bg-white focus:ring-0 rounded-2xl p-4 transition-all text-right" 
                     placeholder="example@gmail.com"
                   />
-                </div>
-                <div className="space-y-2 text-right">
-                  <label className="text-sm font-bold text-slate-700">معرف المستخدم (UID)</label>
-                  <input 
-                    name="userId" 
-                    required
-                    className="w-full bg-slate-50 border-transparent focus:border-accent focus:bg-white focus:ring-0 rounded-2xl p-4 transition-all text-right font-mono text-sm" 
-                    placeholder="UID..."
-                  />
-                  <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 text-[11px] text-blue-600 leading-relaxed">
-                    <p className="font-bold mb-1">كيف تحصل على الـ UID؟</p>
-                    <ol className="list-decimal list-inside space-y-1">
-                      <li>اطلب من الزميل تسجيل الدخول أولاً في الموقع.</li>
-                      <li>بعد تسجيل الدخول، سيظهر الـ UID الخاص به في صفحة "حسابي".</li>
-                      <li>قم بنسخه ولصقه هنا لمنحه الصلاحيات.</li>
-                    </ol>
-                  </div>
+                  <p className="text-[10px] text-slate-400 mr-1 mt-1">بمجرد تسجيل هذا الإيميل، سيتمكن صاحبه من الدخول للوحة التحكم فوراً.</p>
                 </div>
                 
                 <button 
                   disabled={loading}
                   className="w-full bg-accent hover:bg-accent/90 disabled:bg-slate-300 text-white font-bold py-4 rounded-2xl shadow-xl shadow-accent/20 transition-all flex items-center justify-center gap-3"
                 >
-                  {loading ? 'جاري الإضافة...' : 'منح صلاحيات الأدمن'}
+                  {loading ? 'جاري الإضافة...' : 'منح صلاحيات المسؤول'}
                   <Save className="w-5 h-5" />
                 </button>
               </form>

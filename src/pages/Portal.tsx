@@ -11,6 +11,7 @@ import {
   doc, 
   getDocFromServer,
   addDoc,
+  deleteDoc,
   serverTimestamp,
   where,
   getDocs
@@ -966,8 +967,8 @@ function ScheduleView({ isAdmin, onAdd }: { isAdmin: boolean, onAdd: () => void 
                     <span className="text-slate-400 font-mono text-[10px]">{slot.time}</span>
                   </div>
                 </div>
-                <h4 className="text-lg font-black text-primary mb-1 uppercase tracking-tight">{slot.courseName || 'حصة تعليمية'}</h4>
-                <p className="text-slate-500 text-xs mb-6 italic">المدرس: {slot.teacherName || 'مدرس المادة'}</p>
+                <h4 className="text-lg font-black text-primary mb-1 uppercase tracking-tight">{slot.subject || 'حصة تعليمية'}</h4>
+                <p className="text-slate-500 text-xs mb-6 italic">المدرس: {slot.teacher || 'مدرس المادة'}</p>
                 
                 {!isAdmin && (
                   <button 
@@ -987,8 +988,26 @@ function ScheduleView({ isAdmin, onAdd }: { isAdmin: boolean, onAdd: () => void 
                 )}
                 {isAdmin && (
                   <div className="flex items-center gap-2">
-                    <button className="flex-1 bg-slate-50 text-slate-400 p-2 rounded-xl text-[10px] hover:text-red-500 transition-colors">حذف الحصة</button>
-                    <button className="flex-1 bg-slate-50 text-slate-400 p-2 rounded-xl text-[10px]">تعديل</button>
+                    <button 
+                      onClick={async () => {
+                        if (confirm('هل أنت متأكد من حذف هذه الحصة؟')) {
+                          try {
+                            await deleteDoc(doc(db, 'schedule', slot.id));
+                          } catch (err) {
+                            alert('خطأ في الحذف');
+                          }
+                        }
+                      }}
+                      className="flex-1 bg-slate-50 text-slate-400 p-2 rounded-xl text-[10px] hover:text-red-500 transition-colors"
+                    >
+                      حذف الحصة
+                    </button>
+                    <Link 
+                      to="/admin?tab=schedule"
+                      className="flex-1 bg-slate-50 text-slate-400 p-2 rounded-xl text-[10px] text-center hover:text-accent"
+                    >
+                      تعديل في اللوحة
+                    </Link>
                   </div>
                 )}
               </div>
@@ -1259,7 +1278,7 @@ function ExamRunnerView({ exam, onFinish }: { exam: any, onFinish: () => void })
       <div className="mb-12 text-right">
         {questions.length > 0 && (
           <>
-            <h4 className="text-2xl font-bold text-primary mb-8">{questions[currentStep].q}</h4>
+            <h4 className="text-2xl font-bold text-primary mb-8">{questions[currentStep].question || questions[currentStep].q}</h4>
             <div className="grid grid-cols-1 gap-3">
               {questions[currentStep].options.map((opt: string, idx: number) => (
                 <button 
@@ -1324,8 +1343,8 @@ function ExamRunnerView({ exam, onFinish }: { exam: any, onFinish: () => void })
 function AddClassModal({ onClose }: { onClose: () => void }) {
   const [day, setDay] = useState('السبت');
   const [time, setTime] = useState('');
-  const [courseName, setCourseName] = useState('');
-  const [teacherName, setTeacherName] = useState('');
+  const [subject, setSubject] = useState('');
+  const [teacher, setTeacher] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -1335,8 +1354,8 @@ function AddClassModal({ onClose }: { onClose: () => void }) {
       await addDoc(collection(db, 'schedule'), {
         day,
         time,
-        courseName,
-        teacherName,
+        subject,
+        teacher,
         createdAt: serverTimestamp()
       });
       alert('تم إضافة الحصة بنجاح');
@@ -1389,14 +1408,14 @@ function AddClassModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">اسم المادة / المجموعة</label>
             <input 
-              type="text" value={courseName} onChange={(e) => setCourseName(e.target.value)}
+              type="text" value={subject} onChange={(e) => setSubject(e.target.value)}
               className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
             />
           </div>
           <div>
             <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">اسم المدرس</label>
             <input 
-              type="text" value={teacherName} onChange={(e) => setTeacherName(e.target.value)}
+              type="text" value={teacher} onChange={(e) => setTeacher(e.target.value)}
               className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
             />
           </div>
@@ -1490,7 +1509,7 @@ function AddExamModal({ onClose }: { onClose: () => void }) {
   const [questions, setQuestions] = useState<any[]>([{ q: '', options: ['', '', '', ''], correct: 0 }]);
   const [loading, setLoading] = useState(false);
 
-  const addQuestion = () => setQuestions([...questions, { q: '', options: ['', '', '', ''], correct: 0 }]);
+  const addQuestion = () => setQuestions([...questions, { question: '', options: ['', '', '', ''], correct: 0 }]);
   const updateQuestion = (idx: number, field: string, value: any) => {
     const newQs = [...questions];
     newQs[idx][field] = value;
@@ -1592,7 +1611,7 @@ function AddExamModal({ onClose }: { onClose: () => void }) {
                 <div key={qIdx} className="bg-slate-50 p-6 rounded-[32px] border border-slate-100 space-y-4">
                   <input 
                     type="text" placeholder={`السؤال رقم ${qIdx + 1}`}
-                    value={q.q} onChange={(e) => updateQuestion(qIdx, 'q', e.target.value)}
+                    value={q.question || q.q} onChange={(e) => updateQuestion(qIdx, 'question', e.target.value)}
                     className="w-full bg-white border-none rounded-xl p-3 text-right text-sm font-bold" required
                   />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">

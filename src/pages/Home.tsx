@@ -41,7 +41,7 @@ export default function Home() {
       {isAdmin && (
         <div className="fixed bottom-6 left-6 z-[100] flex flex-col gap-2">
            <Link 
-             to="/admin/settings"
+             to="/admin?tab=content"
              className="bg-primary text-white p-3 md:p-4 rounded-full shadow-2xl hover:scale-110 transition-all flex items-center gap-2 font-bold"
            >
              <Settings className="w-5 h-5 md:w-6 md:h-6" />

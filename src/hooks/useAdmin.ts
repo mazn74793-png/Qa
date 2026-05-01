@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/src/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
 export function useAdmin() {
   const [user, authLoading] = useAuthState(auth);
@@ -18,7 +18,7 @@ export function useAdmin() {
         return;
       }
 
-      // 1. Check hardcoded super-admin (the user who requested the app)
+      // 1. Check hardcoded super-admin
       const isSuperAdmin = user.email === 'motaem23y@gmail.com' || user.email === 'admin@qa.com';
       
       if (isSuperAdmin) {
@@ -29,14 +29,31 @@ export function useAdmin() {
 
       // 2. Check Database for admin role
       try {
+        // Quick check by UID first (old method)
         const adminDoc = await getDoc(doc(db, 'admins', user.uid));
         if (adminDoc.exists()) {
           setIsAdmin(true);
-        } else {
-          // Check user profile for role
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          setIsAdmin(userDoc.exists() && userDoc.data()?.role === 'admin');
+          return;
         }
+
+        // Search by Email (new method)
+        if (user.email) {
+          const q = query(
+            collection(db, 'admins'), 
+            where('email', '==', user.email.toLowerCase()),
+            limit(1)
+          );
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            setIsAdmin(true);
+            return;
+          }
+        }
+
+        // Check user profile for role
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        setIsAdmin(userDoc.exists() && userDoc.data()?.role === 'admin');
+        
       } catch (error) {
         console.error("Admin check failed:", error);
         setIsAdmin(false);

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Book, GraduationCap, School, ChevronLeft } from 'lucide-react';
 import { dataService } from '@/src/services/dataService';
+import { Link } from 'react-router-dom';
+import { cn } from '@/src/lib/utils';
 
 export default function Courses() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -36,10 +38,24 @@ export default function Courses() {
 
       <section className="py-20">
         <div className="container mx-auto px-4 md:px-6">
+          {Object.keys(groupedCourses).length > 0 && (
+            <div className="flex flex-wrap justify-center gap-3 mb-16">
+              {Object.keys(groupedCourses).map(grade => (
+                <button 
+                  key={grade}
+                  onClick={() => document.getElementById(grade)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                  className="px-6 py-2 bg-white text-slate-500 border border-slate-100 rounded-2xl font-bold hover:border-accent hover:text-accent transition-all shadow-sm"
+                >
+                  {grade}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="space-y-16">
             {Object.keys(groupedCourses).length > 0 ? (
               Object.entries(groupedCourses).map(([grade, subjects]: any, idx) => (
-                <div key={idx} className="space-y-8">
+                <div key={idx} id={grade} className="space-y-8 scroll-mt-32">
                   <div className="flex items-center gap-4 mb-8">
                     <div className="w-12 h-12 bg-accent rounded-2xl flex items-center justify-center text-white">
                       {grade.includes('الثانوي') ? <GraduationCap className="w-6 h-6" /> : <School className="w-6 h-6" />}
@@ -74,10 +90,13 @@ export default function Courses() {
                         </div>
                         <p className="text-sm text-slate-400 mb-6 text-right line-clamp-2">{sub.description}</p>
 
-                        <button className="w-full py-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-primary hover:text-white hover:border-primary transition-all flex items-center justify-center gap-2">
+                        <Link 
+                          to="/portal"
+                          className="w-full py-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-primary hover:text-white hover:border-primary transition-all flex items-center justify-center gap-2"
+                        >
                           تفاصيل الحصص والحجز
                           <ChevronLeft className="w-5 h-5" />
-                        </button>
+                        </Link>
                       </motion.div>
                     ))}
                   </div>
