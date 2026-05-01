@@ -4,6 +4,14 @@ import { User, Star, Award, GraduationCap, ChevronLeft, Play, X } from 'lucide-r
 import { dataService } from '@/src/services/dataService';
 import { AnimatePresence } from 'motion/react';
 
+function getYoutubeUrl(url: string) {
+  if (!url) return '';
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  const id = (match && match[2].length === 11) ? match[2] : null;
+  return id ? `https://www.youtube.com/embed/${id}?autoplay=1` : url;
+}
+
 export default function Teachers() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,8 +112,9 @@ export default function Teachers() {
                 <X className="w-6 h-6" />
               </button>
               <iframe
-                src={activeVideo.includes('v=') ? `https://www.youtube.com/embed/${activeVideo.split('v=')[1].split('&')[0]}` : activeVideo}
-                className="w-full h-full"
+                src={getYoutubeUrl(activeVideo)}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             </motion.div>
