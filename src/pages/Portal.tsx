@@ -11,7 +11,9 @@ import {
   doc, 
   getDocFromServer,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  where,
+  getDocs
 } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -31,6 +33,7 @@ import {
   Clock,
   ClipboardCheck,
   Plus,
+  CheckCircle2,
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -38,7 +41,7 @@ import { cn } from '@/src/lib/utils';
 
 export default function Portal() {
   const [user, loading] = useAuthState(auth);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials' | 'bookings'>('dashboard');
   const [userData, setUserData] = useState<any>(null);
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddExam, setShowAddExam] = useState(false);
@@ -128,6 +131,14 @@ export default function Portal() {
                   icon={BookOpen} 
                   label="المذكرات" 
                 />
+                {userData?.role === 'admin' && (
+                  <TabButton 
+                    active={activeTab === 'bookings'} 
+                    onClick={() => setActiveTab('bookings')} 
+                    icon={User} 
+                    label="الحجوزات" 
+                  />
+                )}
               </div>
 
               <button 
@@ -155,11 +166,12 @@ export default function Portal() {
                 <ExamRunnerView exam={activeExam} onFinish={() => setActiveExam(null)} />
               ) : (
                 <AnimatePresence mode="wait">
-                  {activeTab === 'dashboard' && <DashboardView user={user} />}
+                  {activeTab === 'dashboard' && <DashboardView user={user} userData={userData} />}
                   {activeTab === 'schedule' && <ScheduleView isAdmin={userData?.role === 'admin'} onAdd={() => setShowAddClass(true)} />}
                   {activeTab === 'exams' && <ExamsView isAdmin={userData?.role === 'admin'} onTake={(exam) => setActiveExam(exam)} onAdd={() => setShowAddExam(true)} />}
                   {activeTab === 'grades' && <GradesView />}
                   {activeTab === 'materials' && <MaterialsView />}
+                  {activeTab === 'bookings' && <BookingsView />}
                 </AnimatePresence>
               )}
             </AnimatePresence>
@@ -388,86 +400,116 @@ function LoginView() {
   );
 }
 
-function DashboardView({ user }: { user: any }) {
+function DashboardView({ user, userData }: { user: any, userData: any }) {
+  const isAdmin = userData?.role === 'admin';
+  const [stats, setStats] = useState({ students: 0, exams: 0, bookings: 0 });
+
+  useEffect(() => {
+    if (isAdmin) {
+      // Mock stats for now or fetch real ones
+      getDocs(collection(db, 'users')).then(snap => setStats(s => ({ ...s, students: snap.size })));
+      getDocs(collection(db, 'exams')).then(snap => setStats(s => ({ ...s, exams: snap.size })));
+      getDocs(collection(db, 'bookings')).then(snap => setStats(s => ({ ...s, bookings: snap.size })));
+    }
+  }, [isAdmin]);
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-8"
+      className="space-y-8 text-right"
     >
       {/* Hero Welcome */}
-      <div className="bg-primary rounded-[40px] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-primary/20">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-accent rounded-full blur-[100px] opacity-20 -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-40 h-40 bg-white rounded-full blur-[80px] opacity-10 translate-y-1/2 -translate-x-1/2" />
+      <div className={cn(
+        "rounded-[40px] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-primary/20",
+        isAdmin ? "bg-accent" : "bg-primary"
+      )}>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-white rounded-full blur-[100px] opacity-10 -translate-y-1/2 translate-x-1/2" />
         
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider mb-6">
-            <Clock className="w-3.5 h-3.5 text-accent" />
-            آخر حصة: السبت القادم 10:00 ص
+            <Shield className="w-3.5 h-3.5 text-white" />
+            {isAdmin ? 'مركز التحكم في النظام' : 'منصة الطالب الذكية'}
           </div>
           <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight">أهلاً بك يا {((user as any).displayName || (user as any).fullName || '').split(' ')[0]} 👋</h2>
-          <p className="text-white/60 text-lg md:text-xl max-w-xl leading-relaxed">نتمنى لك رحلة ممتعة ومثمرة اليوم في منصتك التعليمية المتكاملة.</p>
+          <p className="text-white/80 text-lg md:text-xl max-w-xl leading-relaxed">
+            {isAdmin 
+              ? 'لديك اليوم صلاحيات كاملة لإدارة المعلمين، الطلاب، والامتحانات. راقب النشاط العام الآن.'
+              : 'نتمنى لك رحلة ممتعة ومثمرة اليوم في منصتك التعليمية المتكاملة.'}
+          </p>
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-        <StatCard title="الحصص القادمة" value="3" icon={Calendar} color="bg-blue-500" desc="لهذا الأسبوع" />
-        <StatCard title="الدرجات" value="18/20" icon={TrendingUp} color="bg-green-500" desc="آخر اختبار" />
-        <StatCard title="المذكرات" value="5" icon={BookOpen} color="bg-accent" desc="تحميلات متبقية" />
+        {isAdmin ? (
+          <>
+            <StatCard title="إجمالي الطلاب" value={stats.students} icon={User} color="bg-blue-500" desc="مسجلين في النظام" />
+            <StatCard title="الامتحانات" value={stats.exams} icon={ClipboardCheck} color="bg-orange-500" desc="منشورة حالياً" />
+            <StatCard title="الحجوزات" value={stats.bookings} icon={Calendar} color="bg-green-500" desc="تمت هذا الشهر" />
+          </>
+        ) : (
+          <>
+            <StatCard title="الحصص القادمة" value="3" icon={Calendar} color="bg-blue-500" desc="لهذا الأسبوع" />
+            <StatCard title="الدرجات" value="18/20" icon={TrendingUp} color="bg-green-500" desc="آخر اختبار" />
+            <StatCard title="المذكرات" value="5" icon={BookOpen} color="bg-accent" desc="تحميلات متبقية" />
+          </>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Notifications */}
-        <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm transition-all hover:shadow-xl hover:shadow-slate-200/20">
-          <h3 className="text-xl font-black text-primary mb-8 flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <AlertCircle className="text-accent w-5 h-5" />
-              تنبيهات هامة
-            </span>
-            <span className="text-xs bg-red-50 text-red-500 px-2.5 py-1 rounded-full">جديد</span>
-          </h3>
-          <div className="space-y-6">
-            <ActivityItem 
-              title="امتحان الفيزياء الدوري" 
-              desc="السبت القادم 10 ص - قاعة 1" 
-              type="alert" 
-              color="text-orange-500"
-            />
-            <ActivityItem 
-              title="مذكرة البلاغة الجديدة" 
-              desc="تم رفع الجزء الثالث الآن" 
-              type="file" 
-              color="text-blue-500"
-            />
-            <ActivityItem 
-              title="تقييم الشهر الماضي" 
-              desc="درجتك 19/20 - ممتاز!" 
-              type="exam" 
-              color="text-green-500"
-            />
+      {!isAdmin && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Notifications */}
+          <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm transition-all hover:shadow-xl hover:shadow-slate-200/20">
+            <h3 className="text-xl font-black text-primary mb-8 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <AlertCircle className="text-accent w-5 h-5" />
+                تنبيهات هامة
+              </span>
+              <span className="text-xs bg-red-50 text-red-500 px-2.5 py-1 rounded-full">جديد</span>
+            </h3>
+            <div className="space-y-6">
+              <ActivityItem 
+                title="امتحان الفيزياء الدوري" 
+                desc="السبت القادم 10 ص - قاعة 1" 
+                type="alert" 
+                color="text-orange-500"
+              />
+              <ActivityItem 
+                title="مذكرة البلاغة الجديدة" 
+                desc="تم رفع الجزء الثالث الآن" 
+                type="file" 
+                color="text-blue-500"
+              />
+              <ActivityItem 
+                title="تقييم الشهر الماضي" 
+                desc="درجتك 19/20 - ممتاز!" 
+                type="exam" 
+                color="text-green-500"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Quick Links / Next Step */}
-        <div className="bg-gradient-to-br from-white to-slate-50 rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-black text-primary mb-4 italic">ماذا تريد أن تنجز الآن؟</h3>
-            <p className="text-slate-500 text-sm leading-relaxed mb-8">يمكنك البدء بمراجعة آخر حصة مسجلة أو تحميل مذكرات الأسبوع الجديد.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-             <button className="flex flex-col items-center gap-3 p-6 bg-white border border-slate-100 rounded-3xl hover:border-accent hover:shadow-lg transition-all group">
-                <BookOpen className="w-6 h-6 text-accent group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] font-black text-primary uppercase">المذكرات</span>
-             </button>
-             <button className="flex flex-col items-center gap-3 p-6 bg-white border border-slate-100 rounded-3xl hover:border-primary hover:shadow-lg transition-all group">
-                <Calendar className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] font-black text-primary uppercase">الأيام</span>
-             </button>
+          {/* Quick Links / Next Step */}
+          <div className="bg-gradient-to-br from-white to-slate-50 rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 className="text-xl font-black text-primary mb-4 italic">ماذا تريد أن تنجز الآن؟</h3>
+              <p className="text-slate-500 text-sm leading-relaxed mb-8">يمكنك البدء بمراجعة آخر حصة مسجلة أو تحميل مذكرات الأسبوع الجديد.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+               <button className="flex flex-col items-center gap-3 p-6 bg-white border border-slate-100 rounded-3xl hover:border-accent hover:shadow-lg transition-all group">
+                  <BookOpen className="w-6 h-6 text-accent group-hover:scale-110 transition-transform" />
+                  <span className="text-[10px] font-black text-primary uppercase">المذكرات</span>
+               </button>
+               <button className="flex flex-col items-center gap-3 p-6 bg-white border border-slate-100 rounded-3xl hover:border-primary hover:shadow-lg transition-all group">
+                  <Calendar className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+                  <span className="text-[10px] font-black text-primary uppercase">الأيام</span>
+               </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </motion.div>
   );
 }
@@ -520,6 +562,7 @@ function TabButton({ active, onClick, icon: Icon, label }: any) {
 
 function ScheduleView({ isAdmin, onAdd }: { isAdmin: boolean, onAdd: () => void }) {
   const [slots, setSlots] = useState<any[]>([]);
+  const [userBookings, setUserBookings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingId, setBookingId] = useState<string | null>(null);
 
@@ -531,6 +574,14 @@ function ScheduleView({ isAdmin, onAdd }: { isAdmin: boolean, onAdd: () => void 
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'schedule');
     });
+
+    if (auth.currentUser) {
+      const bq = query(collection(db, 'bookings'), where('studentId', '==', auth.currentUser.uid));
+      getDocs(bq).then(snap => {
+        setUserBookings(snap.docs.map(d => d.data().slotId));
+      });
+    }
+
     return unsubscribe;
   }, []);
 
@@ -538,6 +589,7 @@ function ScheduleView({ isAdmin, onAdd }: { isAdmin: boolean, onAdd: () => void 
     try {
       setBookingId(slotId);
       await bookClass(slotId, courseId);
+      setUserBookings([...userBookings, slotId]);
       alert('تم الحجز بنجاح!');
     } catch (error: any) {
       alert(error.message);
@@ -551,59 +603,76 @@ function ScheduleView({ isAdmin, onAdd }: { isAdmin: boolean, onAdd: () => void 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-6"
+      className="space-y-6 text-right"
     >
       <div className="flex items-center justify-between bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
         <div className="text-right">
           <h3 className="text-xl font-black text-primary">جداول الحصص</h3>
           <p className="text-slate-500 text-xs mt-1">تصفح واحجز مكانك في المجموعات المتاحة</p>
         </div>
-        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
-          <Calendar className="w-6 h-6" />
-        </div>
+        {isAdmin ? (
+          <button 
+            onClick={onAdd}
+            className="bg-accent text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-accent/20"
+          >
+            إضافة حصة <Plus className="w-4 h-4" />
+          </button>
+        ) : (
+          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
+            <Calendar className="w-6 h-6" />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {loading ? (
           [1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white rounded-3xl animate-pulse border border-slate-100" />)
         ) : slots.length > 0 ? (
-          slots.map((slot) => (
-            <div key={slot.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 transition-all flex flex-col justify-between group">
-              <div className="flex justify-between items-start mb-4">
-                <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black">{slot.day}</span>
-                <span className="text-slate-400 font-mono text-[10px]">{slot.time}</span>
+          slots.map((slot) => {
+            const isBooked = userBookings.includes(slot.id);
+            return (
+              <div key={slot.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 transition-all flex flex-col justify-between group">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black">{slot.day}</span>
+                  <div className="flex items-center gap-2">
+                    {isBooked && <span className="bg-green-50 text-green-600 px-2 py-0.5 rounded-full text-[8px] font-black">حجزت مؤخراً</span>}
+                    <span className="text-slate-400 font-mono text-[10px]">{slot.time}</span>
+                  </div>
+                </div>
+                <h4 className="text-lg font-black text-primary mb-1 uppercase tracking-tight">{slot.courseName || 'حصة تعليمية'}</h4>
+                <p className="text-slate-500 text-xs mb-6 italic">المدرس: {slot.teacherName || 'مدرس المادة'}</p>
+                
+                {!isAdmin && (
+                  <button 
+                    onClick={() => handleBook(slot.id, slot.id)} // Using slot.id as courseId for simplicity
+                    disabled={bookingId === slot.id || isBooked}
+                    className={cn(
+                      "w-full p-3 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2",
+                      isBooked 
+                        ? "bg-green-50 text-green-600 cursor-not-allowed" 
+                        : "bg-slate-50 hover:bg-primary hover:text-white"
+                    )}
+                  >
+                    {bookingId === slot.id ? 'جاري الحجز...' : isBooked ? 'تم الحجز بالفعل' : 'احجز الآن'}
+                    {!isBooked && <ChevronRight className="w-3 h-3 rotate-180" />}
+                    {isBooked && <CheckCircle2 className="w-3 h-3" />}
+                  </button>
+                )}
+                {isAdmin && (
+                  <div className="flex items-center gap-2">
+                    <button className="flex-1 bg-slate-50 text-slate-400 p-2 rounded-xl text-[10px] hover:text-red-500 transition-colors">حذف الحصة</button>
+                    <button className="flex-1 bg-slate-50 text-slate-400 p-2 rounded-xl text-[10px]">تعديل</button>
+                  </div>
+                )}
               </div>
-              <h4 className="text-lg font-black text-primary mb-1 uppercase tracking-tight">{slot.courseName || 'حصة تعليمية'}</h4>
-              <p className="text-slate-500 text-xs mb-6">المدرس: {slot.teacherName || 'مدرس المادة'}</p>
-              
-              {!isAdmin && (
-                <button 
-                  onClick={() => handleBook(slot.id, slot.courseId)}
-                  disabled={bookingId === slot.id}
-                  className="w-full bg-slate-50 hover:bg-primary hover:text-white p-3 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2"
-                >
-                  {bookingId === slot.id ? 'جاري الحجز...' : 'احجز الآن'}
-                  <ChevronRight className="w-3 h-3 rotate-180" />
-                </button>
-              )}
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="col-span-full py-20 text-center text-slate-400 font-bold italic">
             لا توجد حصص مجدولة حالياً
           </div>
         )}
       </div>
-
-      {isAdmin && (
-        <button 
-          onClick={onAdd}
-          className="w-full bg-accent text-white p-4 rounded-2xl font-bold shadow-lg shadow-accent/20 flex items-center justify-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          إضافة حصة جديدة للجدول
-        </button>
-      )}
     </motion.div>
   );
 }
@@ -616,25 +685,38 @@ function ExamsView({ isAdmin, onAdd, onTake }: { isAdmin: boolean, onAdd: () => 
   useEffect(() => {
     if (!isAdmin) {
       const q = query(collection(db, 'bookings'), where('studentId', '==', auth.currentUser?.uid));
-      getDocs(q).then(snap => {
-        setBookings(snap.docs.map(d => d.data().courseId || d.data().slotId));
+      getDocs(q).then(async (snap) => {
+        const slotIds = snap.docs.map(d => d.data().slotId);
+        if (slotIds.length > 0) {
+          // Fetch teachers for these slots
+          const teacherList: string[] = [];
+          for (const sid of slotIds) {
+            const sDoc = await getDocFromServer(doc(db, 'schedule', sid));
+            if (sDoc.exists()) {
+              teacherList.push(sDoc.data().teacherName);
+            }
+          }
+          setBookings(teacherList);
+        }
       });
     }
   }, [isAdmin]);
 
   useEffect(() => {
-    const q = query(collection(db, 'exams'), orderBy('createdAt', 'desc'));
+    // Only fetch active exams for students
+    const q = isAdmin 
+      ? query(collection(db, 'exams'), orderBy('createdAt', 'desc'))
+      : query(collection(db, 'exams'), where('active', '==', true), orderBy('createdAt', 'desc'));
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      // Filter for student: only show exams for classes they are in
+      // Filter for student: only show exams for teachers they have booked with
       if (!isAdmin) {
-        data = data.filter(exam => {
-          // If the exam isn't linked to a course, show it (global/general tests)
-          // Otherwise check if student is in that course
-          if (!exam.courseId && !exam.teacherName) return true; 
-          // Simple logic: if teacher name matches or courseId matches a booking
-          return true; // Keeping it visible for now as "teacherName" is string-based
+        data = data.filter((exam: any) => {
+          // If the exam isn't linked to a specific teacher, or if we have it in bookings
+          if (!exam.teacherName) return true; 
+          return bookings.includes(exam.teacherName);
         });
       }
 
@@ -644,7 +726,7 @@ function ExamsView({ isAdmin, onAdd, onTake }: { isAdmin: boolean, onAdd: () => 
       handleFirestoreError(error, OperationType.LIST, 'exams');
     });
     return unsubscribe;
-  }, [isAdmin, bookings]);
+  }, [isAdmin, bookings.join(',')]);
 
   return (
     <motion.div 
@@ -705,22 +787,67 @@ function ExamsView({ isAdmin, onAdd, onTake }: { isAdmin: boolean, onAdd: () => 
 }
 
 function GradesView() {
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      const q = query(
+        collection(db, 'submissions'), 
+        where('studentId', '==', auth.currentUser.uid),
+        orderBy('submittedAt', 'desc')
+      );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        setSubmissions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching submissions:", error);
+        setLoading(false);
+      });
+      return unsubscribe;
+    }
+  }, []);
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-[32px] p-8 md:p-12 border border-slate-100 text-center shadow-sm"
+      className="space-y-6 text-right"
     >
-      <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
-        <TrendingUp className="text-green-500 w-10 h-10" />
+      <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+        <h3 className="text-xl font-black text-primary">سجل الدرجات</h3>
+        <p className="text-slate-500 text-xs mt-1">عرض جميع نتائج الاختبارات السابقة وتقييماتك</p>
       </div>
-      <h3 className="text-xl font-black text-primary mb-2">سجل الدرجات والتقييم</h3>
-      <p className="text-slate-500 max-w-sm mx-auto text-sm leading-relaxed mb-8">
-        درجاتك في الامتحانات الدورية والتقييمات الشهرية ستظهر هنا فور تصحيحها.
-      </p>
-      <div className="p-8 border-2 border-dashed border-slate-100 rounded-[32px] text-slate-300 font-bold italic text-sm">
-        قريباً: عرض بياني لمستواك الدراسي
+
+      <div className="grid grid-cols-1 gap-4">
+        {loading ? (
+          <div className="p-10 text-center animate-pulse">جاري جلب النتائج...</div>
+        ) : submissions.length > 0 ? (
+          submissions.map((sub) => (
+            <div key={sub.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-green-50 text-green-600 px-4 py-2 rounded-2xl font-black text-lg">
+                  {sub.score}/{sub.total}
+                </div>
+                <div className="text-right">
+                  <h4 className="font-bold text-primary">تم اجتياز الاختبار</h4>
+                  <p className="text-[10px] text-slate-400">التاريخ: {(sub.submittedAt as any)?.toDate?.().toLocaleDateString('ar-EG') || 'حديثاً'}</p>
+                </div>
+              </div>
+              <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-slate-400" />
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="bg-white p-20 rounded-[40px] border border-slate-100 text-center">
+             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ClipboardCheck className="text-slate-200 w-8 h-8" />
+             </div>
+             <p className="text-slate-400 font-bold italic">لم تخضع لأي اختبارات بعد</p>
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -730,11 +857,9 @@ function ExamRunnerView({ exam, onFinish }: { exam: any, onFinish: () => void })
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
+  const [results, setResults] = useState<{ score: number, total: number } | null>(null);
 
-  const questions = exam.questions || [
-    { q: 'ما هي عاصمة مصر؟', options: ['الاسكندرية', 'القاهرة', 'الجيزة', 'الأسوان'], correct: 1 },
-    { q: 'ناتج جمع 5 + 7؟', options: ['10', '11', '12', '13'], correct: 2 }
-  ];
+  const questions = exam.questions || [];
 
   const handleFinish = async () => {
     setSubmitting(true);
@@ -744,14 +869,51 @@ function ExamRunnerView({ exam, onFinish }: { exam: any, onFinish: () => void })
         if (answers[idx] === q.correct) score++;
       });
       await submitExam(exam.id, answers, score, questions.length);
-      alert(`تم الانتهاء! درجتك: ${score}/${questions.length}`);
-      onFinish();
+      setResults({ score, total: questions.length });
     } catch (error) {
       alert('خطأ في إرسال الإجابات');
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (results) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-[40px] p-8 md:p-12 border border-slate-100 shadow-xl text-center"
+      >
+        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <ClipboardCheck className="text-green-500 w-10 h-10" />
+        </div>
+        <h3 className="text-3xl font-black text-primary mb-2">تهانينا! اكتمل الاختبار</h3>
+        <p className="text-slate-500 mb-8">درجتك النهائية: <span className="text-accent font-black">{results.score}</span> من <span className="text-primary font-black">{results.total}</span></p>
+        
+        {exam.solutionVideoUrl && (
+          <div className="mb-8 space-y-4">
+             <div className="flex items-center gap-2 justify-center text-primary font-bold">
+               <BookOpen className="w-5 h-5 text-accent" />
+               شاهد فيديو حل الامتحان والتعليق على الأخطاء
+             </div>
+             <div className="aspect-video w-full rounded-3xl overflow-hidden shadow-lg border border-slate-100">
+                <iframe 
+                  src={exam.solutionVideoUrl.replace('watch?v=', 'embed/').split('&')[0]} 
+                  className="w-full h-full"
+                  allowFullScreen
+                />
+             </div>
+          </div>
+        )}
+
+        <button 
+          onClick={onFinish}
+          className="bg-primary text-white px-10 py-4 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+        >
+          العودة للرئيسية
+        </button>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div 
@@ -768,31 +930,35 @@ function ExamRunnerView({ exam, onFinish }: { exam: any, onFinish: () => void })
       </div>
 
       <div className="mb-12 text-right">
-        <h4 className="text-2xl font-bold text-primary mb-8">{questions[currentStep].q}</h4>
-        <div className="grid grid-cols-1 gap-3">
-          {questions[currentStep].options.map((opt: string, idx: number) => (
-            <button 
-              key={idx}
-              onClick={() => setAnswers({...answers, [currentStep]: idx})}
-              className={cn(
-                "w-full p-5 rounded-2xl border-2 text-right font-bold transition-all",
-                answers[currentStep] === idx 
-                  ? "border-accent bg-accent/5 text-accent shadow-md shadow-accent/10" 
-                  : "border-slate-50 bg-slate-50 hover:border-slate-200 text-slate-600"
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <span>{opt}</span>
-                <div className={cn(
-                  "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                  answers[currentStep] === idx ? "border-accent bg-accent" : "border-slate-300"
-                )}>
-                  {answers[currentStep] === idx && <div className="w-2 h-2 bg-white rounded-full" />}
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+        {questions.length > 0 && (
+          <>
+            <h4 className="text-2xl font-bold text-primary mb-8">{questions[currentStep].q}</h4>
+            <div className="grid grid-cols-1 gap-3">
+              {questions[currentStep].options.map((opt: string, idx: number) => (
+                <button 
+                  key={idx}
+                  onClick={() => setAnswers({...answers, [currentStep]: idx})}
+                  className={cn(
+                    "w-full p-5 rounded-2xl border-2 text-right font-bold transition-all",
+                    answers[currentStep] === idx 
+                      ? "border-accent bg-accent/5 text-accent shadow-md shadow-accent/10" 
+                      : "border-slate-50 bg-slate-50 hover:border-slate-200 text-slate-600"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{opt}</span>
+                    <div className={cn(
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                      answers[currentStep] === idx ? "border-accent bg-accent" : "border-slate-300"
+                    )}>
+                      {answers[currentStep] === idx && <div className="w-2 h-2 bg-white rounded-full" />}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex items-center justify-between gap-4">
@@ -952,11 +1118,87 @@ function AddClassModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+function BookingsView() {
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, 'bookings'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const data = await Promise.all(snapshot.docs.map(async (d) => {
+        const booking = { id: d.id, ...d.data() };
+        // Try to fetch context for the booking
+        return booking;
+      }));
+      setBookings(data);
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'bookings');
+    });
+    return unsubscribe;
+  }, []);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+      className="space-y-6 text-right"
+    >
+      <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+        <h3 className="text-xl font-black text-primary">سجل الحجوزات</h3>
+        <p className="text-slate-500 text-xs mt-1">قائمة بالطلاب الذين قامو بحجز حصص تعليمية</p>
+      </div>
+
+      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-right border-collapse">
+            <thead className="bg-slate-50 text-slate-400 text-[10px] uppercase font-black">
+              <tr>
+                <th className="p-4">رقم الطالب (UID)</th>
+                <th className="p-4">رقم الحصة</th>
+                <th className="p-4">تاريخ الحجز</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm">
+              {loading ? (
+                <tr><td colSpan={3} className="p-10 text-center animate-pulse">جاري التحميل...</td></tr>
+              ) : bookings.length > 0 ? (
+                bookings.map((b) => (
+                  <tr key={b.id} className="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
+                    <td className="p-4 font-mono text-[10px] text-slate-400">{b.studentId}</td>
+                    <td className="p-4 font-bold text-primary">{b.slotId}</td>
+                    <td className="p-4 text-slate-500">{(b.createdAt as any)?.toDate ? (b.createdAt as any).toDate().toLocaleString('ar-EG') : 'قيد المعالجة'}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan={3} className="p-10 text-center text-slate-300 italic">لا توجد حجوزات مسجلة</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function AddExamModal({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState('');
   const [teacherName, setTeacherName] = useState('');
   const [duration, setDuration] = useState('60');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [questions, setQuestions] = useState<any[]>([{ q: '', options: ['', '', '', ''], correct: 0 }]);
   const [loading, setLoading] = useState(false);
+
+  const addQuestion = () => setQuestions([...questions, { q: '', options: ['', '', '', ''], correct: 0 }]);
+  const updateQuestion = (idx: number, field: string, value: any) => {
+    const newQs = [...questions];
+    newQs[idx][field] = value;
+    setQuestions(newQs);
+  };
+  const updateOption = (qIdx: number, oIdx: number, value: string) => {
+    const newQs = [...questions];
+    newQs[qIdx].options[oIdx] = value;
+    setQuestions(newQs);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -966,7 +1208,8 @@ function AddExamModal({ onClose }: { onClose: () => void }) {
         title,
         teacherName,
         durationMinutes: parseInt(duration),
-        questions: [], 
+        questions,
+        solutionVideoUrl: videoUrl,
         createdAt: serverTimestamp(),
         active: true
       });
@@ -982,49 +1225,99 @@ function AddExamModal({ onClose }: { onClose: () => void }) {
   return (
     <motion.div 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm overflow-y-auto"
     >
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-[40px] w-full max-w-lg p-8 relative overflow-hidden text-right"
+        className="bg-white rounded-[40px] w-full max-w-2xl p-8 relative overflow-hidden text-right my-8"
       >
         <button onClick={onClose} className="absolute top-6 left-6 p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors">
           <X className="w-5 h-5 text-slate-500" />
         </button>
         
         <h3 className="text-2xl font-black text-primary mb-6 flex items-center gap-2 justify-end">
-          إنشاء امتحان جديد
+          إنشاء امتحان جديد متكامل
           <ClipboardCheck className="text-accent" />
         </h3>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">عنوان الامتحان</label>
-            <input 
-              type="text" placeholder="مثلاً: اختبار الفيزياء - الفصل الأول" 
-              value={title} onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">عنوان الامتحان</label>
+              <input 
+                type="text" placeholder="مثلاً: اختبار الفيزياء - الفصل الأول" 
+                value={title} onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">المدرس المسؤول</label>
+              <input 
+                type="text" value={teacherName} onChange={(e) => setTeacherName(e.target.value)}
+                className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
+              />
+            </div>
           </div>
-          <div>
-            <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">المدرس المسؤول</label>
-            <input 
-              type="text" value={teacherName} onChange={(e) => setTeacherName(e.target.value)}
-              className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
-            />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">مدة الامتحان (بالدقائق)</label>
+              <input 
+                type="number" value={duration} onChange={(e) => setDuration(e.target.value)}
+                className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">رابط فيديو الحل (YouTube/Vimeo)</label>
+              <input 
+                type="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://youtu.be/..."
+                className="w-full bg-slate-50 border-none rounded-xl p-4 text-right"
+              />
+            </div>
           </div>
-          <div>
-            <label className="text-xs font-bold text-slate-400 mb-1 block mr-1">مدة الامتحان (بالدقائق)</label>
-            <input 
-              type="number" value={duration} onChange={(e) => setDuration(e.target.value)}
-              className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" required
-            />
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+               <button type="button" onClick={addQuestion} className="text-accent text-xs font-bold flex items-center gap-1 hover:underline">
+                 <Plus className="w-3 h-3" /> إضافة سؤال آخر
+               </button>
+               <h4 className="text-sm font-black text-primary">الأسئلة ({questions.length})</h4>
+            </div>
+            
+            <div className="max-h-[400px] overflow-y-auto pr-2 space-y-6">
+              {questions.map((q, qIdx) => (
+                <div key={qIdx} className="bg-slate-50 p-6 rounded-[32px] border border-slate-100 space-y-4">
+                  <input 
+                    type="text" placeholder={`السؤال رقم ${qIdx + 1}`}
+                    value={q.q} onChange={(e) => updateQuestion(qIdx, 'q', e.target.value)}
+                    className="w-full bg-white border-none rounded-xl p-3 text-right text-sm font-bold" required
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                    {q.options.map((opt: string, oIdx: number) => (
+                      <div key={oIdx} className="flex items-center gap-2">
+                        <input 
+                          type="radio" name={`q-${qIdx}`} checked={q.correct === oIdx}
+                          onChange={() => updateQuestion(qIdx, 'correct', oIdx)}
+                        />
+                        <input 
+                          type="text" placeholder={`الخيار ${oIdx + 1}`}
+                          value={opt} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)}
+                          className="flex-1 bg-white border-none rounded-lg p-2 text-right" required
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+
           <button 
             type="submit" disabled={loading}
             className="w-full bg-primary text-white p-4 rounded-xl font-black shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
           >
-            {loading ? 'جاري الإنشاء...' : 'بدء إنشاء الامتحان'}
+            {loading ? 'جاري الإنشاء...' : 'نشر الامتحان للطلاب'}
           </button>
         </form>
       </motion.div>

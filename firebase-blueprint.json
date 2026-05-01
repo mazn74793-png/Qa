@@ -87,9 +87,10 @@
         "questions": { "type": "array" },
         "durationMinutes": { "type": "number" },
         "active": { "type": "boolean" },
+        "solutionVideoUrl": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "teacherId", "questions"]
+      "required": ["title", "teacherName", "questions"]
     },
     "ExamSubmission": {
       "title": "Exam Submission",
