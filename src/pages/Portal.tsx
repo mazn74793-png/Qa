@@ -367,6 +367,7 @@ function LoginView() {
     setError('');
     try {
       await loginWithEmail(email, password);
+      navigate('/admin');
     } catch (err: any) {
       setError('خطأ في بيانات الإدارة. يرجى التأكد من البريد وكلمة المرور.');
     } finally {
