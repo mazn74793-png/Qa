@@ -33,7 +33,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   logoUrl: "",
   heroTitle: "مستقبلك يبدأ من مركز QA التعليمي",
   heroSubtitle: "نقدم تجربة تعليمية فريدة قائمة على الابتكار والتميز، مع نخبة من أفضل المدرسين في كافة التخصصات والمراحل الدراسية.",
-  heroBadge: "بداية الحجز للعام الدراسي الجديد 2024-2025",
+  heroBadge: "بداية الحجز للعام الدراسي الجديد 2025-2026",
   heroImage: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop",
   stats: [
     { label: 'نسبة النجاح', value: '99%' },

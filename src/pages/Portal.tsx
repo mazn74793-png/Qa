@@ -566,7 +566,7 @@ function LoginView() {
           )}
 
           <p className="mt-8 text-[10px] text-slate-400">
-            نظام QA التعليمي © 2024 - جميع الحقوق محفوظة
+            نظام QA التعليمي © 2026 - جميع الحقوق محفوظة
           </p>
         </motion.div>
       </div>

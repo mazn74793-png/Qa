@@ -34,7 +34,7 @@ export default function Schedule() {
               <Calendar className="w-8 h-8 text-accent" />
               <div>
                 <div className="font-bold">العام الدراسي الحالي</div>
-                <div className="text-sm text-white/60">2024 - 2025</div>
+                <div className="text-sm text-white/60">2025 - 2026</div>
               </div>
             </div>
           </div>
