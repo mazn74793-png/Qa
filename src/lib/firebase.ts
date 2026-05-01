@@ -1,6 +1,14 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile
+} from 'firebase/auth';
+import { getFirestore, doc, getDocFromServer, setDoc } from 'firebase/firestore';
 import firebaseConfigFile from '@/firebase-applet-config.json';
 
 // Use environment variables if available (for Vercel/Production), otherwise fallback to the config file
@@ -88,6 +96,45 @@ testConnection();
 export const loginWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
+    // Create/update user document if needed
+    await setDoc(doc(db, 'users', result.user.uid), {
+      uid: result.user.uid,
+      fullName: result.user.displayName,
+      email: result.user.email,
+      role: 'student', // Default role
+      createdAt: new Date().toISOString()
+    }, { merge: true });
+    return result.user;
+  } catch (error) {
+    console.error("Login failed:", error);
+    throw error;
+  }
+};
+
+export const registerWithEmail = async (email: string, pass: string, name: string) => {
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(result.user, { displayName: name });
+    
+    // Create student doc
+    await setDoc(doc(db, 'users', result.user.uid), {
+      uid: result.user.uid,
+      fullName: name,
+      email: result.user.email,
+      role: 'student',
+      createdAt: new Date().toISOString()
+    });
+    
+    return result.user;
+  } catch (error) {
+    console.error("Registration failed:", error);
+    throw error;
+  }
+};
+
+export const loginWithEmail = async (email: string, pass: string) => {
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, pass);
     return result.user;
   } catch (error) {
     console.error("Login failed:", error);

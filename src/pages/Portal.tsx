@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, loginWithGoogle, logout, db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
+import { auth, loginWithGoogle, logout, db, handleFirestoreError, OperationType, registerWithEmail, loginWithEmail } from '@/src/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -16,7 +16,8 @@ import {
   TrendingUp,
   AlertCircle,
   Shield,
-  LogIn
+  LogIn,
+  UserPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -123,8 +124,10 @@ export default function Portal() {
 
 function LoginView() {
   const [mode, setMode] = useState<'student' | 'admin'>('student');
+  const [studentAction, setStudentAction] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -134,10 +137,33 @@ function LoginView() {
     setLoading(true);
     setError('');
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // Success will trigger useAuthState which will re-render Portal
+      await loginWithEmail(email, password);
     } catch (err: any) {
-      setError('خطأ في بيانات الدخول. يرجى التأكد من الإيميل والباسورد.');
+      setError('خطأ في بيانات الإدارة. يرجى التأكد من البريد وكلمة المرور.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStudentAuth = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      if (studentAction === 'register') {
+        if (!name) throw new Error('يرجى كتابة الاسم');
+        await registerWithEmail(email, password, name);
+      } else {
+        await loginWithEmail(email, password);
+      }
+    } catch (err: any) {
+      if (err.message.includes('email-already-in-use')) {
+        setError('هذا البريد مسجل مسبقاً، جرب تسجيل الدخول.');
+      } else if (err.message.includes('wrong-password') || err.message.includes('user-not-found')) {
+        setError('بيانات الدخول غير صحيحة.');
+      } else {
+        setError(err.message || 'حدث خطأ غير متوقع.');
+      }
     } finally {
       setLoading(false);
     }
@@ -147,9 +173,9 @@ function LoginView() {
     <div className="pt-32 pb-20 min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="max-w-md w-full">
         {/* Toggle Mode */}
-        <div className="flex bg-slate-200 p-1 rounded-2xl mb-6">
+        <div className="flex bg-slate-200 p-1 rounded-2xl mb-6 shadow-inner">
            <button 
-             onClick={() => setMode('student')}
+             onClick={() => { setMode('student'); setError(''); }}
              className={cn(
                "flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2",
                mode === 'student' ? "bg-white text-primary shadow-sm" : "text-slate-500"
@@ -159,7 +185,7 @@ function LoginView() {
              بوابة الطالب
            </button>
            <button 
-             onClick={() => setMode('admin')}
+             onClick={() => { setMode('admin'); setError(''); }}
              className={cn(
                "flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2",
                mode === 'admin' ? "bg-white text-accent shadow-sm" : "text-slate-500"
@@ -171,42 +197,104 @@ function LoginView() {
         </div>
 
         <motion.div 
-          key={mode}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          key={mode + studentAction}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-[40px] p-8 md:p-10 shadow-2xl shadow-slate-200/50 text-center border border-slate-100"
         >
           <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <GraduationCap className={cn("w-8 h-8", mode === 'student' ? "text-primary" : "text-accent")} />
           </div>
           <h2 className="text-2xl font-bold text-primary mb-2">
-             {mode === 'student' ? 'بوابة الطلاب' : 'دخول المدرسين والإدارة'}
+             {mode === 'student' 
+               ? (studentAction === 'login' ? 'دخول الطلاب' : 'حساب جديد للطالب') 
+               : 'دخول المدرسين والإدارة'}
           </h2>
           <p className="text-slate-500 mb-8 text-sm">
             {mode === 'student' 
-              ? 'سجل دخولك لمتابعة حصصك ومذكراتك القادمة.' 
+              ? (studentAction === 'login' ? 'ادخل بياناتك لمتابعة مذكراتك ومواعيدك.' : 'سجل بياناتك للانضمام للمركز والاستفادة من خدماتنا.')
               : 'سجل دخولك بصفتك مسؤولاً للتحكم في محتوى المركز.'}
           </p>
           
-          {error && <div className="bg-red-50 text-red-500 p-3 rounded-xl text-xs font-bold mb-4 border border-red-100">{error}</div>}
+          {error && <div className="bg-red-50 text-red-500 p-3 rounded-xl text-xs font-bold mb-6 border border-red-100 text-right">{error}</div>}
 
           {mode === 'student' ? (
-            <button 
-              onClick={() => loginWithGoogle()}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-accent p-4 rounded-2xl font-bold text-slate-700 transition-all hover:bg-slate-50"
-            >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
-              الدخول باستخدام جوجل
-            </button>
+            <div className="space-y-6">
+              <form onSubmit={handleStudentAuth} className="space-y-4 text-right">
+                {studentAction === 'register' && (
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">اسم الطالب الرباعي</label>
+                    <input 
+                      type="text" 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-primary/20"
+                      placeholder="احمد محمد علي محمود"
+                      required
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">البريد الإلكتروني</label>
+                  <input 
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-primary/20"
+                    placeholder="example@gmail.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">كلمة المرور</label>
+                  <input 
+                    type="password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-primary/20"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full bg-primary text-white p-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  {loading ? 'جاري التحميل...' : (studentAction === 'login' ? 'تسجيل الدخول' : 'إنشاء الحساب')}
+                  {!loading && (studentAction === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />)}
+                </button>
+              </form>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+                <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-white px-2 text-slate-400 font-bold">أو عن طريق</span></div>
+              </div>
+
+              <button 
+                onClick={() => loginWithGoogle()}
+                className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-accent p-4 rounded-2xl font-bold text-slate-700 transition-all hover:bg-slate-50"
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
+                الدخول السريع باستخدام جوجل
+              </button>
+
+              <button 
+                onClick={() => setStudentAction(studentAction === 'login' ? 'register' : 'login')}
+                className="text-accent font-bold text-sm hover:underline"
+              >
+                {studentAction === 'login' ? 'ليس لديك حساب؟ سجل الآن' : 'لديك حساب بالفعل؟ سجل دخولك'}
+              </button>
+            </div>
           ) : (
             <form onSubmit={handleAdminLogin} className="space-y-4 text-right">
               <div>
-                 <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">البريد الإلكتروني</label>
+                 <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">البريد الإلكتروني (الإدارة)</label>
                  <input 
                    type="email" 
                    value={email}
                    onChange={(e) => setEmail(e.target.value)}
-                   className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-accent"
+                   className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-accent/20"
                    placeholder="admin@qa.com"
                    required
                  />
@@ -217,7 +305,7 @@ function LoginView() {
                    type="password" 
                    value={password}
                    onChange={(e) => setPassword(e.target.value)}
-                   className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-accent"
+                   className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-accent/20"
                    placeholder="••••••••"
                    required
                  />
