@@ -24,6 +24,7 @@ export function useAdmin() {
       
       if (isSuperAdmin) {
         setIsAdmin(true);
+        setIsAdminStatusSet(true);
         setLoading(false);
         return;
       }

@@ -50,7 +50,18 @@ import { cn } from '@/src/lib/utils';
 export default function Portal() {
   const { isAdmin: isSystemAdmin, loading: adminLoading, user } = useAdmin();
   const [_, __, error] = useAuthState(auth);
+  const [longLoading, setLongLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials' | 'bookings' | 'lectures'>('dashboard');
+
+  // Fallback for long loading
+  useEffect(() => {
+    if (adminLoading) {
+      const timer = setTimeout(() => setLongLoading(true), 5000);
+      return () => clearTimeout(timer);
+    } else {
+      setLongLoading(false);
+    }
+  }, [adminLoading]);
   const [userData, setUserData] = useState<any>(null);
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddExam, setShowAddExam] = useState(false);
@@ -110,6 +121,17 @@ export default function Portal() {
     <div className="pt-32 pb-20 flex flex-col items-center justify-center min-h-screen bg-slate-50">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>
       <p className="text-slate-400 font-bold animate-pulse">جاري التحميل...</p>
+      {longLoading && (
+        <div className="mt-8 text-center animate-in fade-in slide-in-from-bottom-4">
+          <p className="text-slate-500 text-sm mb-4">يبدو أن التحميل يستغرق وقتاً طويلاً...</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="text-accent underline font-bold"
+          >
+            إعادة تحميل الصفحة
+          </button>
+        </div>
+      )}
     </div>
   );
 
