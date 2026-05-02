@@ -25,6 +25,7 @@ export interface SiteSettings {
   facebookUrl: string;
   instagramUrl: string;
   whatsappUrl: string;
+  whyChooseUsVideoUrl: string;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -66,7 +67,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   missionText: "الارتقاء بمستوى الطالب المصري وتوفير كل ما يحتاجه للتفوق في مكان واحد.",
   facebookUrl: "#",
   instagramUrl: "#",
-  whatsappUrl: "#"
+  whatsappUrl: "#",
+  whyChooseUsVideoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
 };
 
 export async function getSiteSettings(): Promise<SiteSettings> {

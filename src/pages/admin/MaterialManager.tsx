@@ -9,9 +9,12 @@ import {
   BookOpen,
   X,
   ExternalLink,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Upload,
+  Loader2
 } from 'lucide-react';
 import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
+import { uploadToCloudinary } from '@/src/services/uploadService';
 import { 
   collection, 
   addDoc, 
@@ -23,6 +26,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
+import { cn } from '@/src/lib/utils';
 
 export default function MaterialManager() {
   const [materials, setMaterials] = useState<any[]>([]);
@@ -37,6 +41,8 @@ export default function MaterialManager() {
     subject: '',
     description: ''
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     // Fetch Materials
@@ -59,24 +65,37 @@ export default function MaterialManager() {
   }, []);
 
   const handleSave = async () => {
-    if (!newMaterial.title || !newMaterial.url || !newMaterial.teacherId) {
-      alert('يرجى ملء كافة البيانات الأساسية');
+    if (!newMaterial.title || (!newMaterial.url && !selectedFile) || !newMaterial.teacherId) {
+      alert('يرجى ملء كافة البيانات الأساسية (العنوان، المدرس، ورابط أو ملف)');
       return;
     }
 
-    const teacher = teachers.find(t => t.id === newMaterial.teacherId);
+    setUploading(true);
+    let finalUrl = newMaterial.url;
 
     try {
+      if (selectedFile) {
+        finalUrl = await uploadToCloudinary(selectedFile);
+      }
+
+      const teacher = teachers.find(t => t.id === newMaterial.teacherId);
+
       await addDoc(collection(db, 'materials'), {
         ...newMaterial,
+        url: finalUrl,
         teacherName: teacher?.name || '',
         subject: teacher?.subject || newMaterial.subject,
         createdAt: serverTimestamp()
       });
       setShowAdd(false);
       setNewMaterial({ title: '', url: '', teacherId: '', teacherName: '', subject: '', description: '' });
+      setSelectedFile(null);
     } catch (err) {
+      console.error(err);
+      alert('حدث خطأ أثناء الرفع أو الحفظ');
       handleFirestoreError(err, OperationType.WRITE, 'materials');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -193,15 +212,59 @@ export default function MaterialManager() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-black text-slate-400 block px-2">رابط المذكرة (PDF/Link)</label>
-                  <input 
-                    type="text" 
-                    value={newMaterial.url}
-                    onChange={e => setNewMaterial({...newMaterial, url: e.target.value})}
-                    placeholder="https://drive.google.com/..."
-                    className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-accent focus:bg-white rounded-3xl outline-none transition-all font-mono text-sm"
-                  />
+                <div className="space-y-4 border-2 border-dashed border-slate-100 rounded-3xl p-6 bg-slate-50/50">
+                   <p className="text-sm font-black text-slate-400 mb-2">اختر طريقة رفع المذكرة:</p>
+                   
+                   <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-400 block px-2">1. رفع ملف مباشر من الجهاز (PDF/صور)</label>
+                        <div className="relative group">
+                          <input 
+                            type="file" 
+                            accept=".pdf,image/*"
+                            onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          />
+                          <div className={cn(
+                            "w-full p-4 rounded-2xl border-2 border-white bg-white shadow-sm flex items-center justify-center gap-3 transition-all",
+                            selectedFile ? "border-green-500 bg-green-50" : "group-hover:border-accent"
+                          )}>
+                             {selectedFile ? (
+                               <>
+                                 <FileText className="w-5 h-5 text-green-500" />
+                                 <span className="font-bold text-green-700 truncate max-w-[200px]">{selectedFile.name}</span>
+                                 <button onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }} className="text-red-500 font-bold ml-auto">إلغاء</button>
+                               </>
+                             ) : (
+                               <>
+                                 <Upload className="w-5 h-5 text-accent" />
+                                 <span className="font-bold text-slate-400">اضغط هنا لاختيار ملف</span>
+                               </>
+                             )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="relative py-4 flex items-center">
+                        <div className="flex-grow border-t border-slate-200"></div>
+                        <span className="flex-shrink mx-4 text-slate-300 text-xs font-bold uppercase">أو</span>
+                        <div className="flex-grow border-t border-slate-200"></div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-400 block px-2">2. وضع رابط خارجي (Google Drive/MEGA)</label>
+                        <input 
+                          type="text" 
+                          value={newMaterial.url}
+                          onChange={e => {
+                            setNewMaterial({...newMaterial, url: e.target.value});
+                            if (e.target.value) setSelectedFile(null);
+                          }}
+                          placeholder="https://drive.google.com/..."
+                          className="w-full p-4 bg-white border-2 border-transparent focus:border-accent rounded-2xl outline-none transition-all font-mono text-sm shadow-sm"
+                        />
+                      </div>
+                   </div>
                 </div>
 
                 <div className="space-y-2">
@@ -232,14 +295,20 @@ export default function MaterialManager() {
                 <div className="flex gap-4 pt-4">
                   <button 
                     onClick={handleSave}
-                    className="flex-[2] bg-primary text-white p-5 rounded-3xl font-black text-lg hover:shadow-2xl hover:shadow-primary/20 transition-all flex items-center justify-center gap-2"
+                    disabled={uploading}
+                    className="flex-[2] bg-primary text-white p-5 rounded-3xl font-black text-lg hover:shadow-2xl hover:shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Save className="w-6 h-6" />
-                    حفظ المذكرة
+                    {uploading ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <Save className="w-6 h-6" />
+                    )}
+                    {uploading ? 'جاري الرفع والحفظ...' : 'حفظ المذكرة'}
                   </button>
                   <button 
                     onClick={() => setShowAdd(false)}
-                    className="flex-1 bg-slate-50 text-slate-400 p-5 rounded-3xl font-black text-lg hover:bg-slate-100 transition-all"
+                    disabled={uploading}
+                    className="flex-1 bg-slate-50 text-slate-400 p-5 rounded-3xl font-black text-lg hover:bg-slate-100 transition-all disabled:opacity-30"
                   >
                     إلغاء
                   </button>

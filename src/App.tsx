@@ -10,6 +10,7 @@ import Schedule from './pages/Schedule';
 import Contact from './pages/Contact';
 import Portal from './pages/Portal';
 import AdminDashboard from './pages/admin/Dashboard';
+import { motion, AnimatePresence } from 'motion/react';
 
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();

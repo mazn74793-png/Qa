@@ -266,10 +266,16 @@ export default function SiteEditor() {
                  <textarea {...register('missionText')} rows={4} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" />
                </div>
             </div>
-            <div className="text-right">
-              <label className="block text-sm font-bold text-slate-700 mb-2">رابط صورة "عن المركز"</label>
-              <input {...register('aboutImage')} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://..." />
-            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="text-right">
+                  <label className="block text-sm font-bold text-slate-700 mb-2">رابط فيديو (لماذا نحن؟) - YouTube Embed</label>
+                  <input {...register('whyChooseUsVideoUrl')} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://www.youtube.com/embed/..." />
+                </div>
+                <div className="text-right">
+                  <label className="block text-sm font-bold text-slate-700 mb-2">رابط صورة "عن المركز"</label>
+                  <input {...register('aboutImage')} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://..." />
+                </div>
+             </div>
           </div>
         </section>
 

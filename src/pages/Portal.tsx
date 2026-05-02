@@ -595,46 +595,60 @@ function MaterialsView() {
   return (
     <motion.div 
       initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-      className="space-y-8 text-right pb-10"
+      className="space-y-6 md:space-y-8 text-right pb-10"
     >
       <div>
-        <h2 className="text-2xl md:text-3xl font-black text-primary">المذكرات والملازم 📂</h2>
-        <p className="text-slate-500 font-bold">كل الملفات التي تحتاجها في رحلتك الدراسية</p>
+        <h2 className="text-xl md:text-3xl font-black text-primary">المذكرات والملازم 📂</h2>
+        <p className="text-slate-500 font-bold text-xs md:text-base">كل الملفات التي تحتاجها في رحلتك الدراسية</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {loading ? (
-          <div className="col-span-full p-20 text-center animate-pulse font-bold text-slate-300">جاري تحميل الملفات...</div>
+          [1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-100 space-y-4 animate-pulse">
+               <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-50 rounded-3xl" />
+               <div className="h-2 w-12 bg-slate-100 rounded-full" />
+               <div className="h-4 w-3/4 bg-slate-50 rounded-full" />
+               <div className="h-3 w-1/2 bg-slate-50 rounded-full" />
+               <div className="h-12 w-full bg-slate-50 rounded-3xl" />
+            </div>
+          ))
         ) : materials.length > 0 ? (
-          materials.map((mat) => (
-            <div key={mat.id} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm relative group hover:shadow-xl transition-all">
-               <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-3xl flex items-center justify-center mb-6 shadow-sm">
-                  <FileText className="w-8 h-8" />
+          materials.map((mat, idx) => (
+            <motion.div 
+              key={mat.id} 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.05 }}
+              className="bg-white p-6 md:p-8 rounded-[24px] md:rounded-[40px] border border-slate-100 shadow-sm relative group hover:shadow-xl transition-all"
+            >
+               <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-50 text-blue-500 rounded-2xl md:rounded-3xl flex items-center justify-center mb-6 shadow-sm group-hover:bg-accent group-hover:text-white transition-colors">
+                  <FileText className="w-6 h-6 md:w-8 md:h-8" />
                </div>
                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="text-[10px] bg-accent/10 text-accent px-3 py-1 rounded-full font-black">{mat.subject}</span>
+                  <span className="text-[9px] md:text-[10px] bg-accent/10 text-accent px-3 py-1 rounded-full font-black">{mat.subject}</span>
                </div>
-               <h3 className="text-xl font-black text-primary mb-3 leading-tight">{mat.title}</h3>
-               <p className="text-slate-400 text-xs font-bold mb-6 flex items-center gap-2">
+               <h3 className="text-lg md:text-xl font-black text-primary mb-2 md:mb-3 leading-tight break-words">{mat.title}</h3>
+               <p className="text-slate-400 text-[10px] md:text-xs font-bold mb-6 flex items-center gap-2">
                  <User className="w-3 h-3" /> {mat.teacherName}
                </p>
                <a 
                  href={mat.url}
                  target="_blank"
                  rel="noreferrer"
-                 className="flex items-center justify-center gap-3 w-full p-4 bg-primary text-white rounded-3xl font-black hover:bg-accent transition-all shadow-lg shadow-primary/10"
+                 className="flex items-center justify-center gap-2 md:gap-3 w-full p-3 md:p-4 bg-primary text-white rounded-xl md:rounded-3xl font-black text-xs md:text-sm hover:bg-accent transition-all shadow-lg shadow-primary/10 active:scale-95"
                >
-                 <Download className="w-5 h-5" />
-                 تحميل المذكرة
+                 <Download className="w-4 h-4 md:w-5 md:h-5" />
+                 تحميل الآن
                </a>
-            </div>
+            </motion.div>
           ))
         ) : (
-          <div className="col-span-full bg-slate-100/50 p-20 rounded-[50px] text-center border-4 border-dashed border-slate-200">
-             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                <FileText className="text-slate-300 w-10 h-10" />
+          <div className="col-span-full bg-slate-100/50 p-10 md:p-20 rounded-[32px] md:rounded-[50px] text-center border-2 md:border-4 border-dashed border-slate-200">
+             <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <FileText className="text-slate-300 w-8 h-8 md:w-10 md:h-10" />
              </div>
-             <p className="text-slate-400 font-black italic text-lg">لا توجد مذكرات متاحة للتحميل حالياً</p>
+             <p className="text-slate-400 font-black italic text-base md:text-lg">لا توجد مذكرات متاحة للتحميل حالياً</p>
           </div>
         )}
       </div>
@@ -664,28 +678,28 @@ function LecturesView() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-8 text-right pb-10"
+      className="space-y-6 md:space-y-8 text-right pb-10"
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-black text-primary">المحاضرات المرئية 📺</h2>
-          <p className="text-slate-500 font-bold">تابع دروسك وشروحات المدرسين في أي وقت</p>
+          <h2 className="text-xl md:text-3xl font-black text-primary">المحاضرات المرئية 📺</h2>
+          <p className="text-slate-500 font-bold text-xs md:text-base">تابع دروسك وشروحات المدرسين في أي وقت</p>
         </div>
       </div>
 
       <AnimatePresence>
         {selectedVideo && (
           <motion.div 
-             initial={{ opacity: 0, scale: 0.95 }}
-             animate={{ opacity: 1, scale: 1 }}
-             exit={{ opacity: 0, scale: 0.95 }}
-             className="bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl relative border-4 border-slate-800"
+             initial={{ opacity: 0, scale: 0.95, y: 20 }}
+             animate={{ opacity: 1, scale: 1, y: 0 }}
+             exit={{ opacity: 0, scale: 0.95, y: 20 }}
+             className="bg-slate-900 rounded-2xl md:rounded-[32px] overflow-hidden shadow-2xl relative border-4 border-slate-800"
           >
              <button 
                 onClick={() => setSelectedVideo(null)}
-                className="absolute top-4 left-4 z-10 p-3 bg-black/50 text-white rounded-full hover:bg-black transition-all"
+                className="absolute top-4 left-4 z-10 p-2.5 md:p-3 bg-black/50 text-white rounded-full hover:bg-black transition-all"
              >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 md:w-5 md:h-5" />
              </button>
              <div className="aspect-video">
                 <iframe 
@@ -697,28 +711,39 @@ function LecturesView() {
              </div>
              <div className="p-6 md:p-8 bg-slate-900 text-white border-t border-white/5">
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="text-[10px] bg-accent/20 text-accent px-3 py-1 rounded-full font-black border border-accent/20">{selectedVideo.subject}</span>
-                  <span className="text-[10px] bg-white/10 text-white/50 px-3 py-1 rounded-full font-black">{selectedVideo.teacherName}</span>
+                  <span className="text-[9px] md:text-[10px] bg-accent/20 text-accent px-3 py-1 rounded-full font-black border border-accent/20 tracking-tighter uppercase">{selectedVideo.subject}</span>
+                  <span className="text-[9px] md:text-[10px] bg-white/10 text-white/50 px-3 py-1 rounded-full font-black">{selectedVideo.teacherName}</span>
                 </div>
-                <h3 className="text-xl md:text-2xl font-black mb-2">{selectedVideo.title}</h3>
-                <p className="text-white/40 text-sm leading-relaxed">{selectedVideo.description}</p>
+                <h3 className="text-lg md:text-2xl font-black mb-2 leading-tight">{selectedVideo.title}</h3>
+                <p className="text-white/40 text-xs md:text-sm leading-relaxed">{selectedVideo.description}</p>
              </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {loading ? (
-          <div className="col-span-full p-20 text-center animate-pulse font-bold text-slate-300">جاري تحميل المحاضرات...</div>
+          [1, 2, 3].map(i => (
+             <div key={i} className="bg-white rounded-[32px] overflow-hidden animate-pulse">
+                <div className="aspect-video bg-slate-50" />
+                <div className="p-6 space-y-3">
+                   <div className="h-4 w-3/4 bg-slate-50 rounded-full" />
+                   <div className="h-3 w-1/2 bg-slate-50 rounded-full" />
+                </div>
+             </div>
+          ))
         ) : videos.length > 0 ? (
-          videos.map((vid) => (
-            <button 
+          videos.map((vid, idx) => (
+            <motion.button 
               key={vid.id} 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
               onClick={() => {
                 setSelectedVideo(vid);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden group text-right hover:shadow-xl transition-all"
+              className="bg-white rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm overflow-hidden group text-right hover:shadow-xl transition-all active:scale-[0.98]"
             >
                <div className="aspect-video bg-slate-100 relative overflow-hidden">
                   <img 
@@ -728,31 +753,31 @@ function LecturesView() {
                   />
                   <div className="absolute inset-0 bg-primary/20 group-hover:bg-primary/0 transition-all" />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-accent shadow-xl border-4 border-accent/10">
-                      <Play className="w-6 h-6 fill-current" />
+                    <div className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center text-accent shadow-xl border-4 border-accent/10">
+                      <Play className="w-5 h-5 md:w-6 md:h-6 fill-current" />
                     </div>
                   </div>
-                  <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-black">
+                  <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-[9px] md:text-[10px] text-white font-black tracking-tighter uppercase border border-white/10">
                     {vid.subject}
                   </div>
                </div>
-               <div className="p-6">
-                  <h3 className="font-black text-primary mb-2 line-clamp-1 group-hover:text-accent transition-colors">{vid.title}</h3>
+               <div className="p-5 md:p-6">
+                  <h3 className="font-black text-primary mb-2 line-clamp-1 group-hover:text-accent transition-colors text-sm md:text-base leading-tight">{vid.title}</h3>
                   <div className="flex items-center gap-2 text-slate-400">
-                    <div className="w-6 h-6 bg-slate-50 rounded-lg flex items-center justify-center">
+                    <div className="w-6 h-6 bg-slate-50 rounded-lg flex items-center justify-center shrink-0">
                       <User className="w-3 h-3" />
                     </div>
-                    <span className="text-xs font-bold">{vid.teacherName}</span>
+                    <span className="text-[10px] md:text-xs font-bold truncate">{vid.teacherName}</span>
                   </div>
                </div>
-            </button>
+            </motion.button>
           ))
         ) : (
-          <div className="col-span-full bg-slate-50 p-20 rounded-[40px] border border-dashed border-slate-200 text-center">
-             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
-                <Video className="text-slate-300 w-8 h-8" />
+          <div className="col-span-full bg-slate-50 p-12 md:p-20 rounded-[32px] md:rounded-[40px] border border-dashed border-slate-200 text-center">
+             <div className="w-14 h-14 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <Video className="text-slate-300 w-7 h-7 md:w-8 md:h-8" />
              </div>
-             <p className="text-slate-400 font-black italic">لا توجد محاضرات منشورة حالياً</p>
+             <p className="text-slate-400 font-black italic text-sm md:text-base">لا توجد محاضرات منشورة حالياً</p>
           </div>
         )}
       </div>

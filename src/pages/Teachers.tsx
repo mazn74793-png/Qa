@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { User, Star, Award, GraduationCap, ChevronLeft, Play, X } from 'lucide-react';
 import { dataService } from '@/src/services/dataService';
+import { Link } from 'react-router-dom';
 import { AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
@@ -15,13 +16,19 @@ function getYoutubeUrl(url: string) {
 
 export default function Teachers() {
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [schedule, setSchedule] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
+  const [selectedTeacherSchedule, setSelectedTeacherSchedule] = useState<any | null>(null);
   const [filter, setFilter] = useState('الكل');
 
   useEffect(() => {
-    dataService.getTeachers().then(data => {
-      setTeachers(data);
+    Promise.all([
+      dataService.getTeachers(),
+      dataService.getSchedule()
+    ]).then(([teachersData, scheduleData]) => {
+      setTeachers(teachersData);
+      setSchedule(scheduleData);
       setLoading(false);
     });
   }, []);
@@ -31,7 +38,11 @@ export default function Teachers() {
     ? teachers 
     : teachers.filter(t => t.subject === filter);
 
-  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold">جاري تحميل المعلمين...</div>;
+  const getTeacherSchedule = (teacherName: string) => {
+    return schedule.filter(slot => slot.teacher === teacherName);
+  };
+
+  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold">جاري تحميل المدرسين...</div>;
 
   return (
     <div id="teachers-page" className="pt-20 md:pt-24 min-h-screen">
@@ -101,10 +112,13 @@ export default function Teachers() {
                           نبذة فيديو
                         </button>
                       )}
-                      <button className="w-full sm:w-auto text-slate-500 font-black text-xs md:text-sm flex items-center justify-center gap-2 hover:text-accent transition-colors py-2">
-                        الجدول الدراسي
-                        <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
-                      </button>
+                        <button 
+                          onClick={() => setSelectedTeacherSchedule(teacher)}
+                          className="w-full sm:w-auto text-slate-500 font-black text-xs md:text-sm flex items-center justify-center gap-2 hover:text-accent transition-colors py-2"
+                        >
+                          الجدول الدراسي
+                          <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+                        </button>
                     </div>
                   </div>
                 </motion.div>
@@ -141,6 +155,82 @@ export default function Teachers() {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {selectedTeacherSchedule && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-xl"
+            onClick={() => setSelectedTeacherSchedule(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 40 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 40 }}
+              className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden text-right"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-8 md:p-10 bg-primary text-white relative">
+                 <button 
+                    onClick={() => setSelectedTeacherSchedule(null)}
+                    className="absolute top-8 left-8 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"
+                 >
+                    <X className="w-6 h-6" />
+                 </button>
+                 <div className="flex items-center gap-6">
+                    <img src={selectedTeacherSchedule.image} className="w-20 h-20 rounded-3xl object-cover border-2 border-white/20" />
+                    <div>
+                       <h3 className="text-2xl md:text-3xl font-black mb-1">{selectedTeacherSchedule.name}</h3>
+                       <div className="bg-accent inline-block px-3 py-0.5 rounded-lg text-xs font-black uppercase tracking-tighter shadow-lg shadow-accent/20">
+                          جدول حصص {selectedTeacherSchedule.subject}
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="p-6 md:p-10 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                 <div className="space-y-4">
+                    {getTeacherSchedule(selectedTeacherSchedule.name).length > 0 ? (
+                      getTeacherSchedule(selectedTeacherSchedule.name).map((slot, i) => (
+                        <motion.div 
+                           initial={{ opacity: 0, x: 20 }}
+                           animate={{ opacity: 1, x: 0 }}
+                           transition={{ delay: i * 0.05 }}
+                           key={i} 
+                           className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-xl hover:border-transparent transition-all group"
+                        >
+                           <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-100 font-black text-primary text-lg group-hover:bg-accent group-hover:text-white transition-colors">
+                              {slot.time}
+                           </div>
+                           <div className="flex-grow text-right">
+                              <p className="font-black text-slate-400 text-xs mb-1">{slot.day}</p>
+                              <h4 className="text-xl font-black text-primary">{slot.grade}</h4>
+                           </div>
+                           <Link 
+                             to="/portal" 
+                             className="w-full sm:w-auto bg-primary text-white px-8 py-3 rounded-2xl font-black text-sm hover:bg-accent shadow-lg shadow-primary/10 transition-all active:scale-95"
+                           >
+                              حجز الحصة 💳
+                           </Link>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <div className="py-20 text-center text-slate-400 font-black italic">
+                         لا توجد حصص مجدولة حالياً لهذا المدرس
+                      </div>
+                    )}
+                 </div>
+              </div>
+
+              <div className="p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                 <p className="text-[10px] md:text-xs font-bold text-slate-400">جميع المواعيد قابلة للتغيير بناءً على إدارة السنتر</p>
+                 <button 
+                   onClick={() => setSelectedTeacherSchedule(null)}
+                   className="text-primary font-black hover:text-accent transition-colors"
+                 >
+                   إغلاق
+                 </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
