@@ -260,7 +260,7 @@ export default function Home() {
                {realTeachers.length > 0 ? (
                  realTeachers.map((t, idx) => (
                    <div key={idx} className="group relative rounded-[40px] overflow-hidden aspect-[4/5] bg-white/5 border border-white/5">
-                      <img src={t.image || 'https://via.placeholder.com/400x500?text=Teacher'} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt={t.name} />
+                      <img src={t.image || 'https://via.placeholder.com/400x500?text=Teacher'} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={t.name} />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent p-8 flex flex-col justify-end text-right">
                          <p className="text-accent font-black text-sm mb-1 uppercase tracking-tighter">{t.subject}</p>
                          <h3 className="text-xl font-black text-white">{t.name}</h3>
