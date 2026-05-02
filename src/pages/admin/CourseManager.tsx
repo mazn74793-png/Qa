@@ -13,6 +13,7 @@ interface Course {
   teacher?: string;
   description: string;
   image?: string;
+  videoUrl?: string;
 }
 
 export default function CourseManager() {
@@ -22,6 +23,7 @@ export default function CourseManager() {
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
 
   useEffect(() => {
     const unsubscribe = dataService.subscribeCourses((data) => {
@@ -38,9 +40,14 @@ export default function CourseManager() {
     try {
       const formData = new FormData(e.currentTarget);
       let imageUrl = formData.get('image') as string || 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1000&auto=format&fit=crop';
+      let videoUrl = formData.get('videoUrl') as string || '';
       
       if (selectedFile) {
         imageUrl = await uploadToCloudinary(selectedFile);
+      }
+
+      if (selectedVideo) {
+        videoUrl = await uploadToCloudinary(selectedVideo);
       }
 
       const data = {
@@ -49,6 +56,7 @@ export default function CourseManager() {
         description: formData.get('description') as string,
         teacher: formData.get('teacher') as string,
         image: imageUrl,
+        videoUrl: videoUrl,
       };
 
       if (editingCourse?.id) {
@@ -60,6 +68,7 @@ export default function CourseManager() {
       setEditingCourse(null);
       setShowForm(false);
       setSelectedFile(null);
+      setSelectedVideo(null);
     } catch (err) {
       console.error(err);
       alert('خطأ في الحفظ');
@@ -115,6 +124,8 @@ export default function CourseManager() {
                   <label className="text-sm font-bold text-slate-600">اسم المدرس القائم بالمادة</label>
                   <input name="teacher" defaultValue={editingCourse?.teacher} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="أ/ خالد..." />
                 </div>
+                
+                {/* Image Upload */}
                 <div className="space-y-4 md:col-span-2 bg-slate-50 p-6 rounded-3xl border border-dashed border-slate-200">
                   <p className="text-xs font-black text-slate-400 mb-2">صورة المادة:</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -157,6 +168,51 @@ export default function CourseManager() {
                     </div>
                   </div>
                 </div>
+
+                {/* Video Upload */}
+                <div className="space-y-4 md:col-span-2 bg-slate-50 p-6 rounded-3xl border border-dashed border-slate-200">
+                  <p className="text-xs font-black text-slate-400 mb-2">فيديو تعريفي للمادة (اختياري):</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2 text-right">
+                       <label className="text-[10px] font-bold text-slate-400 block px-2">الخيار 1: رفع فيديو من الجهاز</label>
+                       <div className="relative group">
+                          <input 
+                            type="file" 
+                            accept="video/*"
+                            onChange={e => setSelectedVideo(e.target.files?.[0] || null)}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          />
+                          <div className={cn(
+                            "w-full p-4 rounded-2xl border-2 border-white bg-white shadow-sm flex items-center justify-center gap-3 transition-all",
+                            selectedVideo ? "border-green-500 bg-green-50" : "group-hover:border-accent"
+                          )}>
+                             {selectedVideo ? (
+                               <>
+                                 <Upload className="w-5 h-5 text-green-500" />
+                                 <span className="font-bold text-green-700 truncate max-w-[150px]">{selectedVideo.name}</span>
+                               </>
+                             ) : (
+                               <>
+                                 <Upload className="w-5 h-5 text-accent" />
+                                 <span className="font-bold text-slate-400">اختر فيديو</span>
+                               </>
+                             )}
+                          </div>
+                       </div>
+                    </div>
+                    <div className="space-y-2 text-right">
+                       <label className="text-[10px] font-bold text-slate-400 block px-2">الخيار 2: رابط يوتيوب (اختياري)</label>
+                       <input 
+                         name="videoUrl" 
+                         defaultValue={editingCourse?.videoUrl} 
+                         disabled={!!selectedVideo}
+                         className="w-full bg-white border-2 border-white shadow-sm rounded-xl p-4 text-right disabled:opacity-50" 
+                         placeholder="https://youtube.com/..." 
+                       />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-bold text-slate-600">وصف المادة</label>
                   <textarea name="description" defaultValue={editingCourse?.description} rows={3} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="شرح مبسط لكافة أجزاء المنهج..." />

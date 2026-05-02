@@ -163,17 +163,30 @@ export default function SiteEditor() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {facilityFields.map((field, index) => (
-              <div key={field.id} className="relative group">
-                <input 
-                  {...register(`facilities.${index}` as any)} 
-                  placeholder="https://..." 
-                  className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm text-right pr-10" 
-                />
-                <ImageIcon className="absolute right-3 top-3.5 w-4 h-4 text-slate-400" />
+              <div key={field.id} className="relative group flex gap-2">
+                <div className="relative flex-grow">
+                  <input 
+                    {...register(`facilities.${index}` as any)} 
+                    placeholder="https://..." 
+                    className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm text-right pr-10" 
+                  />
+                  <ImageIcon className="absolute right-3 top-3.5 w-4 h-4 text-slate-400" />
+                </div>
+                <div className="relative flex-shrink-0">
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={e => e.target.files?.[0] && handleFileUpload(`facilities.${index}` as any, e.target.files[0])}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                  <button type="button" className="bg-slate-100 p-3 rounded-xl text-slate-500 hover:bg-slate-200 transition-all h-full flex items-center justify-center">
+                    {uploading === `facilities.${index}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  </button>
+                </div>
                 <button 
                   type="button" 
                   onClick={() => removeFacility(index)}
-                  className="absolute -top-2 -left-2 bg-white text-red-500 p-1.5 rounded-full shadow-sm border border-red-100 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-2 -left-2 bg-white text-red-500 p-1.5 rounded-full shadow-sm border border-red-100 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -203,6 +216,24 @@ export default function SiteEditor() {
             <div className="text-right">
               <label className="block text-sm font-bold text-slate-700 mb-2">الوصف الفرعي</label>
               <textarea {...register('heroSubtitle')} rows={3} className="w-full bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-accent transition-all text-right" />
+            </div>
+
+            <div className="text-right">
+              <label className="block text-sm font-bold text-slate-700 mb-2">صورة الواجهة الرئيسية (Hero Image)</label>
+              <div className="flex gap-2">
+                <div className="relative flex-shrink-0">
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={e => e.target.files?.[0] && handleFileUpload('heroImage', e.target.files[0])}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                  <button type="button" className="bg-slate-100 p-4 rounded-xl text-slate-500 hover:bg-slate-200 transition-all">
+                    {uploading === 'heroImage' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                  </button>
+                </div>
+                <input {...register('heroImage')} className="flex-grow bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://..." />
+              </div>
             </div>
           </div>
         </section>
@@ -379,18 +410,6 @@ export default function SiteEditor() {
                  <input {...register('whatsappUrl')} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" />
                </div>
             </div>
-          </div>
-        </section>
-
-        {/* Hero Image */}
-        <section className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-          <div className="flex items-center gap-3 mb-8 pb-4 border-b">
-            <ImageIcon className="text-accent w-6 h-6" />
-            <h3 className="text-xl font-bold text-primary">صورة الواجهة (Hero Image)</h3>
-          </div>
-          <div className="text-right">
-            <label className="block text-sm font-bold text-slate-700 mb-2">رابط صورة الواجهة</label>
-            <input {...register('heroImage')} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://..." />
           </div>
         </section>
 
