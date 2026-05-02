@@ -15,24 +15,23 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Auth tokens never contain custom claims in this environment.
-    // We must look up the role from the 'users' collection.
-    // NOTE: get() is used for RBAC lookups.
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
+    // RBAC: Check role from user document
     function hasRole(role) {
-      return isSignedIn() && getUserData().role == role;
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'student') == role;
     }
 
     function isAdmin() {
       return isSignedIn() && (
         request.auth.token.email == "motaem23y@gmail.com" ||
         request.auth.token.email.matches('.*@qa\\.com$') ||
-        getUserData().get('role', 'user') == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'student') == 'admin' ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
+    }
+    
+    function isTeacher() {
+      return hasRole('teacher') || isAdmin();
     }
 
     function isValidId(id) {
@@ -81,23 +80,22 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isOwner(userId) && isValidUser(incoming());
-      allow update: if isOwner(userId) && (
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().get('role', 'student') == 'student';
+      allow update: if (isOwner(userId) && (
         // Allow updating everything EXCEPT role for self
-        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'gradeLevel', 'parentId', 'avatarUrl', 'lastLogin']) ||
-        isAdmin()
-      );
+        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'gradeLevel', 'parentId', 'avatarUrl', 'lastLogin'])
+      )) || isAdmin();
       allow delete: if isAdmin();
     }
 
     match /courses/{courseId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isTeacher();
     }
 
     match /schedule/{slotId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isTeacher();
     }
 
     match /teachers/{teacherId} {
@@ -107,30 +105,30 @@ service cloud.firestore {
 
     match /materials/{materialId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isTeacher();
     }
 
     match /videos/{videoId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isTeacher();
     }
 
     match /exams/{examId} {
       allow get: if isSignedIn();
-      allow list: if isSignedIn() && (resource.data.get('active', false) == true || isAdmin());
-      allow write: if isAdmin();
+      allow list: if isSignedIn() && (resource.data.get('active', false) == true || isTeacher());
+      allow write: if isTeacher();
     }
 
     match /submissions/{submissionId} {
-      allow get: if isSignedIn() && (isOwner(existing().studentId) || isAdmin());
-      allow list: if isSignedIn() && (resource.data.studentId == request.auth.uid || isAdmin());
+      allow get: if isSignedIn() && (isOwner(existing().studentId) || isTeacher());
+      allow list: if isSignedIn() && (resource.data.studentId == request.auth.uid || isTeacher());
       allow create: if isSignedIn() && incoming().studentId == request.auth.uid;
     }
 
     match /bookings/{bookingId} {
-      allow read: if isSignedIn() && (isOwner(resource.data.studentId) || isAdmin());
+      allow read: if isSignedIn() && (isOwner(resource.data.studentId) || isTeacher());
       allow create: if isSignedIn() && incoming().studentId == request.auth.uid;
-      allow delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.studentId));
+      allow delete: if isTeacher() || (isSignedIn() && isOwner(resource.data.studentId));
     }
 
     match /settings/{settingId} {
