@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -12,6 +12,16 @@ import Portal from './pages/Portal';
 import AdminDashboard from './pages/admin/Dashboard';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -35,6 +45,7 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <LayoutWrapper>
         <Routes>
           <Route path="/" element={<Home />} />
