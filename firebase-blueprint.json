@@ -11,7 +11,7 @@
         "bio": { "type": "string" },
         "introVideoUrl": { "type": "string" }
       },
-      "required": ["name", "subject"]
+      "required": ["name", "subject", "image"]
     },
     "User": {
       "title": "User Profile",
@@ -25,6 +25,7 @@
         "phone": { "type": "string" },
         "gradeLevel": { "type": "string" },
         "parentId": { "type": "string" },
+        "avatarUrl": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "fullName", "role", "email"]
@@ -34,14 +35,14 @@
       "description": "Educational subjects and packages.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
         "name": { "type": "string" },
-        "teacherName": { "type": "string" },
-        "gradeLevel": { "type": "string" },
-        "price": { "type": "number" },
+        "teacher": { "type": "string" },
+        "grade": { "type": "string" },
+        "image": { "type": "string" },
+        "videoUrl": { "type": "string" },
         "description": { "type": "string" }
       },
-      "required": ["name", "teacherName", "gradeLevel", "price"]
+      "required": ["name", "teacher", "grade"]
     },
     "Schedule": {
       "title": "Schedule Slot",
@@ -84,19 +85,25 @@
       "type": "object",
       "properties": {
         "title": { "type": "string" },
-        "courseId": { "type": "string" },
-        "fileUrl": { "type": "string" },
-        "type": { "type": "string", "enum": ["pdf", "video", "link"] }
-      }
+        "teacherId": { "type": "string" },
+        "teacherName": { "type": "string" },
+        "url": { "type": "string" },
+        "subject": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["title", "teacherId", "url"]
     },
     "Video": {
       "title": "Video Lecture",
-      "description": "YouTube lectures linked to teachers.",
+      "description": "Video lectures linked to teachers.",
       "type": "object",
       "properties": {
         "title": { "type": "string" },
         "url": { "type": "string" },
         "teacherId": { "type": "string" },
+        "teacherName": { "type": "string" },
+        "subject": { "type": "string" },
+        "isDirectUpload": { "type": "boolean" },
         "description": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },

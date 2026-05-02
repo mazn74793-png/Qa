@@ -7,9 +7,14 @@ import {
   CheckCircle2, 
   Clock,
   ChevronLeft,
-  X
+  X,
+  Upload,
+  Image as ImageIcon,
+  Loader2
 } from 'lucide-react';
 import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
+import { uploadToCloudinary } from '@/src/services/uploadService';
+import { cn } from '@/src/lib/utils';
 import { 
   collection, 
   getDocs, 
@@ -31,12 +36,15 @@ export default function ExamManager() {
   const [newExam, setNewExam] = useState({
     title: '',
     duration: 30,
+    grade: '',
     teacherId: '',
     teacherName: '',
+    image: '',
     questions: [
-      { question: '', options: ['', '', '', ''], correct: 0 }
+      { question: '', options: ['', '', '', ''], correct: 0, image: '' }
     ]
   });
+  const [uploading, setUploading] = useState<number | string | null>(null);
 
   useEffect(() => {
     const qExams = query(collection(db, 'exams'), orderBy('createdAt', 'desc'));
@@ -61,10 +69,29 @@ export default function ExamManager() {
     };
   }, []);
 
+  const handleFileUpload = async (index: number | string, file: File) => {
+    setUploading(index);
+    try {
+      const url = await uploadToCloudinary(file);
+      if (index === 'cover') {
+        setNewExam({ ...newExam, image: url });
+      } else {
+        const qs = [...newExam.questions];
+        qs[index as number].image = url;
+        setNewExam({ ...newExam, questions: qs });
+      }
+    } catch (err) {
+      console.error(err);
+      alert('خطأ في رفع الصورة');
+    } finally {
+      setUploading(null);
+    }
+  };
+
   const handleAddQuestion = () => {
     setNewExam(prev => ({
       ...prev,
-      questions: [...prev.questions, { question: '', options: ['', '', '', ''], correct: 0 }]
+      questions: [...prev.questions, { question: '', options: ['', '', '', ''], correct: 0, image: '' }]
     }));
   };
 
@@ -76,8 +103,8 @@ export default function ExamManager() {
   };
 
   const handleSave = async () => {
-    if (!newExam.title || !newExam.teacherName) {
-      alert('يرجى ملء كافة البيانات الأساسية');
+    if (!newExam.title || !newExam.teacherName || !newExam.grade) {
+      alert('يرجى ملء كافة البيانات الأساسية (العنوان، المدرس، الصف الدراسي)');
       return;
     }
     try {
@@ -89,9 +116,11 @@ export default function ExamManager() {
       setNewExam({
         title: '',
         duration: 30,
+        grade: '',
         teacherId: '',
         teacherName: '',
-        questions: [{ question: '', options: ['', '', '', ''], correct: 0 }]
+        image: '',
+        questions: [{ question: '', options: ['', '', '', ''], correct: 0, image: '' }]
       });
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'exams');
@@ -129,29 +158,41 @@ export default function ExamManager() {
           <div className="col-span-full p-20 text-center animate-pulse font-bold text-slate-300">جاري تحميل الاختبارات...</div>
         ) : exams.length > 0 ? (
           exams.map((exam) => (
-            <div key={exam.id} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm relative group overflow-hidden">
-               <div className="absolute top-0 right-0 w-1 h-full bg-accent opacity-20" />
-               <div className="flex justify-between items-start mb-4">
-                  <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-accent">
-                    <FileText className="w-6 h-6" />
+            <div key={exam.id} className="bg-white rounded-[32px] border border-slate-100 shadow-sm relative group overflow-hidden">
+               <div className="aspect-video bg-slate-100 relative overflow-hidden">
+                  <img 
+                    src={exam.image || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop'} 
+                    className="w-full h-full object-cover" 
+                    alt={exam.title} 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-4 right-4">
+                    <span className="bg-accent text-white text-[10px] font-black px-2 py-1 rounded-lg uppercase">{exam.grade}</span>
                   </div>
-                  <button 
-                    onClick={() => handleDelete(exam.id)}
-                    className="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
                </div>
-               <h3 className="font-black text-primary mb-2 line-clamp-1">{exam.title}</h3>
-               <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="text-[10px] bg-slate-50 text-slate-500 px-2 py-1 rounded-lg font-bold flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {exam.duration} دقيقة
-                  </span>
-                  <span className="text-[10px] bg-slate-50 text-slate-500 px-2 py-1 rounded-lg font-bold">
-                    {exam.questions?.length || 0} سؤال
-                  </span>
+               <div className="p-6">
+                 <div className="flex justify-between items-start mb-4">
+                    <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-accent">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <button 
+                      onClick={() => handleDelete(exam.id)}
+                      className="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                 </div>
+                 <h3 className="font-black text-primary mb-2 line-clamp-1">{exam.title}</h3>
+                 <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="text-[10px] bg-slate-50 text-slate-500 px-2 py-1 rounded-lg font-bold flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {exam.duration} دقيقة
+                    </span>
+                    <span className="text-[10px] bg-slate-50 text-slate-500 px-2 py-1 rounded-lg font-bold">
+                      {exam.questions?.length || 0} سؤال
+                    </span>
+                 </div>
+                 <p className="text-xs text-slate-400 font-bold border-t border-slate-50 pt-4">المدرس: {exam.teacherName}</p>
                </div>
-               <p className="text-xs text-slate-400 font-bold border-t border-slate-50 pt-4">المدرس: {exam.teacherName}</p>
             </div>
           ))
         ) : (
@@ -184,19 +225,32 @@ export default function ExamManager() {
 
               <div className="text-right mb-8">
                 <h2 className="text-3xl font-black text-primary mb-2">تجهيز اختبار جديد</h2>
-                <p className="text-slate-500">املأ بيانات الاختبار والأسئلة بدقة</p>
+                <p className="text-slate-500 font-bold text-sm">املأ بيانات الاختبار والأسئلة بدقة</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-right">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 text-right">
                 <div className="space-y-2">
                   <label className="text-sm font-black text-slate-400 block px-2">عنوان الاختبار</label>
                   <input 
                     type="text" 
                     value={newExam.title}
                     onChange={e => setNewExam({...newExam, title: e.target.value})}
-                    placeholder="مثال: اختبار شامل الباب الأول"
+                    placeholder="مثال: الباب الأول"
                     className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-accent focus:bg-white rounded-3xl outline-none transition-all font-bold"
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-black text-slate-400 block px-2">الصف الدراسي</label>
+                  <select 
+                    value={newExam.grade}
+                    onChange={e => setNewExam({...newExam, grade: e.target.value})}
+                    className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-accent rounded-3xl outline-none transition-all font-bold"
+                  >
+                    <option value="">-- اختر الصف --</option>
+                    <option value="1sec">الأول الثانوي</option>
+                    <option value="2sec">الثاني الثانوي</option>
+                    <option value="3sec">الثالث الثانوي</option>
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-black text-slate-400 block px-2">اسم المدرس</label>
@@ -220,10 +274,44 @@ export default function ExamManager() {
                 </div>
               </div>
 
+              <div className="space-y-4 mb-10 bg-slate-50 p-6 rounded-3xl border-2 border-dashed border-slate-200">
+                <p className="text-sm font-black text-slate-400 mb-2 text-right">غلاف الامتحان (إختياري):</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2 text-right">
+                    <label className="text-[10px] font-bold text-slate-400 block px-2">الخيار 1: رفع من الجهاز</label>
+                    <div className="relative group">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={e => e.target.files?.[0] && handleFileUpload('cover', e.target.files[0])}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      />
+                      <div className={cn(
+                        "w-full p-4 rounded-2xl border-2 border-white bg-white shadow-sm flex items-center justify-center gap-3 transition-all",
+                        newExam.image ? "border-green-500 bg-green-50" : "group-hover:border-accent"
+                      )}>
+                        {uploading === 'cover' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5 text-accent" />}
+                        <span className="font-bold text-slate-400">{newExam.image ? 'تم الرفع بنجاح' : 'اختر صورة'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2 text-right">
+                    <label className="text-[10px] font-bold text-slate-400 block px-2">الخيار 2: رابط صورة</label>
+                    <input 
+                      type="text" 
+                      value={newExam.image}
+                      onChange={e => setNewExam({...newExam, image: e.target.value})}
+                      placeholder="https://..."
+                      className="w-full p-4 bg-white border-2 border-white shadow-sm rounded-2xl outline-none font-bold text-right"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-6 mb-10">
-                <h3 className="font-black text-primary border-b pb-4">الأسئلة ({newExam.questions.length})</h3>
+                <h3 className="font-black text-primary border-b pb-4 text-right">الأسئلة ({newExam.questions.length})</h3>
                 {newExam.questions.map((q, idx) => (
-                  <div key={idx} className="p-6 bg-slate-50 rounded-[32px] space-y-4 relative border border-slate-100">
+                  <div key={idx} className="p-6 bg-slate-50 rounded-[32px] space-y-4 relative border border-slate-100 text-right">
                     <div className="flex justify-between items-center bg-white/50 p-2 rounded-2xl">
                       <span className="font-black text-accent px-4 text-sm">سؤال {idx + 1}</span>
                       <button onClick={() => handleRemoveQuestion(idx)} className="text-red-400 p-2 hover:bg-red-50 rounded-xl transition-all">
@@ -231,17 +319,53 @@ export default function ExamManager() {
                       </button>
                     </div>
                     
-                    <input 
-                      type="text"
-                      placeholder="اكتب السؤال هنا..."
-                      value={q.question}
-                      onChange={e => {
-                        const qs = [...newExam.questions];
-                        qs[idx].question = e.target.value;
-                        setNewExam({...newExam, questions: qs});
-                      }}
-                      className="w-full p-4 bg-white rounded-2xl outline-none font-bold text-sm"
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <input 
+                          type="text"
+                          placeholder="اكتب السؤال هنا..."
+                          value={q.question}
+                          onChange={e => {
+                            const qs = [...newExam.questions];
+                            qs[idx].question = e.target.value;
+                            setNewExam({...newExam, questions: qs});
+                          }}
+                          className="w-full p-4 bg-white rounded-2xl outline-none font-bold text-sm text-right"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                           <div className="relative flex-grow">
+                             <input 
+                               type="text"
+                               placeholder="رابط صورة السؤال (اختياري)"
+                               value={q.image}
+                               onChange={e => {
+                                 const qs = [...newExam.questions];
+                                 qs[idx].image = e.target.value;
+                                 setNewExam({...newExam, questions: qs});
+                               }}
+                               className="w-full p-4 bg-white rounded-2xl outline-none font-bold text-sm pr-10 text-right"
+                             />
+                             <ImageIcon className="absolute right-3 top-4 w-4 h-4 text-slate-400" />
+                           </div>
+                           <div className="relative flex-shrink-0">
+                              <input 
+                                type="file" 
+                                accept="image/*"
+                                onChange={e => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleFileUpload(idx, file);
+                                }}
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                              />
+                              <button type="button" className="bg-white p-4 rounded-2xl text-accent hover:bg-slate-100 transition-all shadow-sm">
+                                {uploading === idx ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                              </button>
+                           </div>
+                        </div>
+                      </div>
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {q.options.map((opt, oIdx) => (
@@ -266,7 +390,7 @@ export default function ExamManager() {
                               qs[idx].options[oIdx] = e.target.value;
                               setNewExam({...newExam, questions: qs});
                             }}
-                            className="flex-1 p-3 bg-white rounded-xl outline-none text-xs font-medium"
+                            className="flex-1 p-3 bg-white rounded-xl outline-none text-xs font-medium text-right"
                           />
                         </div>
                       ))}
