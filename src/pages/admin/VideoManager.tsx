@@ -33,9 +33,11 @@ export default function VideoManager() {
   const [showAdd, setShowAdd] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [newVideo, setNewVideo] = useState({
     title: '',
     url: '',
+    thumbnail: '',
     teacherId: '',
     teacherName: '',
     subject: '',
@@ -72,6 +74,7 @@ export default function VideoManager() {
 
     try {
       let finalUrl = newVideo.url;
+      let finalThumbnail = newVideo.thumbnail;
 
       // Handle File Upload if selected
       if (selectedFile) {
@@ -83,8 +86,15 @@ export default function VideoManager() {
           const match = newVideo.url.match(regExp);
           if (match && match[2].length === 11) {
             finalUrl = match[2]; 
+            if (!finalThumbnail) {
+              finalThumbnail = `https://img.youtube.com/vi/${match[2]}/mqdefault.jpg`;
+            }
           }
         }
+      }
+
+      if (selectedThumbnail) {
+        finalThumbnail = await uploadToCloudinary(selectedThumbnail);
       }
 
       const teacher = teachers.find(t => t.id === newVideo.teacherId);
@@ -92,6 +102,7 @@ export default function VideoManager() {
       await addDoc(collection(db, 'videos'), {
         ...newVideo,
         url: finalUrl,
+        thumbnail: finalThumbnail,
         isDirectUpload: !!selectedFile,
         teacherName: teacher?.name || '',
         subject: teacher?.subject || newVideo.subject,
@@ -99,7 +110,8 @@ export default function VideoManager() {
       });
       setShowAdd(false);
       setSelectedFile(null);
-      setNewVideo({ title: '', url: '', teacherId: '', teacherName: '', subject: '', description: '' });
+      setSelectedThumbnail(null);
+      setNewVideo({ title: '', url: '', thumbnail: '', teacherId: '', teacherName: '', subject: '', description: '' });
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'videos');
     } finally {
@@ -139,21 +151,13 @@ export default function VideoManager() {
         ) : videos.length > 0 ? (
           videos.map((vid) => (
             <div key={vid.id} className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden group">
-               <div className="aspect-video bg-slate-900 relative">
-                  {vid.isDirectUpload ? (
-                    <video 
-                      src={vid.url} 
-                      className="w-full h-full object-cover"
-                      poster="https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=600&auto=format&fit=crop"
-                    />
-                  ) : (
-                    <img 
-                      src={`https://img.youtube.com/vi/${vid.url}/mqdefault.jpg`} 
-                      className="w-full h-full object-cover opacity-60"
-                      alt={vid.title}
-                    />
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center">
+                <div className="aspect-video bg-slate-900 relative">
+                  <img 
+                    src={vid.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop'} 
+                    className="w-full h-full object-cover" 
+                    alt={vid.title} 
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                     <div className="w-12 h-12 bg-accent/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 group-hover:scale-110 transition-all">
                       <Play className="w-6 h-6 fill-current" />
                     </div>
@@ -224,9 +228,37 @@ export default function VideoManager() {
                 </div>
 
                 <div className="space-y-4">
-                  <label className="text-sm font-black text-slate-400 block px-2">طريقة الفيديو</label>
+                  <label className="text-sm font-black text-slate-400 block px-2">غلاف الفيديو (اختياري)</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="relative group">
+                       <input 
+                         type="file" 
+                         accept="image/*" 
+                         onChange={e => setSelectedThumbnail(e.target.files?.[0] || null)}
+                         className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                       />
+                       <div className={`w-full py-4 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center gap-2 transition-all ${selectedThumbnail ? 'border-accent bg-accent/5' : 'hover:border-accent hover:bg-white'}`}>
+                         <Upload className={`w-5 h-5 ${selectedThumbnail ? 'text-accent' : 'text-slate-300'}`} />
+                         <span className={`font-bold text-sm ${selectedThumbnail ? 'text-accent' : 'text-slate-400'}`}>
+                           {selectedThumbnail ? 'تم اختيار صورة' : 'رفع صورة غلاف'}
+                         </span>
+                       </div>
+                    </div>
+                    <input 
+                      type="text" 
+                      value={newVideo.thumbnail}
+                      onChange={e => setNewVideo({...newVideo, thumbnail: e.target.value})}
+                      placeholder="أو ضع رابط صورة..."
+                      className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-accent focus:bg-white rounded-3xl outline-none transition-all font-bold text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-sm font-black text-slate-400 block px-2">طريقة عرض الفيديو</label>
                   <div className="flex gap-4">
                     <button 
+                      type="button"
                       onClick={() => setSelectedFile(null)}
                       className={`flex-1 py-3 rounded-2xl font-bold transition-all ${!selectedFile ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400'}`}
                     >
@@ -237,10 +269,10 @@ export default function VideoManager() {
                          type="file" 
                          accept="video/*" 
                          onChange={e => setSelectedFile(e.target.files?.[0] || null)}
-                         className="absolute inset-0 opacity-0 cursor-pointer"
+                         className="absolute inset-0 opacity-0 cursor-pointer z-10"
                        />
                        <div className={`w-full py-3 rounded-2xl font-bold text-center transition-all ${selectedFile ? 'bg-primary text-white text-xs' : 'bg-slate-100 text-slate-400'}`}>
-                         {selectedFile ? selectedFile.name.slice(0, 15) + '...' : 'رفع فيديو'}
+                         {selectedFile ? selectedFile.name.slice(0, 15) + '...' : 'رفع فيديو مباشر'}
                        </div>
                     </div>
                   </div>

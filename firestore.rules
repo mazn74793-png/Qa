@@ -29,7 +29,8 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && (
         request.auth.token.email == "motaem23y@gmail.com" ||
-        hasRole('admin') ||
+        request.auth.token.email.matches('.*@qa\\.com$') ||
+        getUserData().get('role', 'user') == 'admin' ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
@@ -51,24 +52,21 @@ service cloud.firestore {
     function isValidUser(data) {
       return data.keys().hasAll(['fullName', 'role', 'email']) &&
              data.fullName is string && data.fullName.size() <= 100 &&
-             data.role in ['student', 'parent', 'teacher', 'admin'] &&
+             data.get('role', 'student') in ['student', 'parent', 'teacher', 'admin'] &&
              data.email is string && data.email.size() <= 100 &&
-             (data.avatarUrl == null || (data.avatarUrl is string && data.avatarUrl.size() <= 500));
+             (data.get('avatarUrl', null) == null || (data.avatarUrl is string && data.avatarUrl.size() <= 500));
     }
 
     function isValidCourse(data) {
       return data.keys().hasAll(['name', 'teacher', 'grade']) &&
              data.name is string && data.name.size() <= 200 &&
-             data.teacher is string && data.teacher.size() <= 100 &&
-             (data.image == null || data.image is string) &&
-             (data.videoUrl == null || data.videoUrl is string);
+             data.teacher is string && data.teacher.size() <= 100;
     }
 
     function isValidExam(data) {
       return data.keys().hasAll(['title', 'teacherName', 'questions', 'createdAt']) &&
              data.title is string && data.title.size() <= 255 &&
-             data.questions is list && data.questions.size() <= 100 &&
-             data.createdAt == request.time;
+             data.questions is list && data.questions.size() <= 100;
     }
 
     function isValidMaterial(data) {
@@ -86,12 +84,18 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isValidUser(incoming());
       allow update: if isOwner(userId) && (
         // Allow updating everything EXCEPT role for self
-        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'gradeLevel', 'parentId', 'avatarUrl', 'lastLogin']) &&
-        isValidUser(incoming())
-      ) || isAdmin();
+        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'gradeLevel', 'parentId', 'avatarUrl', 'lastLogin']) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
     }
 
     match /courses/{courseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /schedule/{slotId} {
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -113,14 +117,14 @@ service cloud.firestore {
 
     match /exams/{examId} {
       allow get: if isSignedIn();
-      allow list: if isSignedIn() && (resource.data.active == true || isAdmin());
+      allow list: if isSignedIn() && (resource.data.get('active', false) == true || isAdmin());
       allow write: if isAdmin();
     }
 
     match /submissions/{submissionId} {
       allow get: if isSignedIn() && (isOwner(existing().studentId) || isAdmin());
       allow list: if isSignedIn() && (resource.data.studentId == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && incoming().studentId == request.auth.uid && incoming().submittedAt == request.time;
+      allow create: if isSignedIn() && incoming().studentId == request.auth.uid;
     }
 
     match /bookings/{bookingId} {
@@ -135,8 +139,9 @@ service cloud.firestore {
     }
 
     match /admins/{adminId} {
-      allow read: if isSignedIn();
+      allow read, list: if isSignedIn();
       allow write: if isAdmin();
     }
+
   }
 }

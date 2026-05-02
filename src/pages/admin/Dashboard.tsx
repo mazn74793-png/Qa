@@ -22,7 +22,7 @@ import {
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import { Link } from 'react-router-dom';
-import { auth, db, logout } from '@/src/lib/firebase';
+import { auth, db, logout, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { collection, getDocs, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import SiteEditor from './SiteEditor';
 import CourseManager from './CourseManager';
@@ -180,7 +180,7 @@ function OverviewView() {
         icon: Users
       }));
       setActivities(userActs);
-    });
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'users'));
 
     fetchStats();
     return () => unsubscribeUsers();

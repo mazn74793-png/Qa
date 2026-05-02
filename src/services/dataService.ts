@@ -24,7 +24,7 @@ export const dataService = {
     const q = query(collection(db, 'teachers'), orderBy('name'));
     return onSnapshot(q, (snapshot) => {
       callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'teachers'));
   },
   async addTeacher(data: any) {
     return addDoc(collection(db, 'teachers'), data);
@@ -44,7 +44,7 @@ export const dataService = {
   subscribeCourses(callback: (data: any[]) => void) {
     return onSnapshot(collection(db, 'courses'), (snapshot) => {
       callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'courses'));
   },
   async addCourse(data: any) {
     return addDoc(collection(db, 'courses'), data);
@@ -64,7 +64,7 @@ export const dataService = {
   subscribeSchedule(callback: (data: any[]) => void) {
     return onSnapshot(collection(db, 'schedule'), (snapshot) => {
       callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'schedule'));
   },
   async addSchedule(data: any) {
     return addDoc(collection(db, 'schedule'), data);

@@ -909,17 +909,26 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const studentSnap = await getDocs(collection(db, 'users'));
-      const examSnap = await getDocs(collection(db, 'exams'));
-      const bookingSnap = await getDocs(collection(db, 'bookings'));
-      setStats({
-        students: studentSnap.size,
-        exams: examSnap.size,
-        bookings: bookingSnap.size
-      });
+      if (!isAdmin) {
+        // For students, maybe just show their own stats or nothing yet
+        setStats({ students: 0, exams: 0, bookings: 0 });
+        return;
+      }
+      try {
+        const studentSnap = await getDocs(collection(db, 'users'));
+        const examSnap = await getDocs(collection(db, 'exams'));
+        const bookingSnap = await getDocs(collection(db, 'bookings'));
+        setStats({
+          students: studentSnap.size,
+          exams: examSnap.size,
+          bookings: bookingSnap.size
+        });
+      } catch (err) {
+        console.error("Stats fetch failed:", err);
+      }
     };
     fetchData();
-  }, []);
+  }, [isAdmin]);
 
   return (
     <motion.div 
