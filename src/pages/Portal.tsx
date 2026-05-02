@@ -651,24 +651,48 @@ function MaterialsView() {
                       <p className="text-[10px] text-slate-400 font-bold">{selectedMaterial.subject} - {selectedMaterial.teacherName}</p>
                    </div>
                 </div>
-                <div className="flex-grow bg-slate-100 relative">
+                <div className="flex-grow bg-slate-100 relative group/viewer">
                    <iframe 
                       src={`https://docs.google.com/viewer?url=${encodeURIComponent(selectedMaterial.url)}&embedded=true`}
-                      className="w-full h-full border-none"
+                      className="w-full h-full border-none bg-white"
                       title={selectedMaterial.title}
                    />
+                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-0 group-hover/viewer:opacity-100 transition-opacity">
+                      <div className="bg-white/90 backdrop-blur-md p-6 rounded-[32px] shadow-2xl flex flex-col items-center gap-4 border border-slate-100">
+                         <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                            <FileSearch className="w-6 h-6" />
+                         </div>
+                         <div className="text-center">
+                            <p className="font-black text-primary">هل تواجه مشكلة في المعاينة؟</p>
+                            <p className="text-xs text-slate-400 font-bold">يمكنك فتح الملف مباشرة في صفحة جديدة</p>
+                         </div>
+                         <a 
+                            href={selectedMaterial.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-primary text-white px-6 py-3 rounded-2xl font-black text-sm pointer-events-auto hover:bg-accent transition-all"
+                         >
+                            فتح في نافذة جديدة
+                         </a>
+                      </div>
+                   </div>
                 </div>
-                <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-4">
+                <div className="p-4 md:p-8 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row gap-4">
                    <a 
                      href={selectedMaterial.url}
                      target="_blank"
                      rel="noreferrer"
-                     download
-                     className="flex-1 bg-primary text-white py-4 rounded-2xl font-black text-center flex items-center justify-center gap-2"
+                     className="flex-[2] bg-primary text-white py-4 md:py-6 rounded-2xl md:rounded-3xl font-black text-center flex items-center justify-center gap-3 hover:bg-accent transition-all shadow-xl shadow-primary/20 active:scale-95"
                    >
-                      <Download className="w-5 h-5" />
-                      تحميل الملف الأصلي
+                      <Download className="w-5 h-5 md:w-6 md:h-6" />
+                      تحميل المذكرة الآن (PDF)
                    </a>
+                   <button 
+                      onClick={() => setSelectedMaterial(null)}
+                      className="flex-1 bg-white text-slate-400 py-4 md:py-6 rounded-2xl md:rounded-3xl font-black border border-slate-200 hover:bg-slate-100 transition-all"
+                   >
+                      إغلاق المعاينة
+                   </button>
                 </div>
              </motion.div>
           </motion.div>
@@ -706,24 +730,13 @@ function MaterialsView() {
                  <User className="w-3 h-3" /> {mat.teacherName}
                </p>
                
-               <div className="grid grid-cols-2 gap-2">
-                 <button 
-                   onClick={() => setSelectedMaterial(mat)}
-                   className="flex items-center justify-center gap-2 p-3 md:p-4 bg-slate-50 text-primary border border-slate-100 rounded-xl md:rounded-3xl font-black text-xs md:text-sm hover:bg-slate-100 transition-all active:scale-95"
-                 >
-                   <FileSearch className="w-4 h-4" />
-                   معاينة
-                 </button>
-                 <a 
-                   href={mat.url}
-                   target="_blank"
-                   rel="noreferrer"
-                   className="flex items-center justify-center gap-2 p-3 md:p-4 bg-primary text-white rounded-xl md:rounded-3xl font-black text-xs md:text-sm hover:bg-accent transition-all shadow-lg shadow-primary/10 active:scale-95"
-                 >
-                   <Download className="w-4 h-4" />
-                   تحميل
-                 </a>
-               </div>
+               <button 
+                 onClick={() => setSelectedMaterial(mat)}
+                 className="flex items-center justify-center gap-2 md:gap-3 w-full p-3 md:p-5 bg-primary text-white rounded-xl md:rounded-[24px] font-black text-xs md:text-base hover:bg-accent transition-all shadow-xl shadow-primary/20 hover:shadow-accent/30 active:scale-95"
+               >
+                 <Eye className="w-4 h-4 md:w-5 md:h-5" />
+                 مشاهدة وتحميل المذكرة
+               </button>
             </motion.div>
           ))
         ) : (
