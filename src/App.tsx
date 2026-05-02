@@ -11,15 +11,20 @@ import Contact from './pages/Contact';
 import Portal from './pages/Portal';
 import AdminDashboard from './pages/admin/Dashboard';
 import { motion, AnimatePresence } from 'motion/react';
+import { cn } from './lib/utils';
 
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
+  const isHomePage = location.pathname === '/';
 
   return (
     <div className="flex flex-col min-h-screen font-sans">
       {!isAdminPath && <Navbar />}
-      <main className="flex-grow">
+      <main className={cn(
+        "flex-grow",
+        !isHomePage && !isAdminPath && "pt-20 md:pt-28 lg:pt-32"
+      )}>
         {children}
       </main>
       {!isAdminPath && <Footer />}

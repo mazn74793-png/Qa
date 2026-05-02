@@ -93,7 +93,7 @@ export default function Home() {
       )}
 
       {/* Hero Section */}
-      <section id="hero" className="relative h-[90vh] md:min-h-screen flex items-center pt-24 lg:pt-0 overflow-hidden bg-slate-900">
+      <section id="hero" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-24 md:pt-32 xl:pt-0 overflow-hidden bg-slate-900">
         <div className="absolute top-0 right-0 w-full h-full">
            <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/20 rounded-full blur-[120px] animate-pulse" />
            <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[100px]" />

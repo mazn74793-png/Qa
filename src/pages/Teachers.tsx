@@ -45,7 +45,7 @@ export default function Teachers() {
   if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold">جاري تحميل المدرسين...</div>;
 
   return (
-    <div id="teachers-page" className="pt-20 md:pt-24 min-h-screen">
+    <div id="teachers-page" className="min-h-screen">
       <section className="bg-primary text-white py-12 md:py-20 px-4">
         <div className="container mx-auto text-center">
           <h1 className="text-3xl md:text-5xl font-black mb-4 md:mb-6 text-white text-center">نخبة المدرسين</h1>

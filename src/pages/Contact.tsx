@@ -13,7 +13,7 @@ export default function Contact() {
   if (!settings) return <div className="min-h-screen flex items-center justify-center font-bold">جاري التحميل...</div>;
 
   return (
-    <div id="contact-page" className="pt-20 md:pt-24 min-h-screen pb-12 md:pb-20">
+    <div id="contact-page" className="min-h-screen pb-12 md:pb-20">
       <section className="bg-primary text-white py-12 md:py-20 px-4">
         <div className="container mx-auto text-center">
           <h1 className="text-3xl md:text-5xl font-black mb-4 md:mb-6">اتصل بنا</h1>

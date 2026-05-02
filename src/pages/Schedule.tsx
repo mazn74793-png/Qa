@@ -27,7 +27,7 @@ export default function Schedule() {
   if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-black text-xl animate-pulse">جاري تحميل الجدول... 🗓️</div>;
 
   return (
-    <div id="schedule-page" className="pt-24 min-h-screen bg-slate-50 pb-20 overflow-x-hidden">
+    <div id="schedule-page" className="min-h-screen bg-slate-50 pb-20 overflow-x-hidden">
       <section className="bg-slate-900 text-white py-24 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-[120px] -mr-48 -mt-48" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px]" />

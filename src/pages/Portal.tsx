@@ -175,7 +175,7 @@ export default function Portal() {
   const isAdminUser = !!actualIsAdmin;
 
   return (
-    <div className={cn("pb-20 min-h-screen bg-slate-50", isAdminUser ? "pt-32 md:pt-48" : "pt-24 md:pt-32")}>
+    <div className={cn("pb-20 min-h-screen bg-slate-50", isAdminUser && "pt-12 md:pt-16")}>
       {isAdminUser && (
         <div className="fixed top-16 md:top-20 left-0 right-0 z-[40] transition-all">
           <div className="bg-primary/95 backdrop-blur-md text-white py-2 md:py-3 shadow-xl border-b border-white/10">

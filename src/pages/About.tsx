@@ -13,7 +13,7 @@ export default function About() {
   if (!settings) return <div className="min-h-screen flex items-center justify-center font-bold">جاري التحميل...</div>;
 
   return (
-    <div id="about-page" className="pt-20 md:pt-24 min-h-screen">
+    <div id="about-page" className="min-h-screen">
       {/* Hero */}
       <section className="bg-primary text-white py-12 md:py-20 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-[100px]" />
