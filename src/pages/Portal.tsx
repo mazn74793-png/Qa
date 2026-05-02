@@ -363,6 +363,20 @@ function LoginView() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const getAuthErrorMessage = (err: any) => {
+    const code = err.code || '';
+    const msg = err.message || '';
+    
+    if (code === 'auth/email-already-in-use' || msg.includes('email-already-in-use')) return 'هذا البريد مسجل مسبقاً، جرب تسجيل الدخول.';
+    if (code === 'auth/invalid-email' || msg.includes('invalid-email')) return 'البريد الإلكتروني المدخل غير صالح.';
+    if (code === 'auth/weak-password' || msg.includes('weak-password')) return 'كلمة المرور ضعيفة جداً. يجب أن تكون 6 أحرف على الأقل.';
+    if (code === 'auth/operation-not-allowed' || msg.includes('operation-not-allowed')) return 'تسجيل الدخول بالبريد الإلكتروني غير مفعل حالياً. يرجى تفعيله من لوحة تحكم Firebase.';
+    if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found' || msg.includes('invalid-credential') || msg.includes('wrong-password') || msg.includes('user-not-found')) {
+      return 'بيانات الدخول غير صحيحة. يرجى التأكد من البريد الإلكتروني وكلمة المرور.';
+    }
+    return msg || 'حدث خطأ غير متوقع.';
+  };
+
   const handleAdminLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -371,7 +385,7 @@ function LoginView() {
       await loginWithEmail(email, password);
       navigate('/admin');
     } catch (err: any) {
-      setError('خطأ في بيانات الإدارة. يرجى التأكد من البريد وكلمة المرور.');
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -389,13 +403,7 @@ function LoginView() {
         await loginWithEmail(email, password);
       }
     } catch (err: any) {
-      if (err.message.includes('email-already-in-use')) {
-        setError('هذا البريد مسجل مسبقاً، جرب تسجيل الدخول.');
-      } else if (err.message.includes('wrong-password') || err.message.includes('user-not-found')) {
-        setError('بيانات الدخول غير صحيحة.');
-      } else {
-        setError(err.message || 'حدث خطأ غير متوقع.');
-      }
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
