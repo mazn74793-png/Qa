@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { getSiteSettings, updateSiteSettings, SiteSettings } from '@/src/services/siteService';
-import { Save, Plus, Trash2, Globe, Phone, Mail, MapPin, Type, Edit2, Image as ImageIcon } from 'lucide-react';
+import { Save, Plus, Trash2, Globe, Phone, Mail, MapPin, Type, Edit2, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { uploadToCloudinary } from '@/src/services/uploadService';
 
 export default function SiteEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { register, control, handleSubmit, reset } = useForm<SiteSettings>();
+  const [uploading, setUploading] = useState<string | null>(null);
+  const { register, control, handleSubmit, reset, setValue, watch } = useForm<SiteSettings>();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "stats"
@@ -31,6 +33,19 @@ export default function SiteEditor() {
     }
     load();
   }, [reset]);
+
+  const handleFileUpload = async (field: keyof SiteSettings, file: File) => {
+    setUploading(field);
+    try {
+      const url = await uploadToCloudinary(file);
+      setValue(field, url);
+    } catch (err) {
+      console.error(err);
+      alert('خطأ في الرفع');
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const onSubmit = async (data: SiteSettings) => {
     setSaving(true);
@@ -60,7 +75,20 @@ export default function SiteEditor() {
                </div>
                <div className="text-right">
                  <label className="block text-sm font-bold text-slate-700 mb-2">رابط صورة اللوجو (الشعار)</label>
-                 <input {...register('logoUrl')} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://..." />
+                 <div className="flex gap-2">
+                    <div className="relative flex-shrink-0">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={e => e.target.files?.[0] && handleFileUpload('logoUrl', e.target.files[0])}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                      <button type="button" className="bg-slate-100 p-4 rounded-xl text-slate-500 hover:bg-slate-200 transition-all">
+                        {uploading === 'logoUrl' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <input {...register('logoUrl')} className="flex-grow bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://..." />
+                 </div>
                </div>
             </div>
             <div className="text-right">
@@ -268,12 +296,38 @@ export default function SiteEditor() {
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="text-right">
-                  <label className="block text-sm font-bold text-slate-700 mb-2">رابط فيديو (لماذا نحن؟) - YouTube Embed</label>
-                  <input {...register('whyChooseUsVideoUrl')} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://www.youtube.com/embed/..." />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">رابط فيديو (لماذا نحن؟) - YouTube أو رفع مباشر</label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-shrink-0">
+                      <input 
+                        type="file" 
+                        accept="video/*"
+                        onChange={e => e.target.files?.[0] && handleFileUpload('whyChooseUsVideoUrl', e.target.files[0])}
+                        className="absolute inset-0 opacity-0 cursor-pointer" 
+                      />
+                      <button type="button" className="bg-slate-100 p-4 rounded-xl text-slate-500 hover:bg-slate-200 transition-all">
+                        {uploading === 'whyChooseUsVideoUrl' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <input {...register('whyChooseUsVideoUrl')} className="flex-grow bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="رابط فيديو أو ارفع مباشرة" />
+                  </div>
                 </div>
                 <div className="text-right">
                   <label className="block text-sm font-bold text-slate-700 mb-2">رابط صورة "عن المركز"</label>
-                  <input {...register('aboutImage')} className="w-full bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://..." />
+                  <div className="flex gap-2">
+                    <div className="relative flex-shrink-0">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={e => e.target.files?.[0] && handleFileUpload('aboutImage', e.target.files[0])}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                      <button type="button" className="bg-slate-100 p-4 rounded-xl text-slate-500 hover:bg-slate-200 transition-all">
+                        {uploading === 'aboutImage' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <input {...register('aboutImage')} className="flex-grow bg-slate-50 border-none rounded-xl p-4 text-right" placeholder="https://..." />
+                  </div>
                 </div>
              </div>
           </div>

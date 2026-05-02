@@ -33,8 +33,9 @@ import ExamManager from './ExamManager';
 import BookingManager from './BookingManager';
 import VideoManager from './VideoManager';
 import MaterialManager from './MaterialManager';
+import StudentManager from './StudentManager';
 
-type AdminTab = 'overview' | 'content' | 'courses' | 'teachers' | 'schedule' | 'exams' | 'bookings' | 'videos' | 'materials' | 'admins';
+type AdminTab = 'overview' | 'content' | 'courses' | 'teachers' | 'schedule' | 'exams' | 'bookings' | 'videos' | 'materials' | 'admins' | 'students';
 
 export default function AdminDashboard() {
   const { isAdmin, loading, user } = useAdmin();
@@ -87,6 +88,7 @@ export default function AdminDashboard() {
           <SidebarLink active={activeTab === 'overview'} onClick={() => handleTabChange('overview')} icon={LayoutDashboard} label="نظرة عامة" />
           <SidebarLink active={activeTab === 'content'} onClick={() => handleTabChange('content')} icon={Settings2} label="محتوى الموقع" />
           <SidebarLink active={activeTab === 'courses'} onClick={() => handleTabChange('courses')} icon={BookOpen} label="إدارة المواد" />
+          <SidebarLink active={activeTab === 'students'} onClick={() => handleTabChange('students')} icon={Users} label="إدارة الطلاب" />
           <SidebarLink active={activeTab === 'teachers'} onClick={() => handleTabChange('teachers')} icon={Users} label="إدارة المدرسين" />
           <SidebarLink active={activeTab === 'schedule'} onClick={() => handleTabChange('schedule')} icon={Calendar} label="إدارة الجدول" />
           <SidebarLink active={activeTab === 'videos'} onClick={() => handleTabChange('videos')} icon={Video} label="إدارة الفيديوهات" />
@@ -143,6 +145,7 @@ export default function AdminDashboard() {
           {activeTab === 'materials' && <MaterialManager />}
           {activeTab === 'exams' && <ExamManager />}
           {activeTab === 'bookings' && <BookingManager />}
+          {activeTab === 'students' && <StudentManager />}
           {activeTab === 'admins' && <AdminManager />}
         </div>
       </main>

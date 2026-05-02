@@ -19,6 +19,8 @@ import {
 } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
+  Search,
+  Users,
   LayoutDashboard, 
   BookOpen, 
   Calendar, 
@@ -42,7 +44,8 @@ import {
   ExternalLink,
   Download,
   Eye,
-  Settings2
+  Settings2,
+  FileSearch
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -51,7 +54,7 @@ export default function Portal() {
   const { isAdmin: isSystemAdmin, loading: adminLoading, user } = useAdmin();
   const [_, __, error] = useAuthState(auth);
   const [longLoading, setLongLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials' | 'bookings' | 'lectures'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials' | 'bookings' | 'lectures' | 'students'>('dashboard');
 
   // Fallback for long loading
   useEffect(() => {
@@ -260,6 +263,14 @@ export default function Portal() {
                   icon={Shield} 
                   label="الرئيسية" 
                 />
+                {isAdmin && (
+                  <TabButton 
+                    active={activeTab === 'students'} 
+                    onClick={() => setActiveTab('students')} 
+                    icon={Users} 
+                    label="الطلاب" 
+                  />
+                )}
                 <TabButton 
                   active={activeTab === 'schedule'} 
                   onClick={() => setActiveTab('schedule')} 
@@ -329,6 +340,7 @@ export default function Portal() {
                   {activeTab === 'dashboard' && <DashboardView user={user} userData={{...userData, role: isAdmin ? 'admin' : userData?.role}} />}
                   {activeTab === 'lectures' && <LecturesView />}
                   {activeTab === 'materials' && <MaterialsView />}
+                  {activeTab === 'students' && isAdmin && <StudentsView />}
                   {activeTab === 'schedule' && <ScheduleView isAdmin={isAdmin} onAdd={() => setShowAddClass(true)} />}
                   {activeTab === 'exams' && <ExamsView isAdmin={isAdmin} onTake={(exam: any) => setActiveExam(exam)} onAdd={() => setShowAddExam(true)} />}
                   {activeTab === 'grades' && <GradesView />}
@@ -587,6 +599,7 @@ function LoginView() {
 function MaterialsView() {
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'materials'), orderBy('createdAt', 'desc'));
@@ -605,10 +618,62 @@ function MaterialsView() {
       initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
       className="space-y-6 md:space-y-8 text-right pb-10"
     >
-      <div>
-        <h2 className="text-xl md:text-3xl font-black text-primary">المذكرات والملازم 📂</h2>
-        <p className="text-slate-500 font-bold text-xs md:text-base">كل الملفات التي تحتاجها في رحلتك الدراسية</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl md:text-3xl font-black text-primary">المذكرات والملازم 📂</h2>
+          <p className="text-slate-500 font-bold text-xs md:text-base">كل الملفات التي تحتاجها في رحلتك الدراسية</p>
+        </div>
       </div>
+
+      <AnimatePresence>
+        {selectedMaterial && (
+          <motion.div 
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 pointer-events-none"
+          >
+             <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm pointer-events-auto" onClick={() => setSelectedMaterial(null)} />
+             <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="bg-white w-full max-w-5xl h-full rounded-[32px] overflow-hidden shadow-2xl relative flex flex-col pointer-events-auto"
+             >
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                   <button 
+                      onClick={() => setSelectedMaterial(null)}
+                      className="p-2 hover:bg-slate-200 rounded-full transition-all"
+                   >
+                      <X className="w-6 h-6 text-slate-500" />
+                   </button>
+                   <div className="text-right">
+                      <h3 className="font-black text-primary">{selectedMaterial.title}</h3>
+                      <p className="text-[10px] text-slate-400 font-bold">{selectedMaterial.subject} - {selectedMaterial.teacherName}</p>
+                   </div>
+                </div>
+                <div className="flex-grow bg-slate-100 relative">
+                   <iframe 
+                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(selectedMaterial.url)}&embedded=true`}
+                      className="w-full h-full border-none"
+                      title={selectedMaterial.title}
+                   />
+                </div>
+                <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-4">
+                   <a 
+                     href={selectedMaterial.url}
+                     target="_blank"
+                     rel="noreferrer"
+                     download
+                     className="flex-1 bg-primary text-white py-4 rounded-2xl font-black text-center flex items-center justify-center gap-2"
+                   >
+                      <Download className="w-5 h-5" />
+                      تحميل الملف الأصلي
+                   </a>
+                </div>
+             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {loading ? (
@@ -636,19 +701,29 @@ function MaterialsView() {
                <div className="flex flex-wrap gap-2 mb-4">
                   <span className="text-[9px] md:text-[10px] bg-accent/10 text-accent px-3 py-1 rounded-full font-black">{mat.subject}</span>
                </div>
-               <h3 className="text-lg md:text-xl font-black text-primary mb-2 md:mb-3 leading-tight break-words">{mat.title}</h3>
+               <h3 className="text-lg md:text-xl font-black text-primary mb-2 md:mb-3 leading-tight break-words line-clamp-2">{mat.title}</h3>
                <p className="text-slate-400 text-[10px] md:text-xs font-bold mb-6 flex items-center gap-2">
                  <User className="w-3 h-3" /> {mat.teacherName}
                </p>
-               <a 
-                 href={mat.url}
-                 target="_blank"
-                 rel="noreferrer"
-                 className="flex items-center justify-center gap-2 md:gap-3 w-full p-3 md:p-4 bg-primary text-white rounded-xl md:rounded-3xl font-black text-xs md:text-sm hover:bg-accent transition-all shadow-lg shadow-primary/10 active:scale-95"
-               >
-                 <Download className="w-4 h-4 md:w-5 md:h-5" />
-                 تحميل الآن
-               </a>
+               
+               <div className="grid grid-cols-2 gap-2">
+                 <button 
+                   onClick={() => setSelectedMaterial(mat)}
+                   className="flex items-center justify-center gap-2 p-3 md:p-4 bg-slate-50 text-primary border border-slate-100 rounded-xl md:rounded-3xl font-black text-xs md:text-sm hover:bg-slate-100 transition-all active:scale-95"
+                 >
+                   <FileSearch className="w-4 h-4" />
+                   معاينة
+                 </button>
+                 <a 
+                   href={mat.url}
+                   target="_blank"
+                   rel="noreferrer"
+                   className="flex items-center justify-center gap-2 p-3 md:p-4 bg-primary text-white rounded-xl md:rounded-3xl font-black text-xs md:text-sm hover:bg-accent transition-all shadow-lg shadow-primary/10 active:scale-95"
+                 >
+                   <Download className="w-4 h-4" />
+                   تحميل
+                 </a>
+               </div>
             </motion.div>
           ))
         ) : (
@@ -710,12 +785,21 @@ function LecturesView() {
                 <X className="w-4 h-4 md:w-5 md:h-5" />
              </button>
              <div className="aspect-video">
-                <iframe 
-                   src={`https://www.youtube.com/embed/${selectedVideo.url}?autoplay=1`}
-                   className="w-full h-full"
-                   allow="autoplay; encrypted-media; picture-in-picture"
-                   allowFullScreen
-                ></iframe>
+                {selectedVideo.isDirectUpload ? (
+                  <video 
+                     src={selectedVideo.url}
+                     controls
+                     autoPlay
+                     className="w-full h-full"
+                  />
+                ) : (
+                  <iframe 
+                     src={`https://www.youtube.com/embed/${selectedVideo.url}?autoplay=1`}
+                     className="w-full h-full"
+                     allow="autoplay; encrypted-media; picture-in-picture"
+                     allowFullScreen
+                  ></iframe>
+                )}
              </div>
              <div className="p-6 md:p-8 bg-slate-900 text-white border-t border-white/5">
                 <div className="flex flex-wrap gap-2 mb-4">
@@ -754,11 +838,24 @@ function LecturesView() {
               className="bg-white rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm overflow-hidden group text-right hover:shadow-xl transition-all active:scale-[0.98]"
             >
                <div className="aspect-video bg-slate-100 relative overflow-hidden">
-                  <img 
-                    src={`https://img.youtube.com/vi/${vid.url}/mqdefault.jpg`} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
-                    alt={vid.title}
-                  />
+                  {vid.isDirectUpload ? (
+                    <div className="w-full h-full relative">
+                      <video 
+                        src={vid.url} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                        onMouseOver={e => (e.target as HTMLVideoElement).pause()}
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                         <Play className="w-10 h-10 text-white fill-current opacity-50" />
+                      </div>
+                    </div>
+                  ) : (
+                    <img 
+                      src={`https://img.youtube.com/vi/${vid.url}/mqdefault.jpg`} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                      alt={vid.title}
+                    />
+                  )}
                   <div className="absolute inset-0 bg-primary/20 group-hover:bg-primary/0 transition-all" />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
                     <div className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center text-accent shadow-xl border-4 border-accent/10">
@@ -1543,6 +1640,107 @@ function AddClassModal({ onClose }: { onClose: () => void }) {
           </button>
         </form>
       </motion.div>
+    </motion.div>
+  );
+}
+
+function StudentsView() {
+  const [students, setStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setStudents(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
+    }, (err) => {
+      console.error(err);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const filteredStudents = students.filter(s => 
+    (s.fullName || s.displayName || '')?.toLowerCase().includes(search.toLowerCase()) || 
+    (s.email || '')?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h2 className="text-2xl md:text-3xl font-black text-primary">قائمة الطلاب المسجلين</h2>
+        <div className="relative group w-full md:w-64">
+           <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
+           <input 
+             type="text" 
+             placeholder="بحث بالاسم أو الإيميل..." 
+             className="w-full bg-white border border-slate-100 rounded-2xl py-3 pr-10 pl-4 text-sm font-bold focus:ring-2 focus:ring-accent/20 outline-none transition-all shadow-sm"
+             value={search}
+             onChange={(e) => setSearch(e.target.value)}
+           />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="p-20 text-center text-slate-400 font-bold">جاري تحميل بيانات الطلاب...</div>
+        ) : filteredStudents.length === 0 ? (
+          <div className="p-20 text-center text-slate-400 font-bold">لا يوجد طلاب مطابقون للبحث.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">الطالب</th>
+                  <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">البريد الإلكتروني</th>
+                  <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">تاريخ التسجيل</th>
+                  <th className="px-6 py-4 text-xs font-black text-slate-500 uppercase tracking-widest">الدور</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filteredStudents.map((student) => (
+                  <tr key={student.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={student.photoURL || `https://ui-avatars.com/api/?name=${student.fullName || student.email}`} 
+                          className="w-10 h-10 rounded-xl object-cover border border-slate-100 shadow-sm"
+                        />
+                        <div>
+                          <p className="font-bold text-primary group-hover:text-accent transition-colors">{student.fullName || student.displayName || 'بدون اسم'}</p>
+                          <p className="text-[10px] font-mono text-slate-400 uppercase">{student.id.slice(0, 12)}...</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 font-medium text-slate-600 text-sm">
+                      {student.email}
+                    </td>
+                    <td className="px-6 py-4 font-bold text-slate-400 text-xs text-right" dir="rtl">
+                      {student.createdAt?.toDate ? 
+                        new Intl.DateTimeFormat('ar-EG', { dateStyle: 'long' }).format(student.createdAt.toDate()) : 
+                        'غير متوفر'
+                      }
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={cn(
+                        "px-3 py-1 rounded-lg text-[10px] font-black uppercase",
+                        student.role === 'admin' ? "bg-accent/10 text-accent" : "bg-primary/10 text-primary"
+                      )}>
+                        {student.role === 'admin' ? 'مدير' : 'طالب'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }

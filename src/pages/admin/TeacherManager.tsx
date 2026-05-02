@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { dataService } from '@/src/services/dataService';
-import { Plus, Trash2, Edit3, UserPlus, Image as ImageIcon, Save, X, Loader2, Upload } from 'lucide-react';
+import { Plus, Trash2, Edit3, UserPlus, Image as ImageIcon, Save, X, Loader2, Upload, Video } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { uploadToCloudinary } from '@/src/services/uploadService';
 import { cn } from '@/src/lib/utils';
@@ -22,6 +22,7 @@ export default function TeacherManager() {
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
 
   useEffect(() => {
     const unsubscribe = dataService.subscribeTeachers((data) => {
@@ -38,9 +39,14 @@ export default function TeacherManager() {
     try {
       const formData = new FormData(e.currentTarget);
       let imageUrl = formData.get('image') as string || 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=1000&auto=format&fit=crop';
+      let videoUrl = formData.get('introVideoUrl') as string || '';
       
       if (selectedFile) {
         imageUrl = await uploadToCloudinary(selectedFile);
+      }
+      
+      if (selectedVideo) {
+        videoUrl = await uploadToCloudinary(selectedVideo);
       }
 
       const data = {
@@ -48,7 +54,7 @@ export default function TeacherManager() {
         subject: formData.get('subject') as string,
         image: imageUrl,
         bio: formData.get('bio') as string,
-        introVideoUrl: formData.get('introVideoUrl') as string,
+        introVideoUrl: videoUrl,
       };
 
       if (editingTeacher?.id) {
@@ -60,6 +66,7 @@ export default function TeacherManager() {
       setEditingTeacher(null);
       setShowForm(false);
       setSelectedFile(null);
+      setSelectedVideo(null);
     } catch (err) {
       console.error(err);
       alert('حدث خطأ أثناء الحفظ');
@@ -67,7 +74,6 @@ export default function TeacherManager() {
       setUploading(false);
     }
   };
-
   const handleDelete = async (id: string) => {
     if (confirm('هل أنت متأكد من مسح هذا المدرس؟')) {
       await dataService.deleteTeacher(id);
@@ -149,9 +155,47 @@ export default function TeacherManager() {
                     </div>
                   </div>
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-slate-600">رابط الفيديو التعريفي (YouTube URL)</label>
-                  <input name="introVideoUrl" defaultValue={editingTeacher?.introVideoUrl} className="w-full bg-slate-50 border-none rounded-xl p-4 text-left font-mono text-sm" placeholder="https://youtube.com/watch?v=..." />
+                <div className="space-y-4 md:col-span-2 bg-slate-50 p-6 rounded-3xl border border-dashed border-slate-200">
+                  <p className="text-xs font-black text-slate-400 mb-2">الفيديو التعريفي (اختياري):</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2 text-right">
+                       <label className="text-[10px] font-bold text-slate-400 block px-2">الخيار 1: رفع فيديو من الجهاز</label>
+                       <div className="relative group">
+                          <input 
+                            type="file" 
+                            accept="video/*"
+                            onChange={e => setSelectedVideo(e.target.files?.[0] || null)}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          />
+                          <div className={cn(
+                            "w-full p-4 rounded-2xl border-2 border-white bg-white shadow-sm flex items-center justify-center gap-3 transition-all",
+                            selectedVideo ? "border-green-500 bg-green-50" : "group-hover:border-accent"
+                          )}>
+                             {selectedVideo ? (
+                               <>
+                                 <Video className="w-5 h-5 text-green-500" />
+                                 <span className="font-bold text-green-700 truncate max-w-[150px]">{selectedVideo.name}</span>
+                               </>
+                             ) : (
+                               <>
+                                 <Upload className="w-5 h-5 text-accent" />
+                                 <span className="font-bold text-slate-400">اختر فيديو</span>
+                               </>
+                             )}
+                          </div>
+                       </div>
+                    </div>
+                    <div className="space-y-2 text-right">
+                       <label className="text-[10px] font-bold text-slate-400 block px-2">الخيار 2: رابط يوتيوب (اختياري)</label>
+                       <input 
+                         name="introVideoUrl" 
+                         defaultValue={editingTeacher?.introVideoUrl} 
+                         disabled={!!selectedVideo}
+                         className="w-full bg-white border-2 border-white shadow-sm rounded-xl p-4 text-right disabled:opacity-50 font-mono text-sm" 
+                         placeholder="https://youtube.com/..." 
+                       />
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-bold text-slate-600">نبذة تعريفية</label>

@@ -8,9 +8,12 @@ import {
   User, 
   BookOpen,
   X,
-  ExternalLink
+  ExternalLink,
+  Upload,
+  Loader2
 } from 'lucide-react';
 import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
+import { uploadToCloudinary } from '@/src/services/uploadService';
 import { 
   collection, 
   addDoc, 
@@ -28,6 +31,8 @@ export default function VideoManager() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [newVideo, setNewVideo] = useState({
     title: '',
     url: '',
@@ -58,35 +63,47 @@ export default function VideoManager() {
   }, []);
 
   const handleSave = async () => {
-    if (!newVideo.title || !newVideo.url || !newVideo.teacherId) {
-      alert('يرجى ملء كافة البيانات الأساسية');
+    if (!newVideo.title || (!newVideo.url && !selectedFile) || !newVideo.teacherId) {
+      alert('يرجى ملء كافة البيانات الأساسية (العنوان، المدرس، ورابط أو ملف)');
       return;
     }
 
-    // Extract YouTube ID if it's a link
-    let finalUrl = newVideo.url;
-    if (newVideo.url.includes('youtube.com') || newVideo.url.includes('youtu.be')) {
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = newVideo.url.match(regExp);
-      if (match && match[2].length === 11) {
-        finalUrl = match[2]; // Store only ID
-      }
-    }
-
-    const teacher = teachers.find(t => t.id === newVideo.teacherId);
+    setUploading(true);
 
     try {
+      let finalUrl = newVideo.url;
+
+      // Handle File Upload if selected
+      if (selectedFile) {
+        finalUrl = await uploadToCloudinary(selectedFile);
+      } else {
+        // Handle YouTube Link
+        if (newVideo.url.includes('youtube.com') || newVideo.url.includes('youtu.be')) {
+          const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+          const match = newVideo.url.match(regExp);
+          if (match && match[2].length === 11) {
+            finalUrl = match[2]; 
+          }
+        }
+      }
+
+      const teacher = teachers.find(t => t.id === newVideo.teacherId);
+
       await addDoc(collection(db, 'videos'), {
         ...newVideo,
         url: finalUrl,
+        isDirectUpload: !!selectedFile,
         teacherName: teacher?.name || '',
         subject: teacher?.subject || newVideo.subject,
         createdAt: serverTimestamp()
       });
       setShowAdd(false);
+      setSelectedFile(null);
       setNewVideo({ title: '', url: '', teacherId: '', teacherName: '', subject: '', description: '' });
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'videos');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -123,11 +140,19 @@ export default function VideoManager() {
           videos.map((vid) => (
             <div key={vid.id} className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden group">
                <div className="aspect-video bg-slate-900 relative">
-                  <img 
-                    src={`https://img.youtube.com/vi/${vid.url}/mqdefault.jpg`} 
-                    className="w-full h-full object-cover opacity-60"
-                    alt={vid.title}
-                  />
+                  {vid.isDirectUpload ? (
+                    <video 
+                      src={vid.url} 
+                      className="w-full h-full object-cover"
+                      poster="https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=600&auto=format&fit=crop"
+                    />
+                  ) : (
+                    <img 
+                      src={`https://img.youtube.com/vi/${vid.url}/mqdefault.jpg`} 
+                      className="w-full h-full object-cover opacity-60"
+                      alt={vid.title}
+                    />
+                  )}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-12 h-12 bg-accent/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 group-hover:scale-110 transition-all">
                       <Play className="w-6 h-6 fill-current" />
@@ -198,16 +223,41 @@ export default function VideoManager() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-black text-slate-400 block px-2">رابط الفيديو (YouTube)</label>
-                  <input 
-                    type="text" 
-                    value={newVideo.url}
-                    onChange={e => setNewVideo({...newVideo, url: e.target.value})}
-                    placeholder="الصق رابط اليوتيوب هنا"
-                    className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-accent focus:bg-white rounded-3xl outline-none transition-all font-mono text-sm"
-                  />
+                <div className="space-y-4">
+                  <label className="text-sm font-black text-slate-400 block px-2">طريقة الفيديو</label>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => setSelectedFile(null)}
+                      className={`flex-1 py-3 rounded-2xl font-bold transition-all ${!selectedFile ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400'}`}
+                    >
+                      يوتيوب
+                    </button>
+                    <div className="flex-1 relative">
+                       <input 
+                         type="file" 
+                         accept="video/*" 
+                         onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                         className="absolute inset-0 opacity-0 cursor-pointer"
+                       />
+                       <div className={`w-full py-3 rounded-2xl font-bold text-center transition-all ${selectedFile ? 'bg-primary text-white text-xs' : 'bg-slate-100 text-slate-400'}`}>
+                         {selectedFile ? selectedFile.name.slice(0, 15) + '...' : 'رفع فيديو'}
+                       </div>
+                    </div>
+                  </div>
                 </div>
+
+                {!selectedFile && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-black text-slate-400 block px-2">رابط الفيديو (YouTube)</label>
+                    <input 
+                      type="text" 
+                      value={newVideo.url}
+                      onChange={e => setNewVideo({...newVideo, url: e.target.value})}
+                      placeholder="الصق رابط اليوتيوب هنا"
+                      className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-accent focus:bg-white rounded-3xl outline-none transition-all font-mono text-sm"
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <label className="text-sm font-black text-slate-400 block px-2">اختر المدرس</label>
@@ -237,10 +287,11 @@ export default function VideoManager() {
                 <div className="flex gap-4 pt-4">
                   <button 
                     onClick={handleSave}
-                    className="flex-[2] bg-primary text-white p-5 rounded-3xl font-black text-lg hover:shadow-2xl hover:shadow-primary/20 transition-all flex items-center justify-center gap-2"
+                    disabled={uploading}
+                    className="flex-[2] bg-primary text-white p-5 rounded-3xl font-black text-lg hover:shadow-2xl hover:shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <Video className="w-6 h-6" />
-                    حفظ ونشر الفيديو
+                    {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Video className="w-6 h-6" />}
+                    {uploading ? 'جاري الرفع...' : 'حفظ ونشر الفيديو'}
                   </button>
                   <button 
                     onClick={() => setShowAdd(false)}

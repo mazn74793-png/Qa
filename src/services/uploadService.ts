@@ -12,10 +12,17 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
   formData.append('file', file);
   formData.append('upload_preset', UPLOAD_PRESET);
   
+  // Determine resource type
+  // Use 'raw' for PDFs to avoid 401 errors when served as images
+  let resourceType = 'auto';
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    resourceType = 'raw';
+  }
+
   try {
-    console.log('Uploading to Cloudinary...');
+    console.log(`Uploading ${file.name} as ${resourceType}...`);
     const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,
       {
         method: 'POST',
         body: formData,
@@ -30,6 +37,9 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
 
     const data = await response.json();
     console.log('Cloudinary Upload Success:', data.secure_url);
+    
+    // For PDFs, if Cloudinary returns an 'image' URL, it might not open as a document.
+    // Cloudinary 'auto' usually returns the correct URL in data.secure_url.
     return data.secure_url;
   } catch (error) {
     console.error('Cloudinary Upload Catch:', error);

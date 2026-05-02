@@ -149,12 +149,21 @@ export default function Teachers() {
               >
                 <X className="w-6 h-6" />
               </button>
-              <iframe
-                src={getYoutubeUrl(activeVideo)}
-                className="w-full h-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              {activeVideo.includes('cloudinary') ? (
+                <video 
+                  src={activeVideo} 
+                  controls 
+                  autoPlay 
+                  className="w-full h-full border-0"
+                />
+              ) : (
+                <iframe
+                  src={getYoutubeUrl(activeVideo)}
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              )}
             </motion.div>
           </motion.div>
         )}

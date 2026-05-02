@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCircle2, TrendingUp, Users, BookOpen, Clock, Heart, Edit2, Save, X, Settings, ShieldCheck, Image as ImageIcon, Calendar, GraduationCap, ChevronLeft, Play, Download, Search, Sparkles, Youtube } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, TrendingUp, Users, BookOpen, Clock, Heart, Edit2, Save, X, Settings, ShieldCheck, Image as ImageIcon, Calendar, GraduationCap, ChevronLeft, Play, Video, Download, Search, Sparkles, Youtube } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getSiteSettings, updateSiteSettings, SiteSettings } from '@/src/services/siteService';
 import { dataService } from '@/src/services/dataService';
@@ -453,17 +453,25 @@ export default function Home() {
              <div className="relative group/video">
                 <div className="aspect-[4/3] bg-primary rounded-[60px] p-1 shadow-2xl relative z-10 overflow-hidden border-4 border-white">
                    {currentData.whyChooseUsVideoUrl ? (
-                     <iframe 
-                       src={currentData.whyChooseUsVideoUrl} 
-                       className="w-full h-full rounded-[56px]"
-                       title="Why Choose Us"
-                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                       allowFullScreen
-                     />
+                     currentData.whyChooseUsVideoUrl.includes('cloudinary') ? (
+                       <video 
+                         src={currentData.whyChooseUsVideoUrl} 
+                         controls 
+                         className="w-full h-full rounded-[56px]"
+                       />
+                     ) : (
+                       <iframe 
+                         src={currentData.whyChooseUsVideoUrl} 
+                         className="w-full h-full rounded-[56px]"
+                         title="Why Choose Us"
+                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                         allowFullScreen
+                       />
+                     )
                    ) : (
                      <div className="w-full h-full flex flex-col items-center justify-center text-white/30 gap-4 bg-slate-800">
                         <Youtube className="w-20 h-20" />
-                        <p className="font-bold">أضف رابط فيديو يوتيوب هنا</p>
+                        <p className="font-bold">أضف رابط فيديو يوتيوب أو Cloudinary هنا</p>
                      </div>
                    )}
                    
@@ -471,12 +479,12 @@ export default function Home() {
                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/video:opacity-100 transition-opacity z-20">
                         <button 
                           onClick={() => {
-                            const url = prompt('أدخل رابط فيديو Embed الجديد (YouTube):', currentData.whyChooseUsVideoUrl);
-                            if (url) updateField('whyChooseUsVideoUrl', url);
+                            const url = prompt('أدخل رابط الفيديو الجديد (YouTube Embed أو Cloudinary):', currentData.whyChooseUsVideoUrl);
+                            if (url !== null) updateField('whyChooseUsVideoUrl', url);
                           }}
                           className="bg-white text-primary px-6 py-3 rounded-2xl font-black flex items-center gap-2"
                         >
-                          <Youtube className="w-6 h-6 text-red-500" />
+                          <Video className="w-6 h-6 text-accent" />
                           تغيير الفيديو
                         </button>
                      </div>
