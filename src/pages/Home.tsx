@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, CheckCircle2, TrendingUp, Users, BookOpen, Clock, Heart, Edit2, Save, X, Settings, ShieldCheck, Image as ImageIcon, Calendar, GraduationCap, ChevronLeft, Play, Video, Download, Search, Sparkles, Youtube } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, TrendingUp, Users, BookOpen, Clock, Heart, Edit2, Save, X, Settings, ShieldCheck, Image as ImageIcon, Calendar, GraduationCap, ChevronLeft, Play, Video, Download, Search, Sparkles, Youtube, Volume2, VolumeX } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getSiteSettings, updateSiteSettings, SiteSettings } from '@/src/services/siteService';
 import { dataService } from '@/src/services/dataService';
@@ -14,6 +14,41 @@ export default function Home() {
   const [realSchedule, setRealSchedule] = useState<any[]>([]);
   const [realTeachers, setRealTeachers] = useState<any[]>([]);
   const { isAdmin } = useAdmin();
+  const videoRef = useRef<HTMLDivElement>(null);
+  const nativeVideoRef = useRef<HTMLVideoElement>(null);
+  const [shouldPlay, setShouldPlay] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const currentData = isEditing ? editData : settings;
+
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setShouldPlay(true);
+          if (nativeVideoRef.current) {
+            nativeVideoRef.current.play().catch(err => console.error("Video play failed:", err));
+          }
+        }
+      });
+    }, options);
+
+    if (videoRef.current) {
+      observer.observe(videoRef.current);
+    }
+
+    return () => {
+      if (videoRef.current) {
+        observer.unobserve(videoRef.current);
+      }
+    };
+  }, [currentData?.whyChooseUsVideoUrl]); // Use optional chaining for safety
 
   useEffect(() => {
     getSiteSettings().then(data => {
@@ -44,8 +79,6 @@ export default function Home() {
   };
 
   if (!settings || !editData) return <div className="min-h-screen bg-primary flex items-center justify-center text-white">جاري التحميل...</div>;
-
-  const currentData = isEditing ? editData : settings;
 
   const updateField = (field: keyof SiteSettings, value: string) => {
     setEditData(prev => prev ? { ...prev, [field]: value } : null);
@@ -431,7 +464,7 @@ export default function Home() {
                 <span className="text-accent font-black tracking-widest uppercase text-sm mb-3 block">لماذا نحن؟</span>
                 <h2 className="text-3xl md:text-6xl font-black text-primary leading-tight mb-8">التعليم كما يجب أن يكون</h2>
                 <div className="space-y-6">
-                   {(currentData.features || []).map((feature, i) => (
+                   {(currentData?.features || []).map((feature, i) => (
                       <div key={i} className="flex items-start justify-end gap-6 group">
                          <div className="text-right">
                             <h4 className="text-xl font-black text-primary mb-1 group-hover:text-accent transition-colors">{feature.title}</h4>
@@ -450,23 +483,49 @@ export default function Home() {
                 </div>
              </div>
              
-             <div className="relative group/video">
-                <div className="aspect-[4/3] bg-primary rounded-[60px] p-1 shadow-2xl relative z-10 overflow-hidden border-4 border-white">
-                   {currentData.whyChooseUsVideoUrl ? (
-                     currentData.whyChooseUsVideoUrl.includes('cloudinary') ? (
-                       <video 
-                         src={currentData.whyChooseUsVideoUrl} 
-                         controls 
-                         className="w-full h-full rounded-[56px]"
-                       />
+             <div className="relative group/video" ref={videoRef}>
+                <div className="aspect-[4/3] bg-primary rounded-[60px] p-1 shadow-2xl relative z-10 overflow-hidden border-4 border-white select-none">
+                   {currentData?.whyChooseUsVideoUrl ? (
+                     currentData.whyChooseUsVideoUrl.includes('cloudinary') || currentData.whyChooseUsVideoUrl.endsWith('.mp4') ? (
+                       <div className="w-full h-full relative">
+                         <video 
+                           ref={nativeVideoRef}
+                           src={currentData.whyChooseUsVideoUrl} 
+                           muted={isMuted}
+                           loop
+                           playsInline
+                           autoPlay={true}
+                           className="w-full h-full rounded-[56px] object-cover bg-black"
+                         />
+                         <button 
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             setIsMuted(!isMuted);
+                           }}
+                           className="absolute bottom-10 right-10 z-30 bg-black/50 hover:bg-black/70 text-white p-4 rounded-full backdrop-blur-md transition-all pointer-events-auto"
+                         >
+                           {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                         </button>
+                       </div>
                      ) : (
-                       <iframe 
-                         src={currentData.whyChooseUsVideoUrl} 
-                         className="w-full h-full rounded-[56px]"
-                         title="Why Choose Us"
-                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                         allowFullScreen
-                       />
+                       <div className="w-full h-full relative">
+                         <iframe 
+                           key={shouldPlay ? `play-${isMuted}` : `stop-${isMuted}`}
+                           src={`${currentData.whyChooseUsVideoUrl}${currentData.whyChooseUsVideoUrl.includes('?') ? '&' : '?'}autoplay=${shouldPlay ? '1' : '0'}&mute=${isMuted ? '1' : '0'}&controls=0&loop=1&playlist=${currentData.whyChooseUsVideoUrl.split('/').pop()?.split('?')[0]}&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1`} 
+                           className="w-full h-full rounded-[56px] object-cover scale-105 pointer-events-none"
+                           title="Company Video"
+                           allow="autoplay; encrypted-media"
+                         />
+                         <button 
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             setIsMuted(!isMuted);
+                           }}
+                           className="absolute bottom-10 right-10 z-30 bg-black/50 hover:bg-black/70 text-white p-4 rounded-full backdrop-blur-md transition-all pointer-events-auto"
+                         >
+                           {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                         </button>
+                       </div>
                      )
                    ) : (
                      <div className="w-full h-full flex flex-col items-center justify-center text-white/30 gap-4 bg-slate-800">
@@ -476,10 +535,10 @@ export default function Home() {
                    )}
                    
                    {isEditing && (
-                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/video:opacity-100 transition-opacity z-20">
+                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/video:opacity-100 transition-opacity z-20 pointer-events-auto">
                         <button 
                           onClick={() => {
-                            const url = prompt('أدخل رابط الفيديو الجديد (YouTube Embed أو Cloudinary):', currentData.whyChooseUsVideoUrl);
+                            const url = prompt('أدخل رابط الفيديو الجديد (YouTube Embed أو Cloudinary):', currentData?.whyChooseUsVideoUrl);
                             if (url !== null) updateField('whyChooseUsVideoUrl', url);
                           }}
                           className="bg-white text-primary px-6 py-3 rounded-2xl font-black flex items-center gap-2"
