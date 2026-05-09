@@ -483,7 +483,7 @@ export default function Home() {
                 </div>
              </div>
              
-             <div className="relative group/video" ref={videoRef}>
+              <div className="relative group/video" ref={videoRef}>
                 <div className="aspect-[4/3] bg-primary rounded-[60px] p-1 shadow-2xl relative z-10 overflow-hidden border-4 border-white select-none">
                    {currentData?.whyChooseUsVideoUrl ? (
                      currentData.whyChooseUsVideoUrl.includes('cloudinary') || currentData.whyChooseUsVideoUrl.endsWith('.mp4') ? (
@@ -533,25 +533,26 @@ export default function Home() {
                         <p className="font-bold">أضف رابط فيديو يوتيوب أو Cloudinary هنا</p>
                      </div>
                    )}
-                   
-                   {isEditing && (
-                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/video:opacity-100 transition-opacity z-20 pointer-events-auto">
-                        <button 
-                          onClick={() => {
-                            const url = prompt('أدخل رابط الفيديو الجديد (YouTube Embed أو Cloudinary):', currentData?.whyChooseUsVideoUrl);
-                            if (url !== null) updateField('whyChooseUsVideoUrl', url);
-                          }}
-                          className="bg-white text-primary px-6 py-3 rounded-2xl font-black flex items-center gap-2"
-                        >
-                          <Video className="w-6 h-6 text-accent" />
-                          تغيير الفيديو
-                        </button>
-                     </div>
-                   )}
                 </div>
+
+                {isEditing && (
+                  <div className="mt-4 bg-white p-4 rounded-3xl border-2 border-accent shadow-xl relative z-20">
+                    <label className="block text-xs font-black text-accent mb-2 uppercase tracking-widest text-right">رابط الفيديو (YouTube Embed أو MP4)</label>
+                    <input 
+                      type="text" 
+                      value={currentData.whyChooseUsVideoUrl}
+                      onChange={(e) => updateField('whyChooseUsVideoUrl', e.target.value)}
+                      placeholder="لصق الرابط هنا..."
+                      className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-accent transition-all font-mono text-sm text-right"
+                      dir="ltr"
+                    />
+                    <p className="mt-2 text-[10px] text-slate-400 font-bold text-right">مثال: https://www.youtube.com/embed/VIDEO_ID</p>
+                  </div>
+                )}
+
                 <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent/20 rounded-full blur-[80px]" />
                 <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-primary/10 rounded-full blur-[100px]" />
-             </div>
+              </div>
           </div>
         </div>
       </section>

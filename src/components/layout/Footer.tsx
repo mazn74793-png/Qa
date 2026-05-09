@@ -85,6 +85,12 @@ export default function Footer() {
           <p className="text-white/20 text-[10px] md:text-xs font-bold font-mono">
             ALL RIGHTS RESERVED &copy; {new Date().getFullYear()} QA EDUCATION CENTER
           </p>
+          {/* SEO Keywords - hidden from view but visible to crawlers */}
+          <div className="sr-only opacity-0 absolute pointer-events-none">
+            <h1>سنتر qa</h1>
+            <h2>QA Center</h2>
+            <h3>مركز QA التعليمي</h3>
+          </div>
         </div>
       </div>
     </footer>
