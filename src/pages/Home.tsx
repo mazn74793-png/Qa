@@ -203,7 +203,7 @@ export default function Home() {
                className="relative hidden lg:block"
             >
               <div className="relative z-10 p-2 bg-white/5 backdrop-blur-3xl rounded-[60px] border border-white/10 shadow-2xl">
-                <img src={currentData.heroImage} alt="Students" className="rounded-[50px] w-full h-[650px] object-cover ring-1 ring-white/10" referrerPolicy="no-referrer" />
+                <img src={currentData.heroImage} alt="Students" className="rounded-[50px] w-full h-[650px] object-cover ring-1 ring-white/10" referrerPolicy="no-referrer" loading="lazy" />
                 
                 {/* Floating Card */}
                 <motion.div 
@@ -293,7 +293,7 @@ export default function Home() {
                {realTeachers.length > 0 ? (
                  realTeachers.map((t, idx) => (
                    <div key={idx} className="group relative rounded-[40px] overflow-hidden aspect-[4/5] bg-white/5 border border-white/5">
-                      <img src={t.image || 'https://via.placeholder.com/400x500?text=Teacher'} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={t.name} />
+                      <img src={t.image || 'https://via.placeholder.com/400x500?text=Teacher'} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={t.name} loading="lazy" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent p-8 flex flex-col justify-end text-right">
                          <p className="text-accent font-black text-sm mb-1 uppercase tracking-tighter">{t.subject}</p>
                          <h3 className="text-xl font-black text-white">{t.name}</h3>
@@ -315,7 +315,7 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                <div className="order-2 lg:order-1 relative group scale-95 hover:scale-100 transition-transform duration-700">
                   <div className="aspect-video lg:aspect-square bg-slate-100 rounded-[60px] overflow-hidden shadow-2xl border-4 border-slate-50 relative">
-                    <img src={currentData.aboutImage} className="w-full h-full object-cover" />
+                    <img src={currentData.aboutImage} className="w-full h-full object-cover" loading="lazy" />
                   </div>
                   <div className="absolute -bottom-10 -right-10 bg-accent text-white p-10 rounded-full shadow-2xl shadow-accent/40 hidden md:flex flex-col items-center justify-center w-48 h-48">
                      <p className="font-black text-4xl mb-1 tracking-tighter">+10</p>
@@ -402,12 +402,12 @@ export default function Home() {
                         <p className="text-[10px] uppercase font-bold opacity-40">مذكرة الشرح</p>
                      </div>
                      <div className="aspect-[3/4] bg-white rounded-[32px] shadow-xl border border-slate-100 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?w=500" className="w-full h-full object-cover" />
+                        <img src="https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?w=500" className="w-full h-full object-cover" loading="lazy" />
                      </div>
                   </div>
                   <div className="space-y-4">
                      <div className="aspect-[3/4] bg-white rounded-[32px] shadow-xl border border-slate-100 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500" className="w-full h-full object-cover" />
+                        <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500" className="w-full h-full object-cover" loading="lazy" />
                      </div>
                      <div className="aspect-[3/4] bg-white rounded-[32px] shadow-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center group hover:bg-accent hover:text-white transition-all cursor-default">
                         <CheckCircle2 className="w-12 h-12 mb-4 text-primary group-hover:text-white" />

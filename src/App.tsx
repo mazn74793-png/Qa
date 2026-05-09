@@ -1,17 +1,27 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
-import Home from './pages/Home';
-import About from './pages/About';
-import Courses from './pages/Courses';
-import Teachers from './pages/Teachers';
-import Schedule from './pages/Schedule';
-import Contact from './pages/Contact';
-import Portal from './pages/Portal';
-import AdminDashboard from './pages/admin/Dashboard';
 import { useState } from 'react';
 import { cn } from './lib/utils';
+
+// Lazy loading components
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Courses = lazy(() => import('./pages/Courses'));
+const Teachers = lazy(() => import('./pages/Teachers'));
+const Schedule = lazy(() => import('./pages/Schedule'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Portal = lazy(() => import('./pages/Portal'));
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+
+function PageLoader() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-12 h-12 border-4 border-primary border-t-accent rounded-full animate-spin"></div>
+    </div>
+  );
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -55,16 +65,18 @@ export default function App() {
     <Router>
       <ScrollToTop />
       <LayoutWrapper>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/teachers" element={<Teachers />} />
-          <Route path="/schedule" element={<Schedule />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/portal" element={<Portal />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-        </Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/teachers" element={<Teachers />} />
+            <Route path="/schedule" element={<Schedule />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/portal" element={<Portal />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+          </Routes>
+        </Suspense>
       </LayoutWrapper>
     </Router>
   );
