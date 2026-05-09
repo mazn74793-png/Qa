@@ -1,20 +1,37 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# QA Center - سنتر QA التعليمي 🎓
 
-# Run and deploy your AI Studio app
+منصة تعليمية متكاملة لسنتر QA التعليمي، تهدف لتوفير أفضل تجربة تعليمية للطلاب وأولياء الأمور في مصر (الثانوية العامة).
 
-This contains everything you need to run your app locally.
+## 🚀 المميزات الرئيسية
+- **الصفحة الرئيسية (Landing Page):** واجهة عصرية وسريعة مع استعراض لأهم المدرسين والمواد.
+- **جدول الحصص:** جدول أسبوعي محدث لحظياً مع إمكانية البحث والتصفية.
+- **نخبة المدرسين:** عرض تفصيلي للمدرسين مع فيديوهات تعريفية وجداولهم الخاصة.
+- **المواد الدراسية:** استعراض المناهج الدراسية والمذكرات المتاحة.
+- **بوابة الطالب:** نظام تسجيل دخول لمتابعة الحصص، الامتحانات، والنتائج.
+- **لوحة التحكم (Admin):** إمكانية تعديل محتوى الصفحة الرئيسية والبيانات بسهولة.
+- **دعم واتساب:** زر عائم للتواصل المباشر مع الدعم الفني.
+- **SEO & Performance:** أداء عالي مع دعم كامل لمحركات البحث ومشاركة الروابط.
 
-View your app in AI Studio: https://ai.studio/apps/19a6fa68-d1ca-4057-834b-d223b580da85
+## 🛠 التكنولوجيا المستخدمة
+- **React 18 + Vite**
+- **Tailwind CSS** (تصميم عصري ومتجاوب)
+- **Framer Motion** (حركات وانتقالات سلسة)
+- **Firebase** (Firestore, Auth, Storage)
+- **Lucide React** (أيقونات)
 
-## Run Locally
+## 📦 التثبيت والتشغيل
+1. قم بتحميل المستودع.
+2. قم بتثبيت التبعيات: `npm install`
+3. قم بإنشاء ملف `.env` بناءً على `.env.example` وأضف بيانات Firebase الخاصة بك.
+4. ابدأ التشغيل: `npm run dev`
 
-**Prerequisites:**  Node.js
+## 📸 لقطات من التطبيق
+*(يمكن إضافة لقطات الشاشة هنا)*
 
+## 🔗 روابط هامة
+- **العرض المباشر (Demo):** [https://center-qa.vercel.app/](https://center-qa.vercel.app/)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 📝 ملاحظات للمطورين
+- يعتمد النظام على Firebase بشكل أساسي.
+- تأكد من تفعيل Google Login في إعدادات Firebase.
+- تأكد من ضبط `firestore.rules` لضمان حماية البيانات.

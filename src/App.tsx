@@ -10,7 +10,8 @@ import Schedule from './pages/Schedule';
 import Contact from './pages/Contact';
 import Portal from './pages/Portal';
 import AdminDashboard from './pages/admin/Dashboard';
-import { motion, AnimatePresence } from 'motion/react';
+import WhatsAppButton from './components/ui/WhatsAppButton';
+import { useState } from 'react';
 import { cn } from './lib/utils';
 
 function ScrollToTop() {
@@ -43,6 +44,14 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const [settings, setSettings] = useState<any>(null);
+  
+  useEffect(() => {
+    import('@/src/services/siteService').then(service => {
+      service.getSiteSettings().then(setSettings);
+    });
+  }, []);
+
   return (
     <Router>
       <ScrollToTop />
@@ -58,6 +67,7 @@ export default function App() {
           <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </LayoutWrapper>
+      <WhatsAppButton phone={settings?.whatsappUrl || "01234567890"} />
     </Router>
   );
 }

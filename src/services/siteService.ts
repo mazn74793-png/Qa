@@ -67,8 +67,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   missionText: "الارتقاء بمستوى الطالب المصري وتوفير كل ما يحتاجه للتفوق في مكان واحد.",
   facebookUrl: "#",
   instagramUrl: "#",
-  whatsappUrl: "#",
-  whyChooseUsVideoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
+  whatsappUrl: "01234567890",
+  whyChooseUsVideoUrl: "https://www.youtube.com/embed/SzhxO5S5-rM"
 };
 
 export async function getSiteSettings(): Promise<SiteSettings> {

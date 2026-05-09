@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { User, Star, Award, GraduationCap, ChevronLeft, Play, X } from 'lucide-react';
+import { User, Star, Award, GraduationCap, ChevronLeft, Play, X, Search } from 'lucide-react';
 import { dataService } from '@/src/services/dataService';
 import { Link } from 'react-router-dom';
 import { AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
+import { TeacherSkeleton } from '../components/ui/Skeleton';
 
 function getYoutubeUrl(url: string) {
   if (!url) return '';
@@ -21,8 +22,10 @@ export default function Teachers() {
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const [selectedTeacherSchedule, setSelectedTeacherSchedule] = useState<any | null>(null);
   const [filter, setFilter] = useState('الكل');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    setLoading(true);
     Promise.all([
       dataService.getTeachers(),
       dataService.getSchedule()
@@ -30,19 +33,23 @@ export default function Teachers() {
       setTeachers(teachersData);
       setSchedule(scheduleData);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   const subjects = ['الكل', ...new Set(teachers.map(t => t.subject).filter(Boolean))];
-  const filteredTeachers = filter === 'الكل' 
-    ? teachers 
-    : teachers.filter(t => t.subject === filter);
+  
+  const filteredTeachers = teachers.filter(t => {
+    const matchesSubject = filter === 'الكل' || t.subject === filter;
+    const nameStr = (t.name || '').toLowerCase();
+    const subjectStr = (t.subject || '').toLowerCase();
+    const query = searchQuery.toLowerCase();
+    const matchesSearch = nameStr.includes(query) || subjectStr.includes(query);
+    return matchesSubject && matchesSearch;
+  });
 
   const getTeacherSchedule = (teacherName: string) => {
     return schedule.filter(slot => slot.teacher === teacherName);
   };
-
-  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold">جاري تحميل المدرسين...</div>;
 
   return (
     <div id="teachers-page" className="min-h-screen">
@@ -57,24 +64,40 @@ export default function Teachers() {
 
       <section className="py-12 md:py-20 bg-slate-50">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-10 md:mb-16">
-            {subjects.map(s => (
-              <button 
-                key={s}
-                onClick={() => setFilter(s)}
-                className={cn(
-                  "px-4 md:px-6 py-2 rounded-xl md:rounded-2xl text-xs md:text-sm font-black transition-all border",
-                  filter === s 
-                    ? "bg-accent text-white border-accent shadow-lg shadow-accent/20" 
-                    : "bg-white text-slate-500 border-slate-100 hover:border-accent hover:text-accent"
-                )}
-              >
-                {s}
-              </button>
-            ))}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10 md:mb-16">
+            <div className="relative w-full md:w-96 order-2 md:order-1">
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input 
+                type="text"
+                placeholder="ابحث عن مدرس أو مادة..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white border border-slate-200 h-12 pr-12 pl-4 rounded-2xl font-bold focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-all shadow-sm"
+              />
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 md:gap-3 order-1 md:order-2">
+              {subjects.map(s => (
+                <button 
+                  key={s}
+                  onClick={() => setFilter(s)}
+                  className={cn(
+                    "px-4 md:px-6 py-2 rounded-xl md:rounded-2xl text-xs md:text-sm font-black transition-all border",
+                    filter === s 
+                      ? "bg-accent text-white border-accent shadow-lg shadow-accent/20" 
+                      : "bg-white text-slate-500 border-slate-100 hover:border-accent hover:text-accent"
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {filteredTeachers.length > 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
+              {[1, 2, 3, 4].map(i => <TeacherSkeleton key={i} />)}
+            </div>
+          ) : filteredTeachers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
               {filteredTeachers.map((teacher, i) => (
                 <motion.div 

@@ -12,6 +12,7 @@ export default function Schedule() {
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
+    setLoading(true);
     const unsubscribe = dataService.subscribeSchedule((data) => {
       setSchedule(data);
       setLoading(false);
@@ -21,10 +22,8 @@ export default function Schedule() {
 
   const filteredSchedule = schedule.filter(slot => 
     slot.day === activeDay && 
-    (slot.subject.includes(filter) || slot.teacher.includes(filter))
+    ((slot.subject || '').includes(filter) || (slot.teacher || '').includes(filter))
   );
-
-  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-black text-xl animate-pulse">جاري تحميل الجدول... 🗓️</div>;
 
   return (
     <div id="schedule-page" className="min-h-screen bg-slate-50 pb-20 overflow-x-hidden">
@@ -33,8 +32,8 @@ export default function Schedule() {
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px]" />
         
         <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-            <div className="text-right">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-12 text-right">
+            <div className="text-right w-full md:w-auto">
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -65,12 +64,12 @@ export default function Schedule() {
 
       <section className="container mx-auto px-4 md:px-6 -mt-12 relative z-20">
          <div className="bg-white rounded-[40px] shadow-2xl border border-slate-100 p-4 mb-8">
-            <div className="flex flex-wrap items-center gap-4 p-2 justify-end">
+            <div className="flex flex-wrap items-center gap-4 p-2 justify-center md:justify-end">
                {DAYS.map((day) => (
                  <button
                    key={day}
                    onClick={() => setActiveDay(day)}
-                   className={`px-8 py-4 rounded-2xl font-black transition-all text-lg whitespace-nowrap ${
+                   className={`px-4 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-black transition-all text-sm md:text-lg whitespace-nowrap ${
                      activeDay === day 
                      ? 'bg-accent text-white shadow-xl shadow-accent/30 scale-105' 
                      : 'bg-transparent text-slate-400 hover:bg-slate-50'
@@ -83,7 +82,6 @@ export default function Schedule() {
          </div>
 
         <div className="max-w-5xl mx-auto space-y-8">
-           {/* Quick Search */}
            <div className="relative">
               <Search className="absolute right-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300" />
               <input 
@@ -95,14 +93,14 @@ export default function Schedule() {
               />
            </div>
 
-           <div className="bg-white rounded-[50px] overflow-hidden shadow-sm border border-slate-100 min-h-[400px]">
-              <div className="p-8 md:p-12">
+           <div className="bg-white rounded-[40px] md:rounded-[50px] overflow-hidden shadow-sm border border-slate-100 min-h-[400px]">
+              <div className="p-6 md:p-12 text-right">
                  <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
                     <div className="text-right">
-                       <h2 className="text-3xl font-black text-primary">حصص يوم {activeDay}</h2>
+                       <h2 className="text-2xl md:text-3xl font-black text-primary">حصص يوم {activeDay}</h2>
                        <p className="text-slate-400 font-bold">يتم تحديث المواعيد تلقائياً</p>
                     </div>
-                    {filteredSchedule.length > 0 && (
+                    {!loading && filteredSchedule.length > 0 && (
                       <div className="bg-slate-50 px-6 py-3 rounded-2xl border border-slate-100 text-slate-500 font-black flex items-center gap-2">
                          <span className="text-primary">{filteredSchedule.length}</span>
                          حصة متاحة
@@ -111,16 +109,23 @@ export default function Schedule() {
                  </div>
 
                  <div className="space-y-6">
-                    <AnimatePresence mode="wait">
-                       <motion.div
-                         key={activeDay + filter}
-                         initial={{ opacity: 0, x: 20 }}
-                         animate={{ opacity: 1, x: 0 }}
-                         exit={{ opacity: 0, x: -20 }}
-                         className="space-y-6"
-                       >
-                          {filteredSchedule.length > 0 ? (
-                            filteredSchedule.sort((a, b) => a.time.localeCompare(b.time)).map((item, i) => (
+                    {loading ? (
+                      <div className="space-y-6">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="h-40 bg-slate-50 animate-pulse rounded-[40px]" />
+                        ))}
+                      </div>
+                    ) : (
+                      <AnimatePresence mode="wait">
+                         <motion.div
+                           key={activeDay + filter}
+                           initial={{ opacity: 0, x: 20 }}
+                           animate={{ opacity: 1, x: 0 }}
+                           exit={{ opacity: 0, x: -20 }}
+                           className="space-y-6"
+                         >
+                            {filteredSchedule.length > 0 ? (
+                              filteredSchedule.sort((a, b) => a.time.localeCompare(b.time)).map((item, i) => (
                               <div 
                                 key={i} 
                                 className="group flex flex-col md:flex-row items-center gap-8 p-8 rounded-[40px] bg-slate-50/50 border border-slate-100 hover:bg-white hover:shadow-2xl hover:border-transparent transition-all duration-300 relative"
@@ -165,6 +170,7 @@ export default function Schedule() {
                           )}
                        </motion.div>
                     </AnimatePresence>
+                  )}
                  </div>
               </div>
            </div>
