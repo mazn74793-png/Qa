@@ -203,7 +203,7 @@ export default function Home() {
                className="relative hidden lg:block"
             >
               <div className="relative z-10 p-2 bg-white/5 backdrop-blur-3xl rounded-[60px] border border-white/10 shadow-2xl">
-                <img src={currentData.heroImage} alt="Students" className="rounded-[50px] w-full h-[650px] object-cover ring-1 ring-white/10" referrerPolicy="no-referrer" loading="lazy" />
+                <img src={currentData.heroImage} alt="Students" className="rounded-[50px] w-full h-[650px] object-cover ring-1 ring-white/10" referrerPolicy="no-referrer" fetchPriority="high" />
                 
                 {/* Floating Card */}
                 <motion.div 

@@ -11,6 +11,61 @@
     <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="preconnect" href="https://www.youtube.com" />
     <link rel="preconnect" href="https://s.ytimg.com" />
+    
+    <!-- Speed: Preload Critical Assets -->
+    <link rel="preload" href="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80" as="image" />
+    
+    <style>
+      /* Ultra-fast inline loader */
+      #initial-loader {
+        position: fixed;
+        inset: 0;
+        background: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.4s ease-out;
+      }
+      .loader-content {
+        text-align: center;
+      }
+      .loader-logo {
+        font-family: sans-serif;
+        font-weight: 900;
+        font-size: 3rem;
+        color: #fbbf24;
+        margin-bottom: 1rem;
+        letter-spacing: -0.05em;
+      }
+      .loader-bar {
+        width: 120px;
+        height: 4px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 99px;
+        margin: 0 auto;
+        overflow: hidden;
+        position: relative;
+      }
+      .loader-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 50%;
+        background: #fbbf24;
+        animation: loading 1s infinite ease-in-out;
+      }
+      @keyframes loading {
+        0% { left: -50%; }
+        100% { left: 100%; }
+      }
+      body.loaded #initial-loader {
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
     <title>سنتر QA التعليمي: QA Center</title>
     <meta name="description" content="مركز QA التعليمي هو رفيقك في طريق النجاح والتميز الدراسي. نوفر بيئة تعليمية متطورة تهدف إلى تنمية مهارات الطلاب وطموحاتهم مع نخبة من أفضل المدرسين." />
     <meta name="keywords" content="سنتر QA, سنتر qa, QA Center, qa center, مركز QA التعليمي, دروس خصوصية، ثانوية عامة، تعليم، سنتر تعليمي" />
@@ -113,9 +168,22 @@
     <!-- Favicon placeholder -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>" />
   </head>
-  <body>
+  <body class="bg-slate-950">
+    <div id="initial-loader">
+      <div class="loader-content">
+        <div class="loader-logo">QA</div>
+        <div class="loader-bar"></div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          document.body.classList.add('loaded');
+        }, 100);
+      });
+    </script>
   </body>
 </html>
 
