@@ -126,7 +126,7 @@ export default function Home() {
       )}
 
       {/* Hero Section */}
-      <section id="hero" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-24 md:pt-32 xl:pt-0 overflow-hidden bg-slate-900">
+      <section id="hero" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-24 md:pt-32 xl:pt-0 overflow-hidden bg-slate-950">
         <div className="absolute top-0 right-0 w-full h-full">
            <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/20 rounded-full blur-[120px] animate-pulse" />
            <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[100px]" />
@@ -138,14 +138,14 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-white text-right lg:text-right"
+              className="text-right lg:text-right"
             >
               <div className="relative inline-block group mb-6">
                 <div 
                   className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/10"
                 >
                   <Sparkles className="w-4 h-4 text-accent" />
-                  <span className="text-xs md:text-sm font-black tracking-widest uppercase">{currentData.heroBadge}</span>
+                  <span className="text-xs md:text-sm font-black tracking-widest uppercase text-accent/80">{currentData.heroBadge}</span>
                 </div>
               </div>
               
@@ -154,7 +154,7 @@ export default function Home() {
                 suppressContentEditableWarning={true}
                 onBlur={(e) => updateField('heroTitle', e.currentTarget.textContent || '')}
                 className={cn(
-                  "text-4xl sm:text-6xl md:text-8xl font-black mb-6 leading-[1] md:leading-[0.95] tracking-tighter whitespace-pre-line focus:outline-none focus:ring-2 focus:ring-accent rounded-xl",
+                  "text-4xl sm:text-6xl md:text-8xl font-black mb-6 leading-[1] md:leading-[0.95] tracking-tighter whitespace-pre-line focus:outline-none focus:ring-2 focus:ring-accent rounded-xl text-white",
                   isEditing && "bg-white/10 ring-2 ring-accent"
                 )}
               >
@@ -174,7 +174,7 @@ export default function Home() {
               </p>
               
               <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-end">
-                <Link to="/portal" className="w-full sm:w-auto px-8 md:px-10 py-5 bg-accent text-white rounded-2xl font-black text-lg md:text-xl shadow-2xl shadow-accent/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3">
+                <Link to="/portal" className="w-full sm:w-auto px-8 md:px-12 py-5 bg-accent text-primary rounded-2xl font-black text-lg md:text-xl shadow-2xl shadow-accent/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3">
                   ابدأ رحلتك الآن
                   <ArrowLeft className="w-6 h-6" />
                 </Link>
@@ -183,7 +183,7 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="mt-12 flex items-center justify-center lg:justify-end gap-8 text-white/30 border-t border-white/5 pt-8">
+              <div className="mt-12 flex items-center justify-center lg:justify-end gap-8 text-white/20 border-t border-white/5 pt-8">
                  <div className="text-center">
                     <p className="text-2xl font-black text-white">+5K</p>
                     <p className="text-[10px] uppercase font-bold tracking-widest">طالب مسجل</p>
@@ -236,11 +236,27 @@ export default function Home() {
                <p className="text-slate-500 font-bold mt-4">لا تفوت أي لحظة تعليمية، تابع مواعيد حصصك بدقة</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16 text-right">
+            <motion.div 
+               initial="hidden"
+               whileInView="show"
+               viewport={{ once: true }}
+               variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.1 }
+                  }
+               }}
+               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16 text-right"
+            >
                {realSchedule.length > 0 ? (
                  realSchedule.map((item, i) => (
                    <motion.div 
                       key={i}
+                      variants={{
+                        hidden: { opacity: 0, scale: 0.95, y: 20 },
+                        show: { opacity: 1, scale: 1, y: 0 }
+                      }}
                       whileHover={{ y: -10 }}
                       className="p-8 bg-slate-50 border border-slate-100 rounded-[40px] relative overflow-hidden group"
                    >
@@ -260,11 +276,11 @@ export default function Home() {
                    </motion.div>
                  ))
                ) : (
-                 <div className="col-span-full py-12 text-center text-slate-400 bg-slate-50 rounded-[40px] border border-dashed border-slate-200 font-bold">
+                 <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="col-span-full py-12 text-center text-slate-400 bg-slate-50 rounded-[40px] border border-dashed border-slate-200 font-bold">
                     سيتم عرض الحصص القادمة هنا قريباً 🗓️
-                 </div>
+                 </motion.div>
                )}
-            </div>
+            </motion.div>
 
             <div className="text-center">
                <Link to="/schedule" className="inline-flex items-center gap-4 px-10 py-5 bg-primary text-white rounded-3xl font-black text-xl hover:bg-accent hover:scale-105 transition-all shadow-xl shadow-primary/20">
@@ -276,36 +292,57 @@ export default function Home() {
       </section>
 
       {/* Teachers Showcase Section - NEW */}
-      <section className="py-24 bg-slate-900 relative">
+      <section className="py-24 bg-slate-50 relative">
          <div className="container mx-auto px-4">
-            <div className="flex flex-col lg:flex-row items-end justify-between mb-16 gap-8">
-               <div className="text-right flex-grow">
+            <div className="flex flex-col lg:flex-row items-end justify-between mb-16 gap-8 text-right">
+               <div className="flex-grow">
                   <span className="text-accent font-black tracking-widest uppercase text-sm inline-block mb-3">نخبة الخبراء</span>
-                  <h2 className="text-3xl md:text-6xl font-black text-white leading-tight">مدرسون من الطراز الرفيع</h2>
+                  <h2 className="text-3xl md:text-6xl font-black text-primary leading-tight">مدرسون من الطراز الرفيع</h2>
                </div>
-               <Link to="/teachers" className="px-8 py-4 bg-white text-primary rounded-2xl font-black flex items-center gap-2 hover:bg-accent hover:text-white transition-all">
+               <Link to="/teachers" className="px-8 py-4 bg-white border border-slate-100 text-primary rounded-2xl font-black flex items-center gap-2 hover:bg-accent hover:text-white transition-all shadow-sm">
                   استعرض جميع المدرسين
                   <Users className="w-5 h-5" />
                </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <motion.div 
+               initial="hidden"
+               whileInView="show"
+               viewport={{ once: true }}
+               variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1
+                    }
+                  }
+               }}
+               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            >
                {realTeachers.length > 0 ? (
                  realTeachers.map((t, idx) => (
-                   <div key={idx} className="group relative rounded-[40px] overflow-hidden aspect-[4/5] bg-white/5 border border-white/5">
+                   <motion.div 
+                     key={idx}
+                     variants={{
+                       hidden: { opacity: 0, y: 20 },
+                       show: { opacity: 1, y: 0 }
+                     }}
+                     className="group relative rounded-[40px] overflow-hidden aspect-[4/5] bg-white border border-slate-100 shadow-sm"
+                   >
                       <img src={t.image || 'https://via.placeholder.com/400x500?text=Teacher'} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={t.name} loading="lazy" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent p-8 flex flex-col justify-end text-right">
                          <p className="text-accent font-black text-sm mb-1 uppercase tracking-tighter">{t.subject}</p>
                          <h3 className="text-xl font-black text-white">{t.name}</h3>
                       </div>
-                   </div>
+                   </motion.div>
                  ))
                ) : (
-                 <div className="col-span-full py-20 text-center text-white/20 font-black border border-dashed border-white/10 rounded-[40px]">
+                 <div className="col-span-full py-20 text-center text-slate-300 font-black border border-dashed border-slate-200 rounded-[40px]">
                     سيتم عرض نخبة المدرسين قريباً 👨‍🏫
                  </div>
                )}
-            </div>
+            </motion.div>
          </div>
       </section>
 

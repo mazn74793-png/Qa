@@ -52,11 +52,11 @@ export default function Teachers() {
   };
 
   return (
-    <div id="teachers-page" className="min-h-screen">
-      <section className="bg-primary text-white py-12 md:py-20 px-4">
+    <div id="teachers-page" className="min-h-screen bg-white">
+      <section className="bg-white text-slate-900 py-12 md:py-20 px-4 border-b border-slate-50">
         <div className="container mx-auto text-center">
-          <h1 className="text-3xl md:text-5xl font-black mb-4 md:mb-6 text-white text-center">نخبة المدرسين</h1>
-          <p className="text-base md:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
+          <h1 className="text-3xl md:text-5xl font-black mb-4 md:mb-6 text-primary text-center tracking-tighter">نخبة المدرسين</h1>
+          <p className="text-base md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-bold">
             نفخر بوجود أفضل الكوادر التعليمية في مصر، مدرسون يجمعون بين الخبرة الطويلة والأساليب التربوية الحديثة.
           </p>
         </div>

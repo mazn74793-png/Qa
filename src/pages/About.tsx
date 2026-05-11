@@ -27,19 +27,19 @@ export default function About() {
   }
 
   return (
-    <div id="about-page" className="min-h-screen">
+    <div id="about-page" className="min-h-screen bg-white">
       {/* Hero */}
-      <section className="bg-primary text-white py-12 md:py-20 relative overflow-hidden text-right">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-[100px]" />
+      <section className="bg-white text-slate-900 py-12 md:py-20 relative overflow-hidden text-right border-b border-slate-50">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full blur-[100px]" />
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl md:text-6xl font-black mb-4 md:mb-6 text-white text-right"
+            className="text-3xl md:text-6xl font-black mb-4 md:mb-6 text-primary text-right tracking-tighter"
           >
             {currentSettings.aboutTitle}
           </motion.h1>
-          <p className="text-base md:text-xl text-white/60 max-w-2xl ml-auto leading-relaxed">
+          <p className="text-base md:text-xl text-slate-500 max-w-2xl ml-auto leading-relaxed font-bold">
             تعرف على مسيرتنا في التعليم وكيف نسعى لتغيير مستقبل الطلاب من خلال الابتكار والاحترافية.
           </p>
         </div>
@@ -49,35 +49,51 @@ export default function About() {
       <section className="py-12 md:py-20">
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-            <div className="text-right order-2 lg:order-1">
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="text-right order-2 lg:order-1"
+            >
               <div className="inline-flex items-center gap-2 text-accent font-bold mb-4">
                 <History className="w-4 h-4 md:w-5 h-5" />
-                <span className="text-sm md:text-base">أكثر من 15 عاماً</span>
+                <span className="text-sm md:text-base tracking-widest uppercase">أكثر من 15 عاماً من الخبرة</span>
               </div>
               <h2 className="text-2xl md:text-4xl font-bold text-primary mb-6 leading-tight text-right">
                 {currentSettings.aboutTitle}
               </h2>
-              <p className="text-base md:text-lg text-slate-600 mb-8 leading-relaxed text-right">
+              <p className="text-base md:text-lg text-slate-600 mb-8 leading-relaxed text-right font-medium">
                 {currentSettings.aboutText}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div className="bg-slate-50 p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
+                <motion.div 
+                  whileHover={{ y: -5 }}
+                  className="bg-slate-50 p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm"
+                >
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-accent mb-4 ml-auto">
                     <Target className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
                   <h4 className="font-black text-primary mb-2 text-right text-sm md:text-base">{currentSettings.missionTitle}</h4>
-                  <p className="text-xs md:text-sm text-slate-500 text-right leading-relaxed">{currentSettings.missionText}</p>
-                </div>
-                <div className="bg-slate-50 p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm">
+                  <p className="text-xs md:text-sm text-slate-500 text-right leading-relaxed font-medium">{currentSettings.missionText}</p>
+                </motion.div>
+                <motion.div 
+                  whileHover={{ y: -5 }}
+                  className="bg-slate-50 p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm"
+                >
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-accent mb-4 ml-auto">
                     <Eye className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
                   <h4 className="font-black text-primary mb-2 text-right text-sm md:text-base">رؤيتنا المستقبيلة</h4>
-                  <p className="text-xs md:text-sm text-slate-500 text-right leading-relaxed">أن نكون المنصة التعليمية الرائدة والأولى في تقديم الحلول التعليمية المتكاملة والمبتكرة.</p>
-                </div>
+                  <p className="text-xs md:text-sm text-slate-500 text-right leading-relaxed font-medium">أن نكون المنصة التعليمية الرائدة والأولى في تقديم الحلول التعليمية المتكاملة والمبتكرة.</p>
+                </motion.div>
               </div>
-            </div>
-            <div className="relative order-1 lg:order-2">
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="relative order-1 lg:order-2"
+            >
               <div className="aspect-video sm:aspect-square rounded-3xl md:rounded-[40px] overflow-hidden shadow-2xl relative z-10 border-4 border-white">
                 <img 
                   src={currentSettings.aboutImage} 
@@ -86,21 +102,38 @@ export default function About() {
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <div className="absolute -top-10 -right-10 w-48 md:w-64 h-48 md:h-64 bg-accent/20 rounded-full blur-[60px] md:blur-[80px]" />
-            </div>
+              <div className="absolute -top-10 -right-10 w-48 md:w-64 h-48 md:h-64 bg-accent/10 rounded-full blur-[60px] md:blur-[80px]" />
+            </motion.div>
           </div>
         </div>
       </section>
+
       {/* Facilities */}
       <section className="py-12 md:py-20 bg-slate-50">
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-10 md:mb-16">
             <h2 className="text-2xl md:text-4xl font-black text-primary mb-2 md:mb-4">قاعاتنا التعليمية</h2>
-            <p className="text-sm md:text-base text-slate-500">بيئة مجهزة بأحدث الوسائل لراحة الطلاب</p>
+            <p className="text-sm md:text-base text-slate-500 font-bold">بيئة مجهزة بأحدث الوسائل لراحة الطلاب</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+          <motion.div 
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.1 }
+              }
+            }}
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8"
+          >
             {(currentSettings.facilities || []).map((imageUrl, i) => (
               <motion.img 
+                variants={{
+                  hidden: { opacity: 0, scale: 0.95 },
+                  show: { opacity: 1, scale: 1 }
+                }}
                 whileHover={{ scale: 1.02 }}
                 key={i}
                 src={imageUrl} 
@@ -108,7 +141,7 @@ export default function About() {
                 referrerPolicy="no-referrer"
               />
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
     </div>

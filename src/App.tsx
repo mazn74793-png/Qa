@@ -54,15 +54,121 @@ function LayoutWrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { AnimatePresence, motion } from 'motion/react';
+
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location}>
+        <Route path="/" element={
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <Home />
+          </motion.div>
+        } />
+        <Route path="/about" element={
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <About />
+          </motion.div>
+        } />
+        <Route path="/courses" element={
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <Courses />
+          </motion.div>
+        } />
+        <Route path="/teachers" element={
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <Teachers />
+          </motion.div>
+        } />
+        <Route path="/schedule" element={
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <Schedule />
+          </motion.div>
+        } />
+        <Route path="/contact" element={
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <Contact />
+          </motion.div>
+        } />
+        <Route path="/portal" element={
+          <motion.div
+            initial={{ opacity: 0, scale: 0.99 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.99 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <Portal />
+          </motion.div>
+        } />
+        <Route path="/admin" element={
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <AdminDashboard />
+          </motion.div>
+        } />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
 export default function App() {
   const [settings, setSettings] = useState<any>(null);
   
   useEffect(() => {
-    import('@/src/services/siteService').then(service => {
-      service.getSiteSettings().then(setSettings);
-    });
-    // Trigger signal for the initial native loader
-    document.body.classList.add('app-ready');
+    // Faster settings fetch
+    const fetchSettings = async () => {
+      try {
+        const service = await import('@/src/services/siteService');
+        const siteSettings = await service.getSiteSettings();
+        setSettings(siteSettings);
+      } finally {
+        // Ensuring the app-ready signal is sent as soon as basic init is done
+        // Small delay to ensure rendering is committed
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            document.body.classList.add('app-ready');
+          }, 50);
+        });
+      }
+    };
+    
+    fetchSettings();
   }, []);
 
   return (
@@ -70,16 +176,7 @@ export default function App() {
       <ScrollToTop />
       <LayoutWrapper>
         <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/teachers" element={<Teachers />} />
-            <Route path="/schedule" element={<Schedule />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/portal" element={<Portal />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-          </Routes>
+          <AnimatedRoutes />
         </Suspense>
       </LayoutWrapper>
     </Router>

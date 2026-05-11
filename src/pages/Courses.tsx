@@ -26,11 +26,11 @@ export default function Courses() {
   }, {});
 
   return (
-    <div id="courses-page" className="min-h-screen pb-12 md:pb-20">
-      <section className="bg-primary text-white py-12 md:py-20 px-4">
+    <div id="courses-page" className="min-h-screen pb-12 md:pb-20 bg-white">
+      <section className="bg-white text-slate-900 py-12 md:py-20 px-4 border-b border-slate-50">
         <div className="container mx-auto text-center">
-          <h1 className="text-3xl md:text-5xl font-black mb-4 md:mb-6 text-white text-center">المواد والمراحل الدراسية</h1>
-          <p className="text-base md:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
+          <h1 className="text-3xl md:text-5xl font-black mb-4 md:mb-6 text-primary text-center tracking-tighter">المواد والمراحل الدراسية</h1>
+          <p className="text-base md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-bold">
             نقدم تغطية شاملة لكافة المناهج الدراسية مع نخبة من أفضل المدرسين في مصر.
           </p>
         </div>
