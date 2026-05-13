@@ -84,18 +84,18 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <nav className="space-y-1 overflow-y-auto scrollbar-hide flex-1">
+        <nav className="flex md:flex-col gap-1.5 md:gap-1 overflow-x-auto md:overflow-y-auto scrollbar-hide flex-1 -mx-2 px-2 md:mx-0 md:px-0">
           <SidebarLink active={activeTab === 'overview'} onClick={() => handleTabChange('overview')} icon={LayoutDashboard} label="نظرة عامة" />
-          <SidebarLink active={activeTab === 'content'} onClick={() => handleTabChange('content')} icon={Settings2} label="محتوى الموقع" />
-          <SidebarLink active={activeTab === 'courses'} onClick={() => handleTabChange('courses')} icon={BookOpen} label="إدارة المواد" />
-          <SidebarLink active={activeTab === 'students'} onClick={() => handleTabChange('students')} icon={Users} label="إدارة الطلاب" />
-          <SidebarLink active={activeTab === 'teachers'} onClick={() => handleTabChange('teachers')} icon={Users} label="إدارة المدرسين" />
-          <SidebarLink active={activeTab === 'schedule'} onClick={() => handleTabChange('schedule')} icon={Calendar} label="إدارة الجدول" />
-          <SidebarLink active={activeTab === 'videos'} onClick={() => handleTabChange('videos')} icon={Video} label="إدارة الفيديوهات" />
-          <SidebarLink active={activeTab === 'materials'} onClick={() => handleTabChange('materials')} icon={BookOpen} label="إدارة الملازم" />
-          <SidebarLink active={activeTab === 'exams'} onClick={() => handleTabChange('exams')} icon={ClipboardCheck} label="إدارة الامتحانات" />
-          <SidebarLink active={activeTab === 'bookings'} onClick={() => handleTabChange('bookings')} icon={TrendingUp} label="سجل الحجوزات" />
-          <SidebarLink active={activeTab === 'admins'} onClick={() => handleTabChange('admins')} icon={ShieldCheck} label="إدارة المسؤولين" />
+          <SidebarLink active={activeTab === 'content'} onClick={() => handleTabChange('content')} icon={Settings2} label="المحتوى" />
+          <SidebarLink active={activeTab === 'courses'} onClick={() => handleTabChange('courses')} icon={BookOpen} label="المواد" />
+          <SidebarLink active={activeTab === 'students'} onClick={() => handleTabChange('students')} icon={Users} label="الطلاب" />
+          <SidebarLink active={activeTab === 'teachers'} onClick={() => handleTabChange('teachers')} icon={Users} label="المدرسين" />
+          <SidebarLink active={activeTab === 'schedule'} onClick={() => handleTabChange('schedule')} icon={Calendar} label="الجدول" />
+          <SidebarLink active={activeTab === 'videos'} onClick={() => handleTabChange('videos')} icon={Video} label="الفيديوهات" />
+          <SidebarLink active={activeTab === 'materials'} onClick={() => handleTabChange('materials')} icon={BookOpen} label="الملازم" />
+          <SidebarLink active={activeTab === 'exams'} onClick={() => handleTabChange('exams')} icon={ClipboardCheck} label="الامتحانات" />
+          <SidebarLink active={activeTab === 'bookings'} onClick={() => handleTabChange('bookings')} icon={TrendingUp} label="الحجوزات" />
+          <SidebarLink active={activeTab === 'admins'} onClick={() => handleTabChange('admins')} icon={ShieldCheck} label="المسؤولين" />
         </nav>
 
         <div className="mt-auto pt-6 border-t border-white/10 shrink-0">
@@ -122,7 +122,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-3">
              <Link 
-               to="/portal"
+               to="/portal?preview=true"
                className="bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-2 hover:bg-slate-50 transition-all font-black text-primary text-sm shadow-sm"
              >
                 <Eye className="w-5 h-5 text-accent" />
@@ -246,15 +246,15 @@ function SidebarLink({ active, onClick, icon: Icon, label }: any) {
     <button 
       onClick={onClick}
       className={cn(
-        "w-full flex items-center justify-start gap-4 p-4 rounded-2xl font-black text-sm mb-1.5 transition-all text-right",
+        "flex items-center justify-start gap-2 md:gap-4 p-3 md:p-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm transition-all text-right whitespace-nowrap",
         active 
-          ? "bg-accent text-white shadow-xl shadow-accent/20 translate-x-1" 
+          ? "bg-accent text-white shadow-xl shadow-accent/20 scale-[1.02] md:translate-x-1" 
           : "text-white/50 hover:bg-white/10 hover:text-white"
       )}
     >
-      <Icon className={cn("w-5 h-5", active ? "text-white" : "text-white/30")} />
+      <Icon className={cn("w-4 h-4 md:w-5 md:h-5", active ? "text-white" : "text-white/30")} />
       <span>{label}</span>
-      {active && <motion.div layoutId="active-pill" className="w-1.5 h-1.5 bg-white rounded-full ml-auto" />}
+      {active && <motion.div layoutId="active-pill" className="hidden md:block w-1.5 h-1.5 bg-white rounded-full ml-auto" />}
     </button>
   );
 }

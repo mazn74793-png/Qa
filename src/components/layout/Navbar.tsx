@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, GraduationCap, LogIn, Settings, Shield, Phone, Mail, MapPin, MessageCircle } from 'lucide-react';
+import { MoreVertical, X, GraduationCap, LogIn, Settings, Shield, Phone, Mail, MapPin, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NAV_LINKS } from '@/src/constants';
 import { cn } from '@/src/lib/utils';
@@ -74,57 +74,44 @@ export default function Navbar() {
 
         <div className="flex items-center gap-2 md:gap-4 shrink-0">
           {user ? (
-            <div className="flex items-center gap-2">
+            <Link
+              to={isAdmin ? "/admin" : "/portal"}
+              className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl text-xs md:text-sm font-black shadow-lg shadow-accent/20 transition-all active:scale-95 hover:scale-105 whitespace-nowrap"
+            >
               {isAdmin ? (
                 <>
-                  <Link
-                    to="/portal"
-                    className={cn(
-                      "hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black transition-all whitespace-nowrap",
-                      scrolled || !isHomePage ? "text-slate-500 hover:bg-slate-100" : "text-white/70 hover:bg-white/10"
-                    )}
-                  >
-                    بوابة الطالب
-                  </Link>
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-3 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-2xl text-[10px] md:text-sm font-black shadow-lg shadow-accent/20 transition-all active:scale-95 whitespace-nowrap"
-                  >
-                    <Shield className="w-3.5 h-3.5 md:w-5 h-5 text-white/50" />
-                    <span className="hidden xs:inline">لوحة التحكم</span>
-                    <span className="xs:hidden">الادارة</span>
-                  </Link>
+                  <Shield className="w-4 h-4 md:w-5 md:h-5 text-white/50" />
+                  لوحة الإدارة
                 </>
               ) : (
-                <Link
-                  to="/portal"
-                  className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl text-xs md:text-sm font-black shadow-lg shadow-accent/20 transition-all active:scale-95 whitespace-nowrap"
-                >
+                <>
                   <GraduationCap className="w-4 h-4 md:w-5 md:h-5 text-white/50" />
-                  لوحة الطالب
-                </Link>
+                  بوابتي التعليمية
+                </>
               )}
-            </div>
+            </Link>
           ) : (
             <Link
               to="/portal"
               className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl text-xs md:text-sm font-black shadow-lg shadow-accent/20 transition-all active:scale-95 whitespace-nowrap"
             >
               <LogIn className="w-4 h-4 md:w-5 md:h-5 text-white/50" />
-              دخول الطلاب
+              دخول المنصة
             </Link>
           )}
 
           {/* Mobile Toggle */}
           <button 
             className={cn(
-              "lg:hidden p-2 md:p-2.5 rounded-lg md:rounded-xl transition-all shadow-sm",
-              scrolled || !isHomePage ? "bg-white text-primary border border-slate-100" : "bg-white/10 text-white border border-white/20"
+              "lg:hidden p-2 rounded-2xl transition-all shadow-xl active:scale-95 flex items-center justify-center border-2",
+              (scrolled || !isHomePage) 
+                ? "bg-white text-primary border-slate-100" 
+                : "bg-white text-primary border-white"
             )}
             onClick={() => setIsOpen(!isOpen)}
             id="mobile-menu-toggle"
           >
-            {isOpen ? <X className="w-5 h-5 md:w-6 md:h-6" /> : <Menu className="w-5 h-5 md:w-6 md:h-6" />}
+            {isOpen ? <X className="w-5 h-5 md:w-6 md:h-6" /> : <MoreVertical className="w-5 h-5 md:w-6 md:h-6" />}
           </button>
         </div>
       </div>
@@ -133,38 +120,16 @@ export default function Navbar() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            className="lg:hidden bg-white border-b overflow-hidden shadow-2xl relative z-[70] mx-4 mt-2 rounded-[32px] border border-slate-100"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="lg:hidden bg-white border-b overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] relative z-[70] mx-4 mt-2 rounded-[32px] border border-slate-100"
             id="mobile-menu"
           >
             <div className="flex flex-col p-6 gap-3">
-              {/* Mobile Contact Quick Links */}
-              <div className="grid grid-cols-2 gap-3 mb-2 pb-4 border-b border-slate-100">
-                <a href={`tel:${settings?.contactPhone}`} className="flex flex-col items-center gap-2 p-3 bg-slate-50 rounded-2xl text-primary hover:bg-accent hover:text-white transition-all shadow-sm">
-                  <Phone className="w-5 h-5" />
-                  <span className="text-[10px] font-black uppercase">اتصل بنا</span>
-                </a>
-                <a href={`https://wa.me/${settings?.whatsappUrl}`} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 p-3 bg-green-50 rounded-2xl text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm">
-                  <MessageCircle className="w-5 h-5" />
-                  <span className="text-[10px] font-black uppercase">واتساب</span>
-                </a>
-              </div>
-
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="flex items-center gap-3 bg-primary text-white p-4 rounded-2xl font-black shadow-lg shadow-primary/20"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Shield className="w-5 h-5 text-accent" />
-                  لوحة التحكم والادارة
-                </Link>
-              )}
-              
               <div className="space-y-1">
-                {NAV_LINKS.map((link) => (
+                {NAV_LINKS.filter(link => link.href !== '/contact').map((link) => (
                   <Link
                     key={link.href}
                     to={link.href}
@@ -181,12 +146,12 @@ export default function Navbar() {
 
               <div className="mt-2 pt-4 border-t border-slate-100">
                 <Link
-                  to="/portal"
+                  to={isAdmin ? "/admin" : "/portal"}
                   className="flex items-center justify-center gap-3 bg-accent text-white p-4 rounded-2xl font-black shadow-lg shadow-accent/20"
                   onClick={() => setIsOpen(false)}
                 >
-                  <GraduationCap className="w-6 h-6 shrink-0" />
-                  {user ? 'لوحة الطالب' : 'تسجيل دخول الطلاب'}
+                  {isAdmin ? <Shield className="w-6 h-6 shrink-0" /> : <GraduationCap className="w-6 h-6 shrink-0" />}
+                  {user ? (isAdmin ? 'لوحة تحكم الإدارة' : 'بوابتي التعليمية') : 'تسجيل دخول المنصة'}
                 </Link>
               </div>
             </div>

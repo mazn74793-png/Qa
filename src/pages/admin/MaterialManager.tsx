@@ -39,6 +39,7 @@ export default function MaterialManager() {
     teacherId: '',
     teacherName: '',
     subject: '',
+    grade: '',
     description: ''
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -85,10 +86,11 @@ export default function MaterialManager() {
         url: finalUrl,
         teacherName: teacher?.name || '',
         subject: teacher?.subject || newMaterial.subject,
+        grade: newMaterial.grade,
         createdAt: serverTimestamp()
       });
       setShowAdd(false);
-      setNewMaterial({ title: '', url: '', teacherId: '', teacherName: '', subject: '', description: '' });
+      setNewMaterial({ title: '', url: '', teacherId: '', teacherName: '', subject: '', grade: '', description: '' });
       setSelectedFile(null);
     } catch (err) {
       console.error(err);
@@ -158,6 +160,9 @@ export default function MaterialManager() {
                   <span className="text-[10px] bg-slate-50 text-slate-500 px-2 py-1 rounded-lg font-bold flex items-center gap-1">
                     <User className="w-3 h-3" /> {mat.teacherName}
                   </span>
+                  <span className="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded-lg font-black flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" /> {mat.grade || 'جميع الصفوف'}
+                  </span>
                   <span className="text-[10px] bg-slate-50 text-slate-500 px-2 py-1 rounded-lg font-bold">
                     {mat.subject}
                   </span>
@@ -182,11 +187,11 @@ export default function MaterialManager() {
         {showAdd && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/20 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/20 backdrop-blur-sm overflow-y-auto"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl p-8 md:p-12 relative"
+              className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl p-8 md:p-12 relative my-auto"
             >
               <button 
                 onClick={() => setShowAdd(false)}
@@ -267,18 +272,33 @@ export default function MaterialManager() {
                    </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-black text-slate-400 block px-2">اختر المدرس</label>
-                  <select 
-                    value={newMaterial.teacherId}
-                    onChange={e => setNewMaterial({...newMaterial, teacherId: e.target.value})}
-                    className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-accent focus:bg-white rounded-3xl outline-none transition-all font-bold appearance-none cursor-pointer"
-                  >
-                    <option value="">-- اختر من طاقم التدريس --</option>
-                    {teachers.map(t => (
-                      <option key={t.id} value={t.id}>{t.name} ({t.subject})</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-black text-slate-400 block px-2">اختر المدرس</label>
+                    <select 
+                      value={newMaterial.teacherId}
+                      onChange={e => setNewMaterial({...newMaterial, teacherId: e.target.value})}
+                      className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-accent focus:bg-white rounded-3xl outline-none transition-all font-bold appearance-none cursor-pointer"
+                    >
+                      <option value="">-- اختر من طاقم التدريس --</option>
+                      {teachers.map(t => (
+                        <option key={t.id} value={t.id}>{t.name} ({t.subject})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-black text-slate-400 block px-2">الصف الدراسي</label>
+                    <select 
+                      value={newMaterial.grade}
+                      onChange={e => setNewMaterial({...newMaterial, grade: e.target.value})}
+                      className="w-full p-4 bg-slate-50 border-2 border-transparent focus:border-accent focus:bg-white rounded-3xl outline-none transition-all font-bold appearance-none cursor-pointer"
+                    >
+                      <option value="">جميع الصفوف</option>
+                      <option value="الأول الثانوي">الأول الثانوي</option>
+                      <option value="الثاني الثانوي">الثاني الثانوي</option>
+                      <option value="الثالث الثانوي">الثالث الثانوي</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">

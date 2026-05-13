@@ -68,9 +68,7 @@ export default function Footer() {
                <a href={settings?.facebookUrl || '#'} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-accent hover:text-white transition-all border border-white/5">
                  <Facebook className="w-5 h-5" />
                </a>
-               <a href={settings?.whatsappUrl || '#'} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-accent hover:text-white transition-all border border-white/5">
-                 <MessageCircle className="w-5 h-5" />
-               </a>
+
                <a href={settings?.instagramUrl || '#'} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-accent hover:text-white transition-all border border-white/5">
                  <Instagram className="w-5 h-5" />
                </a>

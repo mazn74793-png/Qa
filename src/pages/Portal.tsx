@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import type { FormEvent } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { FormEvent, ChangeEvent } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAdmin } from '@/src/hooks/useAdmin';
 import { auth, loginWithGoogle, logout, db, handleFirestoreError, OperationType, registerWithEmail, loginWithEmail, bookClass, submitExam } from '@/src/lib/firebase';
@@ -17,7 +17,7 @@ import {
   where,
   getDocs
 } from 'firebase/firestore';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { 
   Search,
   Users,
@@ -45,7 +45,10 @@ import {
   Download,
   Eye,
   Settings2,
-  FileSearch
+  FileSearch,
+  Camera,
+  Phone,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -54,7 +57,25 @@ export default function Portal() {
   const { isAdmin: isSystemAdmin, loading: adminLoading, user } = useAdmin();
   const [_, __, error] = useAuthState(auth);
   const [longLoading, setLongLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials' | 'bookings' | 'lectures' | 'students'>('dashboard');
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [isStudentPreview, setIsStudentPreview] = useState(false);
+
+  // Initialize preview mode from URL
+  useEffect(() => {
+    if (searchParams.get('preview') === 'true') {
+      setIsStudentPreview(true);
+    }
+  }, [searchParams]);
+
+  // Redirection for admins
+  useEffect(() => {
+    if (isSystemAdmin && !adminLoading && !isStudentPreview) {
+      navigate('/admin');
+    }
+  }, [isSystemAdmin, adminLoading, navigate, isStudentPreview]);
+
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'schedule' | 'exams' | 'grades' | 'materials' | 'bookings' | 'lectures' | 'students' | 'settings'>('dashboard');
 
   // Fallback for long loading
   useEffect(() => {
@@ -67,10 +88,6 @@ export default function Portal() {
   }, [adminLoading]);
   const [userData, setUserData] = useState<any>(null);
   const [showAddClass, setShowAddClass] = useState(false);
-  const [showAddExam, setShowAddExam] = useState(false);
-  const [activeExam, setActiveExam] = useState<any>(null);
-  const [isStudentPreview, setIsStudentPreview] = useState(false);
-  const [initError, setInitError] = useState<string | null>(null);
 
   // Restore modal functions
   useEffect(() => {
@@ -107,13 +124,15 @@ export default function Portal() {
         }
       }).catch(err => {
         console.error("Error fetching user data:", err);
-        // Don't set error here, just log, but we could set a transient error
       });
     }
   }, [user]);
 
-  const actualIsAdmin = !!isSystemAdmin;
-  const isAdmin = actualIsAdmin && !isStudentPreview;
+  const [showAddExam, setShowAddExam] = useState(false);
+  const [activeExam, setActiveExam] = useState<any>(null);
+  const [initError, setInitError] = useState<string | null>(null);
+
+  const isAdmin = false; // Portal UI is now strictly for students
 
   // Tab management
   useEffect(() => {
@@ -172,55 +191,11 @@ export default function Portal() {
   );
 
   if (!user && !adminLoading) return <LoginView />;
-  const isAdminUser = !!actualIsAdmin;
+  const isAdminUser = !!isSystemAdmin;
+
 
   return (
-    <div className={cn("pb-20 min-h-screen bg-slate-50", isAdminUser && "pt-12 md:pt-16")}>
-      {isAdminUser && (
-        <div className="fixed top-16 md:top-20 left-0 right-0 z-[40] transition-all">
-          <div className="bg-primary/95 backdrop-blur-md text-white py-2 md:py-3 shadow-xl border-b border-white/10">
-            <div className="container mx-auto px-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 md:gap-3">
-                <div className={cn(
-                  "p-1 rounded-lg border hidden sm:block",
-                  isStudentPreview ? "bg-green-500/20 border-green-500/30" : "bg-accent/20 border-accent/30"
-                )}>
-                  <Eye className={cn("w-3.5 h-3.5", isStudentPreview ? "text-green-400" : "text-accent")} />
-                </div>
-                <div>
-                  <span className="text-[10px] md:text-xs font-black text-white/90">
-                    {isStudentPreview ? 'معاينة كطالب' : 'لوحة تحكم المشرف'}
-                  </span>
-                  <span className="text-[8px] md:text-[10px] text-white/40 block">
-                    {isStudentPreview ? 'الأزرار الإدارية مخفية' : 'صلاحيات كاملة'}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 md:gap-3">
-                <button 
-                  onClick={() => setIsStudentPreview(!isStudentPreview)}
-                  className={cn(
-                    "flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black transition-all",
-                    isStudentPreview 
-                      ? "bg-white text-primary" 
-                      : "bg-white/10 hover:bg-white/20 border border-white/10"
-                  )}
-                >
-                  <Settings2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                  {isStudentPreview ? 'وضع المشرف' : 'معاينة'}
-                </button>
-                <Link 
-                  to="/admin"
-                  className="hidden xs:flex items-center gap-1.5 md:gap-2 bg-accent hover:bg-accent/90 text-white px-3 md:px-4 py-1 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black transition-all shadow-lg shadow-accent/20"
-                >
-                  <Shield className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                  التحكم
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    <div className="pb-20 min-h-screen bg-slate-50">
       <div className="container mx-auto px-3 md:px-6">
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
           
@@ -260,17 +235,9 @@ export default function Portal() {
                 <TabButton 
                   active={activeTab === 'dashboard'} 
                   onClick={() => setActiveTab('dashboard')} 
-                  icon={Shield} 
+                  icon={LayoutDashboard} 
                   label="الرئيسية" 
                 />
-                {isAdmin && (
-                  <TabButton 
-                    active={activeTab === 'students'} 
-                    onClick={() => setActiveTab('students')} 
-                    icon={Users} 
-                    label="الطلاب" 
-                  />
-                )}
                 <TabButton 
                   active={activeTab === 'schedule'} 
                   onClick={() => setActiveTab('schedule')} 
@@ -278,37 +245,34 @@ export default function Portal() {
                   label="الجداول" 
                 />
                 <TabButton 
+                  active={activeTab === 'materials'} 
+                  onClick={() => setActiveTab('materials')} 
+                  icon={BookOpen} 
+                  label="المذكرات" 
+                />
+                <TabButton 
+                  active={activeTab === 'lectures'} 
+                  onClick={() => setActiveTab('lectures')} 
+                  icon={Video} 
+                  label="المحاضرات" 
+                />
+                <TabButton 
                   active={activeTab === 'exams'} 
                   onClick={() => setActiveTab('exams')} 
                   icon={ClipboardCheck} 
                   label="الامتحانات" 
                 />
-                {isAdmin ? (
-                  <TabButton 
-                    active={activeTab === 'bookings'} 
-                    onClick={() => setActiveTab('bookings')} 
-                    icon={User} 
-                    label="الحجوزات" 
-                  />
-                ) : (
-                  <TabButton 
-                    active={activeTab === 'grades'} 
-                    onClick={() => setActiveTab('grades')} 
-                    icon={TrendingUp} 
-                    label="نتائجي" 
-                  />
-                )}
                 <TabButton 
-                  active={activeTab === 'lectures'} 
-                  onClick={() => setActiveTab('lectures')} 
-                  icon={Play} 
-                  label="المحاضرات" 
+                  active={activeTab === 'grades'} 
+                  onClick={() => setActiveTab('grades')} 
+                  icon={TrendingUp} 
+                  label="نتائجي" 
                 />
                 <TabButton 
-                  active={activeTab === 'materials'} 
-                  onClick={() => setActiveTab('materials')} 
-                  icon={BookOpen} 
-                  label="المذكرات" 
+                  active={activeTab === 'settings'} 
+                  onClick={() => setActiveTab('settings')} 
+                  icon={Settings2} 
+                  label="الإعدادات" 
                 />
               </div>
 
@@ -338,13 +302,14 @@ export default function Portal() {
               ) : (
                 <AnimatePresence mode="wait">
                   {activeTab === 'dashboard' && <DashboardView user={user} userData={{...userData, role: isAdmin ? 'admin' : userData?.role}} />}
-                  {activeTab === 'lectures' && <LecturesView />}
-                  {activeTab === 'materials' && <MaterialsView />}
+                  {activeTab === 'lectures' && <LecturesView userData={userData} />}
+                  {activeTab === 'materials' && <MaterialsView userData={userData} />}
                   {activeTab === 'students' && isAdmin && <StudentsView />}
                   {activeTab === 'schedule' && <ScheduleView isAdmin={isAdmin} onAdd={() => setShowAddClass(true)} />}
                   {activeTab === 'exams' && <ExamsView isAdmin={isAdmin} onTake={(exam: any) => setActiveExam(exam)} onAdd={() => setShowAddExam(true)} />}
                   {activeTab === 'grades' && <GradesView />}
                   {activeTab === 'bookings' && <BookingsView />}
+                  {activeTab === 'settings' && <SettingsView user={user} userData={userData} setUserData={setUserData} />}
                 </AnimatePresence>
               )}
             </AnimatePresence>
@@ -366,14 +331,12 @@ export default function Portal() {
 }
 
 function LoginView() {
-  const [mode, setMode] = useState<'student' | 'admin'>('student');
   const [studentAction, setStudentAction] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const getAuthErrorMessage = (err: any) => {
     const code = err.code || '';
@@ -389,21 +352,7 @@ function LoginView() {
     return msg || 'حدث خطأ غير متوقع.';
   };
 
-  const handleAdminLogin = async (e: FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      await loginWithEmail(email, password);
-      navigate('/admin');
-    } catch (err: any) {
-      setError(getAuthErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStudentAuth = async (e: FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -424,168 +373,110 @@ function LoginView() {
   return (
     <div className="pt-32 pb-20 min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="max-w-md w-full">
-        {/* Toggle Mode */}
-        <div className="flex bg-slate-200 p-1 rounded-2xl mb-6 shadow-inner">
-           <button 
-             onClick={() => { setMode('student'); setError(''); }}
-             className={cn(
-               "flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2",
-               mode === 'student' ? "bg-white text-primary shadow-sm" : "text-slate-500"
-             )}
-           >
-             <User className="w-4 h-4" />
-             بوابة الطالب
-           </button>
-           <button 
-             onClick={() => { setMode('admin'); setError(''); }}
-             className={cn(
-               "flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2",
-               mode === 'admin' ? "bg-white text-accent shadow-sm" : "text-slate-500"
-             )}
-           >
-             <Shield className="w-4 h-4" />
-             الإدارة
-           </button>
-        </div>
-
         <motion.div 
-          key={mode + studentAction}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="bg-white rounded-3xl md:rounded-[40px] p-6 md:p-10 shadow-2xl shadow-slate-200/50 text-center border border-slate-100"
         >
           <div className="w-14 h-14 md:w-16 md:h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
-            <GraduationCap className={cn("w-7 h-7 md:w-8 md:h-8", mode === 'student' ? "text-primary" : "text-accent")} />
+            <GraduationCap className="w-7 h-7 md:w-8 md:h-8 text-primary" />
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-primary mb-2">
-             {mode === 'student' 
-               ? (studentAction === 'login' ? 'دخول الطلاب' : 'حساب جديد للطالب') 
-               : 'دخول المدرسين والإدارة'}
+             {studentAction === 'login' ? 'دخول المنصة' : 'إنشاء حساب طالب جديد'}
           </h2>
           <p className="text-slate-500 mb-6 md:mb-8 text-xs md:text-sm">
-            {mode === 'student' 
-              ? (studentAction === 'login' ? 'ادخل بياناتك لمتابعة مذكراتك ومواعيدك.' : 'سجل بياناتك للانضمام للمركز والاستفادة من خدماتنا.')
-              : 'سجل دخولك بصفتك مسؤولاً للتحكم في محتوى المركز.'}
+            {studentAction === 'login' 
+              ? 'ادخل بياناتك للوصول إلى دروسك ومذكراتك.' 
+              : 'سجل بياناتك للانضمام للمركز والاستفادة من خدماتنا.'}
           </p>
           
           {error && <div className="bg-red-50 text-red-500 p-3 rounded-xl text-xs font-bold mb-6 border border-red-100 text-right">{error}</div>}
 
-          {mode === 'student' ? (
-            <div className="space-y-6">
-              <form onSubmit={handleStudentAuth} className="space-y-4 text-right">
-                {studentAction === 'register' && (
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">اسم الطالب الرباعي</label>
-                    <input 
-                      type="text" 
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-primary/20"
-                      placeholder="احمد محمد علي محمود"
-                      required
-                    />
-                  </div>
-                )}
+          <div className="space-y-6">
+            <form onSubmit={handleLogin} className="space-y-4 text-right">
+              {studentAction === 'register' && (
                 <div>
-                  <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">البريد الإلكتروني</label>
+                  <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">اسم الطالب الرباعي</label>
                   <input 
-                    type="email" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text" 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-primary/20"
-                    placeholder="example@gmail.com"
+                    placeholder="احمد محمد علي محمود"
                     required
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">كلمة المرور</label>
-                  <input 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-primary/20"
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="w-full bg-primary text-white p-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  {loading ? 'جاري التحميل...' : (studentAction === 'login' ? 'تسجيل الدخول' : 'إنشاء الحساب')}
-                  {!loading && (studentAction === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />)}
-                </button>
-              </form>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-white px-2 text-slate-400 font-bold">أو عن طريق</span></div>
-              </div>
-
-              <button 
-                onClick={async () => {
-                  setError('');
-                  setLoading(true);
-                  try {
-                    console.log("Attempting Google Login...");
-                    await loginWithGoogle();
-                    console.log("Google Login Successfully completed");
-                  } catch (err: any) {
-                    console.error("Google Login Exception:", err);
-                    setError(err.message || "حدث خطأ أثناء الاتصال بجوجل. تأكد من السماح للدومين الجديد في Firebase.");
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-accent p-4 rounded-2xl font-bold text-slate-700 transition-all hover:bg-slate-50 disabled:opacity-50"
-              >
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
-                الدخول السريع باستخدام جوجل
-              </button>
-
-              <button 
-                onClick={() => setStudentAction(studentAction === 'login' ? 'register' : 'login')}
-                className="text-accent font-bold text-sm hover:underline"
-              >
-                {studentAction === 'login' ? 'ليس لديك حساب؟ سجل الآن' : 'لديك حساب بالفعل؟ سجل دخولك'}
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleAdminLogin} className="space-y-4 text-right">
+              )}
               <div>
-                 <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">البريد الإلكتروني (الإدارة)</label>
-                 <input 
-                   type="email" 
-                   value={email}
-                   onChange={(e) => setEmail(e.target.value)}
-                   className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-accent/20"
-                   placeholder="admin@qa.com"
-                   required
-                 />
+                <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">البريد الإلكتروني</label>
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-primary/20"
+                  placeholder="example@gmail.com"
+                  required
+                />
               </div>
               <div>
-                 <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">كلمة المرور</label>
-                 <input 
-                   type="password" 
-                   value={password}
-                   onChange={(e) => setPassword(e.target.value)}
-                   className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-accent/20"
-                   placeholder="••••••••"
-                   required
-                 />
+                <label className="text-xs font-bold text-slate-500 mb-1 block mr-1">كلمة المرور</label>
+                <input 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-slate-50 border-none rounded-xl p-4 text-right focus:ring-2 focus:ring-primary/20"
+                  placeholder="••••••••"
+                  required
+                />
               </div>
               <button 
                 type="submit" 
                 disabled={loading}
-                className="w-full bg-accent text-white p-4 rounded-xl font-bold shadow-lg shadow-accent/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-primary text-white p-4 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
               >
-                {loading ? 'جاري التحقق...' : 'دخول النظام'}
-                {!loading && <LogIn className="w-4 h-4" />}
+                {loading ? 'جاري التحميل...' : (studentAction === 'login' ? 'تسجيل الدخول' : 'إنشاء الحساب')}
+                {!loading && (studentAction === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />)}
               </button>
             </form>
-          )}
+
+            {studentAction === 'login' && (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+                  <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-white px-2 text-slate-400 font-bold">أو عن طريق</span></div>
+                </div>
+
+                <button 
+                  onClick={async () => {
+                    setError('');
+                    setLoading(true);
+                    try {
+                      await loginWithGoogle();
+                    } catch (err: any) {
+                      setError(err.message || "حدث خطأ أثناء الاتصال بجوجل.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:border-accent p-4 rounded-2xl font-bold text-slate-700 transition-all hover:bg-slate-50 disabled:opacity-50"
+                >
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
+                  الدخول السريع باستخدام جوجل
+                </button>
+              </>
+            )}
+
+            <button 
+              onClick={() => {
+                setStudentAction(studentAction === 'login' ? 'register' : 'login');
+                setError('');
+              }}
+              className="text-accent font-bold text-sm hover:underline"
+            >
+              {studentAction === 'login' ? 'ليس لديك حساب؟ سجل الآن' : 'لديك حساب بالفعل؟ سجل دخولك'}
+            </button>
+          </div>
 
           <p className="mt-8 text-[10px] text-slate-400">
             نظام QA التعليمي © 2026 - جميع الحقوق محفوظة
@@ -596,7 +487,7 @@ function LoginView() {
   );
 }
 
-function MaterialsView() {
+function MaterialsView({ userData }: { userData: any }) {
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
@@ -604,14 +495,19 @@ function MaterialsView() {
   useEffect(() => {
     const q = query(collection(db, 'materials'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMaterials(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      const allMaterials = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Filter by grade
+      const filtered = allMaterials.filter(m => 
+        !userData?.grade || !m.grade || m.grade === userData.grade
+      );
+      setMaterials(filtered);
       setLoading(false);
     }, (err) => {
       handleFirestoreError(err, OperationType.LIST, 'materials');
       setLoading(false);
     });
     return unsubscribe;
-  }, []);
+  }, [userData?.grade]);
 
   return (
     <motion.div 
@@ -631,13 +527,13 @@ function MaterialsView() {
              initial={{ opacity: 0 }}
              animate={{ opacity: 1 }}
              exit={{ opacity: 0 }}
-             className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 pointer-events-none"
+             className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 pointer-events-none overflow-y-auto"
           >
              <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm pointer-events-auto" onClick={() => setSelectedMaterial(null)} />
              <motion.div 
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="bg-white w-full max-w-5xl h-full rounded-[32px] overflow-hidden shadow-2xl relative flex flex-col pointer-events-auto"
+                className="bg-white w-full max-w-5xl h-full rounded-[32px] overflow-hidden shadow-2xl relative flex flex-col pointer-events-auto my-auto"
              >
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                    <button 
@@ -699,10 +595,10 @@ function MaterialsView() {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
         {loading ? (
           [1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-100 space-y-4 animate-pulse">
+            <div key={i} className="bg-white p-3 md:p-8 rounded-2xl md:rounded-[32px] border border-slate-100 space-y-4 animate-pulse">
                <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-50 rounded-3xl" />
                <div className="h-2 w-12 bg-slate-100 rounded-full" />
                <div className="h-4 w-3/4 bg-slate-50 rounded-full" />
@@ -717,7 +613,7 @@ function MaterialsView() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.05 }}
-              className="bg-white p-6 md:p-8 rounded-[24px] md:rounded-[40px] border border-slate-100 shadow-sm relative group hover:shadow-xl transition-all"
+              className="bg-white p-3 md:p-8 rounded-[24px] md:rounded-[40px] border border-slate-100 shadow-sm relative group hover:shadow-xl transition-all"
             >
                <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-50 text-blue-500 rounded-2xl md:rounded-3xl flex items-center justify-center mb-6 shadow-sm group-hover:bg-accent group-hover:text-white transition-colors">
                   <FileText className="w-6 h-6 md:w-8 md:h-8" />
@@ -752,34 +648,59 @@ function MaterialsView() {
   );
 }
 
-function LecturesView() {
+function LecturesView({ userData }: { userData: any }) {
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
+  const [expandedTeacher, setExpandedTeacher] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'videos'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setVideos(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      const allVideos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Filter by grade: Show all if admin or if video grade matches student grade or video grade is empty
+      const filtered = allVideos.filter(v => 
+        !userData?.grade || !v.grade || v.grade === userData.grade
+      );
+      setVideos(filtered);
       setLoading(false);
     }, (err) => {
       handleFirestoreError(err, OperationType.LIST, 'videos');
       setLoading(false);
     });
     return unsubscribe;
-  }, []);
+  }, [userData?.grade]);
+
+  // Group videos by teacher
+  const groupedVideos = videos.reduce((acc: any, video) => {
+    const teacher = video.teacherName || 'مدرسون آخرون';
+    if (!acc[teacher]) acc[teacher] = [];
+    acc[teacher].push(video);
+    return acc;
+  }, {});
+
+  const teacherNames = Object.keys(groupedVideos);
+
+  // Initialize expanded teacher if only one or none selected
+  useEffect(() => {
+    if (teacherNames.length > 0 && !expandedTeacher) {
+      setExpandedTeacher(teacherNames[0]);
+    }
+  }, [teacherNames]);
 
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-6 md:space-y-8 text-right pb-10"
+      className="space-y-6 md:space-y-8 text-right pb-20"
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl md:text-3xl font-black text-primary">المحاضرات المرئية 📺</h2>
-          <p className="text-slate-500 font-bold text-xs md:text-base">تابع دروسك وشروحات المدرسين في أي وقت</p>
+          <p className="text-slate-500 font-bold text-xs md:text-sm">
+            {userData?.grade ? `محاضرات الصف ${userData.grade}` : 'تابع دروسك وشروحات المدرسين في أي وقت'}
+          </p>
         </div>
       </div>
 
@@ -818,6 +739,7 @@ function LecturesView() {
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span className="text-[9px] md:text-[10px] bg-accent/20 text-accent px-3 py-1 rounded-full font-black border border-accent/20 tracking-tighter uppercase">{selectedVideo.subject}</span>
                   <span className="text-[9px] md:text-[10px] bg-white/10 text-white/50 px-3 py-1 rounded-full font-black">{selectedVideo.teacherName}</span>
+                  {selectedVideo.grade && <span className="text-[9px] md:text-[10px] bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full font-black">{selectedVideo.grade}</span>}
                 </div>
                 <h3 className="text-lg md:text-2xl font-black mb-2 leading-tight">{selectedVideo.title}</h3>
                 <p className="text-white/40 text-xs md:text-sm leading-relaxed">{selectedVideo.description}</p>
@@ -826,76 +748,101 @@ function LecturesView() {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="space-y-6">
         {loading ? (
-          [1, 2, 3].map(i => (
-             <div key={i} className="bg-white rounded-[32px] overflow-hidden animate-pulse">
-                <div className="aspect-video bg-slate-50" />
-                <div className="p-6 space-y-3">
-                   <div className="h-4 w-3/4 bg-slate-50 rounded-full" />
-                   <div className="h-3 w-1/2 bg-slate-50 rounded-full" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+               <div key={i} className="bg-white h-48 rounded-[32px] animate-pulse" />
+            ))}
+          </div>
+        ) : teacherNames.length > 0 ? (
+          teacherNames.map((teacherName) => (
+            <div key={teacherName} className="space-y-4">
+              <button 
+                onClick={() => setExpandedTeacher(expandedTeacher === teacherName ? null : teacherName)}
+                className="w-full flex items-center justify-between bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm hover:shadow-md transition-all text-right"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2 rounded-xl transition-transform ${expandedTeacher === teacherName ? 'rotate-180 bg-slate-100' : 'bg-slate-50'}`}>
+                    <ChevronDown className="w-5 h-5 text-slate-400" />
+                  </div>
+                  <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[10px] font-black">{groupedVideos[teacherName].length} فيديو</span>
                 </div>
-             </div>
-          ))
-        ) : videos.length > 0 ? (
-          videos.map((vid, idx) => (
-            <motion.button 
-              key={vid.id} 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              onClick={() => {
-                setSelectedVideo(vid);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="bg-white rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm overflow-hidden group text-right hover:shadow-xl transition-all active:scale-[0.98]"
-            >
-               <div className="aspect-video bg-slate-100 relative overflow-hidden">
-                  {vid.isDirectUpload ? (
-                    <div className="w-full h-full relative">
-                      <video 
-                        src={vid.url} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
-                        onMouseOver={e => (e.target as HTMLVideoElement).pause()}
-                      />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                         <Play className="w-10 h-10 text-white fill-current opacity-50" />
-                      </div>
-                    </div>
-                  ) : (
-                    <img 
-                      src={`https://img.youtube.com/vi/${vid.url}/mqdefault.jpg`} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
-                      alt={vid.title}
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-primary/20 group-hover:bg-primary/0 transition-all" />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                    <div className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center text-accent shadow-xl border-4 border-accent/10">
-                      <Play className="w-5 h-5 md:w-6 md:h-6 fill-current" />
-                    </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-lg md:text-xl font-black text-primary">محاضرات {teacherName}</span>
+                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center text-accent">
+                    <User className="w-5 h-5" />
                   </div>
-                  <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-[9px] md:text-[10px] text-white font-black tracking-tighter uppercase border border-white/10">
-                    {vid.subject}
-                  </div>
-               </div>
-               <div className="p-5 md:p-6">
-                  <h3 className="font-black text-primary mb-2 line-clamp-1 group-hover:text-accent transition-colors text-sm md:text-base leading-tight">{vid.title}</h3>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <div className="w-6 h-6 bg-slate-50 rounded-lg flex items-center justify-center shrink-0">
-                      <User className="w-3 h-3" />
+                </div>
+              </button>
+
+              <AnimatePresence>
+                {expandedTeacher === teacherName && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pt-2 pb-6">
+                      {groupedVideos[teacherName].map((vid: any, idx: number) => (
+                        <motion.button 
+                          key={vid.id} 
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: idx * 0.05 }}
+                          onClick={() => {
+                            setSelectedVideo(vid);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="bg-white rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm overflow-hidden group text-right hover:shadow-xl transition-all active:scale-[0.98]"
+                        >
+                           <div className="aspect-video bg-slate-100 relative overflow-hidden">
+                              {vid.isDirectUpload ? (
+                                <div className="w-full h-full relative">
+                                  <video 
+                                    src={vid.url} 
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                                  />
+                                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                     <Play className="w-10 h-10 text-white fill-current opacity-50" />
+                                  </div>
+                                </div>
+                              ) : (
+                                <img 
+                                  src={`https://img.youtube.com/vi/${vid.url}/mqdefault.jpg`} 
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                                  alt={vid.title}
+                                />
+                              )}
+                              <div className="absolute inset-0 bg-primary/20 group-hover:bg-primary/0 transition-all" />
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                                <div className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center text-accent shadow-xl border-4 border-accent/10">
+                                  <Play className="w-5 h-5 md:w-6 md:h-6 fill-current" />
+                                </div>
+                              </div>
+                              <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-[9px] md:text-[10px] text-white font-black tracking-tighter uppercase border border-white/10">
+                                {vid.subject}
+                              </div>
+                           </div>
+                           <div className="p-5 md:p-6">
+                              <h3 className="font-black text-primary mb-2 line-clamp-1 group-hover:text-accent transition-colors text-sm md:text-base leading-tight">{vid.title}</h3>
+                              <p className="text-[10px] md:text-xs text-slate-400 font-bold opacity-60 truncate">{vid.description || 'لا يوجد وصف متاح'}</p>
+                           </div>
+                        </motion.button>
+                      ))}
                     </div>
-                    <span className="text-[10px] md:text-xs font-bold truncate">{vid.teacherName}</span>
-                  </div>
-               </div>
-            </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           ))
         ) : (
           <div className="col-span-full bg-slate-50 p-12 md:p-20 rounded-[32px] md:rounded-[40px] border border-dashed border-slate-200 text-center">
              <div className="w-14 h-14 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                 <Video className="text-slate-300 w-7 h-7 md:w-8 md:h-8" />
              </div>
-             <p className="text-slate-400 font-black italic text-sm md:text-base">لا توجد محاضرات منشورة حالياً</p>
+             <p className="text-slate-400 font-black italic text-sm md:text-base">لا توجد محاضرات منشورة حالياً لتخصصك</p>
           </div>
         )}
       </div>
@@ -905,30 +852,45 @@ function LecturesView() {
 
 function DashboardView({ user, userData }: { user: any, userData: any }) {
   const isAdmin = userData?.role === 'admin';
-  const [stats, setStats] = useState({ students: 0, exams: 0, bookings: 0 });
+  const [stats, setStats] = useState({ students: 0, exams: 0, bookings: 0, userBookings: 0, materials: 0, avgGrade: '0/0' });
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!isAdmin) {
-        // For students, maybe just show their own stats or nothing yet
-        setStats({ students: 0, exams: 0, bookings: 0 });
-        return;
-      }
       try {
-        const studentSnap = await getDocs(collection(db, 'users'));
-        const examSnap = await getDocs(collection(db, 'exams'));
-        const bookingSnap = await getDocs(collection(db, 'bookings'));
-        setStats({
-          students: studentSnap.size,
-          exams: examSnap.size,
-          bookings: bookingSnap.size
-        });
+        if (isAdmin) {
+          const studentSnap = await getDocs(collection(db, 'users'));
+          const examSnap = await getDocs(collection(db, 'exams'));
+          const bookingSnap = await getDocs(collection(db, 'bookings'));
+          setStats(prev => ({
+            ...prev,
+            students: studentSnap.size,
+            exams: examSnap.size,
+            bookings: bookingSnap.size
+          }));
+        } else if (user) {
+          const userBookingsSnap = await getDocs(query(collection(db, 'bookings'), where('studentId', '==', user.uid)));
+          const materialsSnap = await getDocs(collection(db, 'materials'));
+          const submissionsSnap = await getDocs(query(collection(db, 'submissions'), where('studentId', '==', user.uid), orderBy('submittedAt', 'desc')));
+          
+          let gradeString = 'لا يوجد';
+          if (!submissionsSnap.empty) {
+            const last = submissionsSnap.docs[0].data();
+            gradeString = `${last.score}/${last.total}`;
+          }
+
+          setStats(prev => ({
+            ...prev,
+            userBookings: userBookingsSnap.size,
+            materials: materialsSnap.size,
+            avgGrade: gradeString
+          }));
+        }
       } catch (err) {
         console.error("Stats fetch failed:", err);
       }
     };
     fetchData();
-  }, [isAdmin]);
+  }, [isAdmin, user]);
 
   return (
     <motion.div 
@@ -1004,7 +966,7 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-10">
         {isAdmin ? (
           <>
             <StatCard title="الطلاب" value={stats.students} icon={User} color="bg-blue-600" desc="مسجلين حالياً" />
@@ -1013,9 +975,9 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
           </>
         ) : (
           <>
-            <StatCard title="حصصك" value="3" icon={Calendar} color="bg-blue-500" desc="المستوى القادم" />
-            <StatCard title="متوسط الدرجات" value="18/20" icon={TrendingUp} color="bg-green-500" desc="أداء متميز" />
-            <StatCard title="مذكراتك" value="5" icon={BookOpen} color="bg-accent" desc="تم تحميلها" />
+            <StatCard title="حصصك" value={stats.userBookings} icon={Calendar} color="bg-blue-500" desc="المجموعات المشترك بها" />
+            <StatCard title="آخر نتيجة" value={stats.avgGrade} icon={TrendingUp} color="bg-green-500" desc="أحدث تقييم لك" />
+            <StatCard title="مذكراتك" value={stats.materials} icon={BookOpen} color="bg-accent" desc="ملازم متوفرة للتحميل" />
           </>
         )}
       </div>
@@ -1079,29 +1041,38 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
 
 function StatCard({ title, value, icon: Icon, color, desc }: any) {
   return (
-    <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-100 shadow-sm hover:translate-y-[-5px] transition-all group">
-      <div className={cn("w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center text-white mb-3 md:mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-current/20", color)}>
-        <Icon className="w-5 h-5 md:w-7 md:h-7 text-white" />
+    <motion.div 
+      whileHover={{ scale: 1.02, y: -5 }}
+      className="bg-white p-4 md:p-8 rounded-[32px] md:rounded-[48px] border border-slate-100 shadow-sm transition-all group relative overflow-hidden"
+    >
+      <div className={cn("absolute top-0 right-0 w-1.5 h-full opacity-10 transition-all group-hover:w-2", color)} />
+      <div className={cn("w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-[32px] flex items-center justify-center text-white mb-4 md:mb-8 group-hover:rotate-6 transition-transform shadow-2xl", color)}>
+        <Icon className="w-6 h-6 md:w-10 md:h-10 text-white" />
       </div>
       <div className="text-right">
-        <p className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5 md:mb-1">{title}</p>
-        <p className="text-xl md:text-2xl font-black text-primary">{value}</p>
-        <p className="text-[8px] md:text-[9px] text-slate-300 mt-1">{desc}</p>
+        <p className="text-[10px] md:text-xs text-slate-400 font-black uppercase tracking-[0.2em] mb-1 md:mb-2">{title}</p>
+        <p className="text-2xl md:text-5xl font-black text-primary tracking-tighter">{value}</p>
+        <p className="text-[9px] md:text-xs text-slate-400 mt-2 font-bold opacity-60 leading-relaxed">{desc}</p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 function ActivityItem({ title, desc, color }: any) {
   return (
-    <div className="flex items-start gap-4 group cursor-pointer">
-      <div className={cn("mt-1.5 w-2 h-2 rounded-full", color.replace('text-', 'bg-'))} />
-      <div className="flex-1">
-        <h4 className="text-primary font-bold text-sm mb-0.5 group-hover:text-accent transition-colors">{title}</h4>
-        <p className="text-[11px] text-slate-500 font-medium">{desc}</p>
+    <motion.div 
+      whileHover={{ x: -10 }}
+      className="flex items-center gap-5 group cursor-pointer p-4 hover:bg-slate-50 transition-all rounded-3xl"
+    >
+      <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-slate-100 group-hover:scale-110 transition-transform", color)} >
+         <GraduationCap className="w-6 h-6"/>
       </div>
-      <ChevronRight className="w-4 h-4 text-slate-300 rotate-180 self-center group-hover:translate-x-[-3px] transition-transform" />
-    </div>
+      <div className="flex-1 text-right">
+        <h4 className="text-primary font-black text-sm md:text-base leading-tight group-hover:text-accent transition-colors">{title}</h4>
+        <p className="text-[10px] md:text-xs text-slate-500 font-bold opacity-70">{desc}</p>
+      </div>
+      <ChevronRight className="w-5 h-5 text-slate-200 rotate-180" />
+    </motion.div>
   );
 }
 
@@ -1110,16 +1081,226 @@ function TabButton({ active, onClick, icon: Icon, label }: any) {
     <button 
       onClick={onClick}
       className={cn(
-        "flex flex-shrink-0 items-center gap-1.5 md:gap-2 px-4 md:px-4 py-2.5 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all whitespace-nowrap text-xs md:text-sm",
+        "flex flex-shrink-0 items-center gap-2 md:gap-4 px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-[24px] font-black transition-all whitespace-nowrap text-xs md:text-sm border-2",
         active 
-          ? "bg-accent text-white shadow-lg shadow-accent/20 scale-[1.02]" 
-          : "text-slate-600 hover:bg-slate-50"
+          ? "bg-primary text-white border-primary shadow-2xl shadow-primary/30 scale-[1.05]" 
+          : "text-slate-400 bg-white border-slate-50 hover:border-slate-200"
       )}
     >
-      <Icon className="w-4 h-4 md:w-5 md:h-5" />
+      <Icon className={cn("w-4 h-4 md:w-6 md:h-6", active ? "text-white" : "text-slate-300")} />
       <span>{label}</span>
-      {active && <ChevronRight className="hidden lg:block w-4 h-4 rotate-180" />}
+      {active && <motion.div layoutId="nav-pill" className="hidden lg:block w-2 h-2 bg-accent rounded-full ml-auto shadow-sm" />}
     </button>
+  );
+}
+
+function SettingsView({ user, userData, setUserData }: any) {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [formData, setFormData] = useState({
+    fullName: userData?.fullName || '',
+    phone: userData?.phone || '',
+    grade: userData?.grade || '',
+    parentPhone: userData?.parentPhone || '',
+    school: userData?.school || '',
+    birthDate: userData?.birthDate || '',
+    photoURL: userData?.photoURL || user?.photoURL || '',
+  });
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('حجم الصورة كبير جداً، يرجى اختيار صورة أقل من 2 ميجابايت');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setFormData({ ...formData, photoURL: base64 });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const { updateDoc, serverTimestamp } = await import('firebase/firestore');
+      await updateDoc(userRef, { ...formData, updatedAt: serverTimestamp() });
+      setUserData({ ...userData, ...formData });
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ أثناء حفظ البيانات');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-8 text-right pb-20 px-2">
+      {/* Profile Header Card */}
+      <div className="bg-white rounded-[40px] md:rounded-[60px] p-8 md:p-14 shadow-2xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-32 md:h-48 bg-gradient-to-r from-primary to-blue-600 opacity-10" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 md:gap-10">
+          <div className="relative group">
+            <div className="w-32 h-32 md:w-48 md:h-48 rounded-[35px] md:rounded-[50px] bg-slate-100 overflow-hidden border-4 border-white shadow-2xl relative cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+              {formData.photoURL ? (
+                <img src={formData.photoURL} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Profile" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-slate-300">
+                  <User className="w-16 h-16 md:w-24 md:h-24" />
+                </div>
+              )}
+            </div>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*"
+              onChange={handleFileChange}
+            />
+            <button 
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-2 -right-2 bg-accent text-white p-3 md:p-4 rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all"
+            >
+              <Camera className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
+          </div>
+
+          <div className="text-center md:text-right flex-1">
+            <h2 className="text-3xl md:text-5xl font-black text-primary mb-3 tracking-tighter">{formData.fullName || 'طالب QA المتفوق'}</h2>
+            <div className="flex flex-wrap justify-center md:justify-start gap-3">
+              <span className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs md:text-sm font-black border border-blue-100">{formData.grade || 'لم يحدد الصف'}</span>
+              <span className="bg-slate-50 text-slate-500 px-4 py-2 rounded-xl text-xs md:text-sm font-black border border-slate-100">{user?.email}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="bg-white p-8 md:p-14 rounded-[40px] md:rounded-[60px] border border-slate-100 shadow-sm space-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+          {/* Main Info */}
+          <div className="space-y-6">
+            <h3 className="text-xl font-black text-primary flex items-center gap-3 justify-end">
+              البيانات الأساسية <User className="w-6 h-6 text-accent" />
+            </h3>
+            
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest mr-4">اسم الطالب الرباعي</label>
+              <input 
+                type="text" 
+                value={formData.fullName}
+                onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl md:rounded-3xl p-5 md:p-6 text-right font-bold text-lg focus:border-accent focus:bg-white transition-all outline-none"
+                placeholder="احمد محمد علي محمود"
+                required
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest mr-4">رقم هاتفك (واتساب)</label>
+              <input 
+                type="tel" 
+                value={formData.phone}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl md:rounded-3xl p-5 md:p-6 text-right font-bold text-lg focus:border-accent focus:bg-white transition-all outline-none"
+                placeholder="01XXXXXXXXX"
+                required
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest mr-4">الصف الدراسي</label>
+              <select 
+                value={formData.grade}
+                onChange={(e) => setFormData({...formData, grade: e.target.value})}
+                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl md:rounded-3xl p-5 md:p-6 text-right font-bold text-lg focus:border-accent focus:bg-white transition-all outline-none appearance-none"
+                required
+              >
+                <option value="">اختر صفك الدراسي...</option>
+                <option value="الأول الثانوي">الأول الثانوي</option>
+                <option value="الثاني الثانوي">الثاني الثانوي</option>
+                <option value="الثالث الثانوي">الثالث الثانوي</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Social/School Info */}
+          <div className="space-y-6">
+            <h3 className="text-xl font-black text-primary flex items-center gap-3 justify-end">
+              معلومات التواصل والمدرسة <Phone className="w-6 h-6 text-accent" />
+            </h3>
+
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest mr-4">رقم هاتف ولي الأمر</label>
+              <input 
+                type="tel" 
+                value={formData.parentPhone}
+                onChange={(e) => setFormData({...formData, parentPhone: e.target.value})}
+                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl md:rounded-3xl p-5 md:p-6 text-right font-bold text-lg focus:border-accent focus:bg-white transition-all outline-none"
+                placeholder="رقم المتابعة"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest mr-4">المدرسة</label>
+              <input 
+                type="text" 
+                value={formData.school}
+                onChange={(e) => setFormData({...formData, school: e.target.value})}
+                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl md:rounded-3xl p-5 md:p-6 text-right font-bold text-lg focus:border-accent focus:bg-white transition-all outline-none"
+                placeholder="اسم مدرستك"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest mr-4">تاريخ الميلاد</label>
+              <input 
+                type="date" 
+                value={formData.birthDate}
+                onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
+                className="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl md:rounded-3xl p-5 md:p-6 text-right font-bold text-lg focus:border-accent focus:bg-white transition-all outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-10">
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-primary text-white p-6 md:p-8 rounded-[30px] md:rounded-[40px] font-black text-xl md:text-2xl shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4"
+          >
+            {loading ? 'جاري حفظ التغييرات...' : (
+              <>
+                حفظ البيانات المحدثة <CheckCircle2 className="w-6 h-6" />
+              </>
+            )}
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {success && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 10 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0 }}
+              className="bg-green-50 text-green-600 p-6 rounded-[30px] text-center font-black text-lg border-2 border-green-100"
+            >
+              تم تحديث ملفك الشخصي بنجاح! شكراً لتعاونك 🌟
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </form>
+    </motion.div>
   );
 }
 
@@ -1187,7 +1368,7 @@ function ScheduleView({ isAdmin, onAdd }: { isAdmin: boolean, onAdd: () => void 
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4">
         {loading ? (
           [1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white rounded-3xl animate-pulse border border-slate-100" />)
         ) : slots.length > 0 ? (
@@ -1605,11 +1786,11 @@ function AddClassModal({ onClose }: { onClose: () => void }) {
   return (
     <motion.div 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm overflow-y-auto"
     >
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-[40px] w-full max-w-lg p-8 relative overflow-hidden text-right"
+        className="bg-white rounded-[40px] w-full max-w-lg p-8 relative overflow-hidden text-right my-auto"
       >
         <button onClick={onClose} className="absolute top-6 left-6 p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors">
           <X className="w-5 h-5 text-slate-500" />

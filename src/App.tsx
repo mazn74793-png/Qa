@@ -18,9 +18,9 @@ const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 
 function PageLoader() {
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-white">
-      {/* Subtle indicator only if needed for slow connections */}
-      <div className="w-8 h-8 border-2 border-slate-100 border-t-accent rounded-full animate-spin"></div>
+    <div className="min-h-[80vh] flex flex-col items-center justify-center bg-white">
+      <div className="w-10 h-10 border-2 border-slate-100 border-t-accent rounded-full animate-spin mb-4"></div>
+      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">انتظر قليلاً</p>
     </div>
   );
 }
@@ -64,60 +64,60 @@ function AnimatedRoutes() {
       <Routes location={location}>
         <Route path="/" element={
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "circOut" }}
           >
             <Home />
           </motion.div>
         } />
         <Route path="/about" element={
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "circOut" }}
           >
             <About />
           </motion.div>
         } />
         <Route path="/courses" element={
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "circOut" }}
           >
             <Courses />
           </motion.div>
         } />
         <Route path="/teachers" element={
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "circOut" }}
           >
             <Teachers />
           </motion.div>
         } />
         <Route path="/schedule" element={
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "circOut" }}
           >
             <Schedule />
           </motion.div>
         } />
         <Route path="/contact" element={
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "circOut" }}
           >
             <Contact />
           </motion.div>

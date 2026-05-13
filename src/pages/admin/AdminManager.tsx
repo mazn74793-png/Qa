@@ -71,9 +71,9 @@ export default function AdminManager() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/20 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-primary/20 backdrop-blur-sm overflow-y-auto"
           >
-            <div className="bg-white rounded-[40px] p-8 w-full max-w-md shadow-2xl relative">
+            <div className="bg-white rounded-[40px] p-8 w-full max-w-md shadow-2xl relative my-auto">
               <button 
                 onClick={() => setIsAdding(false)}
                 className="absolute top-6 left-6 text-slate-400 hover:text-slate-600"

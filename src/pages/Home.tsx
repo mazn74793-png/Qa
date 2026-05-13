@@ -78,7 +78,12 @@ export default function Home() {
     alert("تم حفظ التعديلات بنجاح!");
   };
 
-  if (!settings || !editData) return <div className="min-h-screen bg-primary flex items-center justify-center text-white">جاري التحميل...</div>;
+  if (!settings || !editData) return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+       <div className="w-10 h-10 border-2 border-slate-100 border-t-accent rounded-full animate-spin mb-4" />
+       <p className="text-slate-400 font-black text-xs uppercase tracking-widest">تحميل البيانات</p>
+    </div>
+  );
 
   const updateField = (field: keyof SiteSettings, value: string) => {
     setEditData(prev => prev ? { ...prev, [field]: value } : null);
@@ -127,9 +132,9 @@ export default function Home() {
 
       {/* Hero Section */}
       <section id="hero" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-24 md:pt-32 xl:pt-0 overflow-hidden bg-slate-950">
-        <div className="absolute top-0 right-0 w-full h-full">
-           <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/20 rounded-full blur-[120px] animate-pulse" />
-           <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[100px]" />
+        <div className="absolute top-0 right-0 w-full h-full pointer-events-none">
+           <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/10 rounded-full blur-[120px]" />
+           <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[100px]" />
         </div>
         
         <div className="container mx-auto px-4 md:px-6 relative z-10">
@@ -174,11 +179,11 @@ export default function Home() {
               </p>
               
               <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-end">
-                <Link to="/portal" className="w-full sm:w-auto px-8 md:px-12 py-5 bg-accent text-primary rounded-2xl font-black text-lg md:text-xl shadow-2xl shadow-accent/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3">
+                <Link to="/portal" className="w-full sm:w-auto px-8 md:px-12 py-5 bg-accent text-primary rounded-2xl font-black text-lg md:text-xl shadow-2xl shadow-accent/40 active:scale-95 hover:scale-105 transition-all flex items-center justify-center gap-3">
                   ابدأ رحلتك الآن
                   <ArrowLeft className="w-6 h-6" />
                 </Link>
-                <Link to="/schedule" className="w-full sm:w-auto px-8 md:px-10 py-5 bg-white/5 text-white rounded-2xl font-black text-lg md:text-xl border border-white/10 hover:bg-white/10 transition-all text-center">
+                <Link to="/schedule" className="w-full sm:w-auto px-8 md:px-10 py-5 bg-white/5 text-white rounded-2xl font-black text-lg md:text-xl border border-white/10 hover:bg-white/10 active:scale-95 transition-all text-center">
                   جدول الحصص
                 </Link>
               </div>
@@ -283,7 +288,7 @@ export default function Home() {
             </motion.div>
 
             <div className="text-center">
-               <Link to="/schedule" className="inline-flex items-center gap-4 px-10 py-5 bg-primary text-white rounded-3xl font-black text-xl hover:bg-accent hover:scale-105 transition-all shadow-xl shadow-primary/20">
+               <Link to="/schedule" className="inline-flex items-center gap-4 px-10 py-5 bg-primary text-white rounded-3xl font-black text-xl active:scale-95 hover:scale-105 transition-all shadow-xl shadow-primary/20">
                   اضغط هنا لمعرفة مواعيد جميع الحصص 🗓️
                   <ChevronLeft className="w-6 h-6" />
                </Link>
@@ -299,7 +304,7 @@ export default function Home() {
                   <span className="text-accent font-black tracking-widest uppercase text-sm inline-block mb-3">نخبة الخبراء</span>
                   <h2 className="text-3xl md:text-6xl font-black text-primary leading-tight">مدرسون من الطراز الرفيع</h2>
                </div>
-               <Link to="/teachers" className="px-8 py-4 bg-white border border-slate-100 text-primary rounded-2xl font-black flex items-center gap-2 hover:bg-accent hover:text-white transition-all shadow-sm">
+               <Link to="/teachers" className="px-8 py-4 bg-white border border-slate-100 text-primary rounded-2xl font-black flex items-center gap-2 active:scale-95 hover:scale-105 transition-all shadow-sm">
                   استعرض جميع المدرسين
                   <Users className="w-5 h-5" />
                </Link>
@@ -431,25 +436,25 @@ export default function Home() {
                   </Link>
                </div>
                
-               <div className="lg:w-1/2 grid grid-cols-2 gap-4">
-                  <div className="space-y-4 pt-12">
-                     <div className="aspect-[3/4] bg-white rounded-[32px] shadow-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center group hover:bg-primary hover:text-white transition-all cursor-default">
-                        <BookOpen className="w-12 h-12 mb-4 text-accent group-hover:text-white" />
-                        <p className="font-black text-lg">لغة عربية</p>
-                        <p className="text-[10px] uppercase font-bold opacity-40">مذكرة الشرح</p>
+               <div className="lg:w-1/2 grid grid-cols-2 gap-3 md:gap-4">
+                  <div className="space-y-3 md:space-y-4 pt-8 md:pt-12">
+                     <div className="aspect-[3/4] bg-white rounded-[24px] md:rounded-[32px] shadow-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center group hover:bg-primary hover:text-white transition-all cursor-default">
+                        <BookOpen className="w-10 h-10 md:w-12 md:h-12 mb-2 md:mb-4 text-accent group-hover:text-white" />
+                        <p className="font-black text-sm md:text-lg">لغة عربية</p>
+                        <p className="text-[8px] md:text-[10px] uppercase font-bold opacity-40">مذكرة الشرح</p>
                      </div>
-                     <div className="aspect-[3/4] bg-white rounded-[32px] shadow-xl border border-slate-100 overflow-hidden">
+                     <div className="aspect-[3/4] bg-white rounded-[24px] md:rounded-[32px] shadow-xl border border-slate-100 overflow-hidden">
                         <img src="https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?w=500" className="w-full h-full object-cover" loading="lazy" />
                      </div>
                   </div>
-                  <div className="space-y-4">
-                     <div className="aspect-[3/4] bg-white rounded-[32px] shadow-xl border border-slate-100 overflow-hidden">
+                  <div className="space-y-3 md:space-y-4">
+                     <div className="aspect-[3/4] bg-white rounded-[24px] md:rounded-[32px] shadow-xl border border-slate-100 overflow-hidden">
                         <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500" className="w-full h-full object-cover" loading="lazy" />
                      </div>
-                     <div className="aspect-[3/4] bg-white rounded-[32px] shadow-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center group hover:bg-accent hover:text-white transition-all cursor-default">
-                        <CheckCircle2 className="w-12 h-12 mb-4 text-primary group-hover:text-white" />
-                        <p className="font-black text-lg">فيزياء</p>
-                        <p className="text-[10px] uppercase font-bold opacity-40">بنك الأسئلة</p>
+                     <div className="aspect-[3/4] bg-white rounded-[24px] md:rounded-[32px] shadow-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center group hover:bg-accent hover:text-white transition-all cursor-default">
+                        <CheckCircle2 className="w-10 h-10 md:w-12 md:h-12 mb-2 md:mb-4 text-primary group-hover:text-white" />
+                        <p className="font-black text-sm md:text-lg">فيزياء</p>
+                        <p className="text-[8px] md:text-[10px] uppercase font-bold opacity-40">بنك الأسئلة</p>
                      </div>
                   </div>
                </div>
@@ -474,19 +479,19 @@ export default function Home() {
                </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                {[
-                 { name: 'اللغة العربية', level: 'المرحلة الثانوية', color: 'bg-orange-50', text: 'text-orange-500' },
-                 { name: 'الفيزياء', level: 'المرحلة الثانوية', color: 'bg-blue-50', text: 'text-blue-500' },
+                 { name: 'اللغة العربية', level: 'ثانوي/إعدادي', color: 'bg-orange-50', text: 'text-orange-500' },
+                 { name: 'الفيزياء', level: 'ثانوي/إعدادي', color: 'bg-blue-50', text: 'text-blue-500' },
                  { name: 'الكيمياء', level: 'المرحلة الثانوية', color: 'bg-green-50', text: 'text-green-500' },
-                 { name: 'الرياضيات', level: 'المرحلة الثانوية', color: 'bg-purple-50', text: 'text-purple-500' },
+                 { name: 'الرياضيات', level: 'بجميع فروعها', color: 'bg-purple-50', text: 'text-purple-500' },
                ].map((c, i) => (
-                 <Link to="/courses" key={i} className="group p-8 rounded-[40px] flex flex-col items-center text-center transition-all hover:bg-slate-50 border border-transparent hover:border-slate-100">
-                    <div className={cn("w-20 h-20 rounded-[30px] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform", c.color, c.text)}>
-                       <BookOpen className="w-10 h-10" />
+                 <Link to="/courses" key={i} className="group p-4 md:p-8 rounded-[32px] md:rounded-[40px] flex flex-col items-center text-center transition-all hover:bg-slate-50 border border-transparent hover:border-slate-100">
+                    <div className={cn("w-14 h-14 md:w-20 md:h-20 rounded-[20px] md:rounded-[30px] flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform", c.color, c.text)}>
+                       <BookOpen className="w-6 h-6 md:w-10 md:h-10" />
                     </div>
-                    <h3 className="text-xl font-black text-primary mb-1">{c.name}</h3>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{c.level}</p>
+                    <h3 className="text-sm md:text-xl font-black text-primary mb-1">{c.name}</h3>
+                    <p className="text-[8px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">{c.level}</p>
                  </Link>
                ))}
             </div>

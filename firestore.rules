@@ -72,7 +72,16 @@ service cloud.firestore {
       return data.keys().hasAll(['title', 'teacherId', 'url']) &&
              data.title is string && data.title.size() <= 200 &&
              isValidId(data.teacherId) &&
-             data.url is string && data.url.size() <= 500;
+             data.url is string && data.url.size() <= 500 &&
+             (data.get('grade', '') is string && data.grade.size() <= 100);
+    }
+
+    function isValidVideo(data) {
+      return data.keys().hasAll(['title', 'url', 'teacherId']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.url is string && data.url.size() <= 500 &&
+             isValidId(data.teacherId) &&
+             (data.get('grade', '') is string && data.grade.size() <= 100);
     }
 
     // --- Collection Rules ---
@@ -105,12 +114,12 @@ service cloud.firestore {
 
     match /materials/{materialId} {
       allow read: if isSignedIn();
-      allow write: if isTeacher();
+      allow write: if isTeacher() && isValidMaterial(incoming());
     }
 
     match /videos/{videoId} {
       allow read: if isSignedIn();
-      allow write: if isTeacher();
+      allow write: if isTeacher() && isValidVideo(incoming());
     }
 
     match /exams/{examId} {
