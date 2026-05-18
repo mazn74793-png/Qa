@@ -84,7 +84,7 @@ export const dataService = {
   },
   async addAdmin(email: string) {
     return addDoc(collection(db, 'admins'), { 
-      email, 
+      email: email.toLowerCase(), 
       role: 'admin',
       addedAt: new Date().toISOString() 
     }).catch(e => handleFirestoreError(e, OperationType.WRITE, 'admins'));

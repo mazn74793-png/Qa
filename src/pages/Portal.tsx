@@ -495,9 +495,9 @@ function MaterialsView({ userData }: { userData: any }) {
   useEffect(() => {
     const q = query(collection(db, 'materials'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const allMaterials = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      const allMaterials = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
       // Filter by grade
-      const filtered = allMaterials.filter(m => 
+      const filtered = allMaterials.filter((m: any) => 
         !userData?.grade || !m.grade || m.grade === userData.grade
       );
       setMaterials(filtered);
@@ -657,9 +657,9 @@ function LecturesView({ userData }: { userData: any }) {
   useEffect(() => {
     const q = query(collection(db, 'videos'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const allVideos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      const allVideos = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
       // Filter by grade: Show all if admin or if video grade matches student grade or video grade is empty
-      const filtered = allVideos.filter(v => 
+      const filtered = allVideos.filter((v: any) => 
         !userData?.grade || !v.grade || v.grade === userData.grade
       );
       setVideos(filtered);
