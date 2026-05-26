@@ -131,12 +131,12 @@ export default function Home() {
       )}
 
       {/* Hero Section */}
-      <section id="hero" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-28 md:pt-36 xl:pt-10 overflow-hidden bg-slate-50">
+      <section id="hero" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-32 md:pt-40 lg:pt-44 xl:pt-48 pb-16 md:pb-24 overflow-hidden bg-slate-950">
         <div className="absolute top-0 right-0 w-full h-full pointer-events-none">
-           <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/5 rounded-full blur-[120px]" />
-           <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[100px]" />
+           <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/20 rounded-full blur-[140px]" />
+           <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
         </div>
-        
+
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div 
@@ -147,7 +147,7 @@ export default function Home() {
             >
               <div className="relative inline-block group mb-6">
                 <div 
-                  className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm"
+                  className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/10 shadow-sm"
                 >
                   <Sparkles className="w-4 h-4 text-accent" />
                   <span className="text-xs md:text-sm font-black tracking-widest uppercase text-accent">{currentData.heroBadge}</span>
@@ -159,8 +159,8 @@ export default function Home() {
                 suppressContentEditableWarning={true}
                 onBlur={(e) => updateField('heroTitle', e.currentTarget.textContent || '')}
                 className={cn(
-                  "text-4xl sm:text-6xl md:text-7xl font-black mb-6 leading-[1.1] md:leading-[1.1] tracking-tighter whitespace-pre-line focus:outline-none focus:ring-2 focus:ring-accent rounded-xl text-primary",
-                  isEditing && "bg-white ring-2 ring-accent p-2"
+                  "text-4xl sm:text-6xl md:text-7xl font-black mb-6 leading-[1.1] md:leading-[1.1] tracking-tighter whitespace-pre-line focus:outline-none focus:ring-2 focus:ring-accent rounded-xl text-white",
+                  isEditing && "bg-white/10 ring-2 ring-accent p-2"
                 )}
               >
                 {currentData.heroTitle}
@@ -171,57 +171,57 @@ export default function Home() {
                 suppressContentEditableWarning={true}
                 onBlur={(e) => updateField('heroSubtitle', e.currentTarget.textContent || '')}
                 className={cn(
-                  "text-base md:text-xl text-slate-500 mb-10 max-w-2xl md:ml-auto leading-relaxed font-bold focus:outline-none focus:ring-2 focus:ring-accent rounded-xl",
-                  isEditing && "bg-white ring-2 ring-accent p-2"
+                  "text-base md:text-xl text-slate-400 mb-10 max-w-2xl md:ml-auto leading-relaxed font-bold focus:outline-none focus:ring-2 focus:ring-accent rounded-xl",
+                  isEditing && "bg-white/10 ring-2 ring-accent p-2"
                 )}
               >
                 {currentData.heroSubtitle}
               </p>
               
               <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-end">
-                <Link to="/portal" className="w-full sm:w-auto px-8 md:px-12 py-5 bg-accent text-white rounded-2xl font-black text-lg md:text-xl shadow-2xl shadow-accent/20 active:scale-95 hover:scale-105 transition-all flex items-center justify-center gap-3">
+                <Link to="/portal" className="w-full sm:w-auto px-8 md:px-12 py-5 bg-accent text-white rounded-2xl font-black text-lg md:text-xl shadow-2xl shadow-accent/30 active:scale-95 hover:scale-105 transition-all flex items-center justify-center gap-3">
                   ابدأ رحلتك الآن
                   <ArrowLeft className="w-6 h-6" />
                 </Link>
-                <Link to="/schedule" className="w-full sm:w-auto px-8 md:px-10 py-5 bg-white text-slate-800 rounded-2xl font-black text-lg md:text-xl border border-slate-200 hover:bg-slate-100 hover:scale-103 active:scale-95 transition-all text-center shadow-sm">
+                <Link to="/schedule" className="w-full sm:w-auto px-8 md:px-10 py-5 bg-white/5 text-white rounded-2xl font-black text-lg md:text-xl border border-white/10 hover:bg-white/10 hover:scale-103 active:scale-95 transition-all text-center">
                   جدول الحصص
                 </Link>
               </div>
 
-              <div className="mt-12 flex items-center justify-center lg:justify-end gap-8 text-slate-300 border-t border-slate-200 pt-8">
+              <div className="mt-12 flex items-center justify-center lg:justify-end gap-8 text-white/20 border-t border-white/5 pt-8">
                  <div className="text-center">
-                    <p className="text-3xl font-black text-primary">+5K</p>
+                    <p className="text-3xl font-black text-white">+5K</p>
                     <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">طالب مسجل</p>
                  </div>
-                 <div className="h-8 w-[1px] bg-slate-200" />
+                 <div className="h-8 w-[1px] bg-white/10" />
                  <div className="text-center">
-                    <p className="text-3xl font-black text-primary">+50</p>
+                    <p className="text-3xl font-black text-white">+50</p>
                     <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">مدرس خبير</p>
                  </div>
               </div>
             </motion.div>
 
             <motion.div 
-               initial={{ opacity: 0, x: 50 }}
-               animate={{ opacity: 1, x: 0 }}
+               initial={{ opacity: 0, scale: 0.95 }}
+               animate={{ opacity: 1, scale: 1 }}
                transition={{ duration: 0.8, delay: 0.2 }}
                className="relative hidden lg:block"
             >
-               <div className="relative z-10 p-2 bg-white rounded-[60px] border border-slate-100 shadow-2xl">
-                <img src={currentData.heroImage} alt="Students" className="rounded-[50px] w-full h-[650px] object-cover ring-1 ring-slate-100" referrerPolicy="no-referrer" fetchPriority="high" />
+               <div className="relative z-10 p-2 bg-white/5 backdrop-blur-3xl rounded-[60px] border border-white/10 shadow-2xl overflow-hidden">
+                <img src={currentData.heroImage} alt="Students" className="rounded-[50px] w-full h-[520px] xl:h-[580px] object-cover ring-1 ring-white/10" referrerPolicy="no-referrer" fetchPriority="high" />
                 
-                {/* Floating Card */}
+                {/* Safe Floating Card inside the image boundaries */}
                 <motion.div 
-                  animate={{ y: [0, -20, 0] }}
+                  animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -left-12 top-1/4 bg-white p-6 rounded-[32px] shadow-2xl border border-slate-100 flex items-center gap-4"
+                  className="absolute left-6 bottom-6 bg-slate-900/95 backdrop-blur-md p-5 rounded-[24px] shadow-2xl border border-white/10 flex items-center gap-4 z-20"
                 >
-                   <div className="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center text-white">
-                      <TrendingUp className="w-6 h-6" />
+                   <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white shrink-0">
+                      <TrendingUp className="w-5 h-5" />
                    </div>
                    <div className="text-right">
-                      <p className="text-sm font-black text-slate-400">نسبة النجاح</p>
-                      <p className="text-2xl font-black text-primary">%99.8</p>
+                      <p className="text-[10px] font-black text-white/50 uppercase">نسبة النجاح</p>
+                      <p className="text-xl font-black text-accent">%99.8</p>
                    </div>
                 </motion.div>
               </div>
@@ -231,8 +231,7 @@ export default function Home() {
       </section>
 
       {/* Schedule Preview Section - NEW */}
-      <section className="py-24 bg-white relative overflow-hidden">
-         <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl -mr-32 -mt-32" />
+      <section className="py-24 bg-gradient-to-b from-white to-slate-50 relative overflow-hidden">
          
          <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center mb-16">
@@ -592,8 +591,8 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent/20 rounded-full blur-[80px]" />
-                <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-primary/10 rounded-full blur-[100px]" />
+                <div className="absolute -top-10 -left-10 w-40 h-40 bg-rose-500/5 rounded-full blur-2xl" />
+                <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
               </div>
           </div>
         </div>

@@ -30,7 +30,7 @@ export default function About() {
     <div id="about-page" className="min-h-screen bg-white">
       {/* Hero */}
       <section className="bg-white text-slate-900 py-12 md:py-20 relative overflow-hidden text-right border-b border-slate-50">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full blur-[100px]" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full blur-2xl" />
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
@@ -102,7 +102,7 @@ export default function About() {
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <div className="absolute -top-10 -right-10 w-48 md:w-64 h-48 md:h-64 bg-accent/10 rounded-full blur-[60px] md:blur-[80px]" />
+              <div className="absolute -top-10 -right-10 w-48 md:w-64 h-48 md:h-64 bg-rose-500/5 rounded-full blur-2xl" />
             </motion.div>
           </div>
         </div>

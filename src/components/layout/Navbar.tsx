@@ -22,8 +22,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const textColor = "text-primary";
-  const iconColor = "text-primary";
+  const textColor = scrolled ? "text-primary" : (isHomePage ? "text-white" : "text-primary");
+  const iconColor = scrolled || !isHomePage ? "text-primary" : "text-white";
   const logoBg = "bg-white";
 
   return (
