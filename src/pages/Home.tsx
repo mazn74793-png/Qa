@@ -131,9 +131,9 @@ export default function Home() {
       )}
 
       {/* Hero Section */}
-      <section id="hero" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-24 md:pt-32 xl:pt-0 overflow-hidden bg-slate-950">
+      <section id="hero" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-28 md:pt-36 xl:pt-10 overflow-hidden bg-slate-50">
         <div className="absolute top-0 right-0 w-full h-full pointer-events-none">
-           <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/10 rounded-full blur-[120px]" />
+           <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/5 rounded-full blur-[120px]" />
            <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[100px]" />
         </div>
         
@@ -147,10 +147,10 @@ export default function Home() {
             >
               <div className="relative inline-block group mb-6">
                 <div 
-                  className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/10"
+                  className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm"
                 >
                   <Sparkles className="w-4 h-4 text-accent" />
-                  <span className="text-xs md:text-sm font-black tracking-widest uppercase text-accent/80">{currentData.heroBadge}</span>
+                  <span className="text-xs md:text-sm font-black tracking-widest uppercase text-accent">{currentData.heroBadge}</span>
                 </div>
               </div>
               
@@ -159,8 +159,8 @@ export default function Home() {
                 suppressContentEditableWarning={true}
                 onBlur={(e) => updateField('heroTitle', e.currentTarget.textContent || '')}
                 className={cn(
-                  "text-4xl sm:text-6xl md:text-8xl font-black mb-6 leading-[1] md:leading-[0.95] tracking-tighter whitespace-pre-line focus:outline-none focus:ring-2 focus:ring-accent rounded-xl text-white",
-                  isEditing && "bg-white/10 ring-2 ring-accent"
+                  "text-4xl sm:text-6xl md:text-7xl font-black mb-6 leading-[1.1] md:leading-[1.1] tracking-tighter whitespace-pre-line focus:outline-none focus:ring-2 focus:ring-accent rounded-xl text-primary",
+                  isEditing && "bg-white ring-2 ring-accent p-2"
                 )}
               >
                 {currentData.heroTitle}
@@ -171,32 +171,32 @@ export default function Home() {
                 suppressContentEditableWarning={true}
                 onBlur={(e) => updateField('heroSubtitle', e.currentTarget.textContent || '')}
                 className={cn(
-                  "text-base md:text-2xl text-white/50 mb-10 max-w-2xl md:ml-auto leading-relaxed font-bold focus:outline-none focus:ring-2 focus:ring-accent rounded-xl",
-                  isEditing && "bg-white/10 ring-2 ring-accent"
+                  "text-base md:text-xl text-slate-500 mb-10 max-w-2xl md:ml-auto leading-relaxed font-bold focus:outline-none focus:ring-2 focus:ring-accent rounded-xl",
+                  isEditing && "bg-white ring-2 ring-accent p-2"
                 )}
               >
                 {currentData.heroSubtitle}
               </p>
               
               <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-end">
-                <Link to="/portal" className="w-full sm:w-auto px-8 md:px-12 py-5 bg-accent text-primary rounded-2xl font-black text-lg md:text-xl shadow-2xl shadow-accent/40 active:scale-95 hover:scale-105 transition-all flex items-center justify-center gap-3">
+                <Link to="/portal" className="w-full sm:w-auto px-8 md:px-12 py-5 bg-accent text-white rounded-2xl font-black text-lg md:text-xl shadow-2xl shadow-accent/20 active:scale-95 hover:scale-105 transition-all flex items-center justify-center gap-3">
                   ابدأ رحلتك الآن
                   <ArrowLeft className="w-6 h-6" />
                 </Link>
-                <Link to="/schedule" className="w-full sm:w-auto px-8 md:px-10 py-5 bg-white/5 text-white rounded-2xl font-black text-lg md:text-xl border border-white/10 hover:bg-white/10 active:scale-95 transition-all text-center">
+                <Link to="/schedule" className="w-full sm:w-auto px-8 md:px-10 py-5 bg-white text-slate-800 rounded-2xl font-black text-lg md:text-xl border border-slate-200 hover:bg-slate-100 hover:scale-103 active:scale-95 transition-all text-center shadow-sm">
                   جدول الحصص
                 </Link>
               </div>
 
-              <div className="mt-12 flex items-center justify-center lg:justify-end gap-8 text-white/20 border-t border-white/5 pt-8">
+              <div className="mt-12 flex items-center justify-center lg:justify-end gap-8 text-slate-300 border-t border-slate-200 pt-8">
                  <div className="text-center">
-                    <p className="text-2xl font-black text-white">+5K</p>
-                    <p className="text-[10px] uppercase font-bold tracking-widest">طالب مسجل</p>
+                    <p className="text-3xl font-black text-primary">+5K</p>
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">طالب مسجل</p>
                  </div>
-                 <div className="h-8 w-[1px] bg-white/10" />
+                 <div className="h-8 w-[1px] bg-slate-200" />
                  <div className="text-center">
-                    <p className="text-2xl font-black text-white">+50</p>
-                    <p className="text-[10px] uppercase font-bold tracking-widest">مدرس خبير</p>
+                    <p className="text-3xl font-black text-primary">+50</p>
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">مدرس خبير</p>
                  </div>
               </div>
             </motion.div>
@@ -207,8 +207,8 @@ export default function Home() {
                transition={{ duration: 0.8, delay: 0.2 }}
                className="relative hidden lg:block"
             >
-              <div className="relative z-10 p-2 bg-white/5 backdrop-blur-3xl rounded-[60px] border border-white/10 shadow-2xl">
-                <img src={currentData.heroImage} alt="Students" className="rounded-[50px] w-full h-[650px] object-cover ring-1 ring-white/10" referrerPolicy="no-referrer" fetchPriority="high" />
+               <div className="relative z-10 p-2 bg-white rounded-[60px] border border-slate-100 shadow-2xl">
+                <img src={currentData.heroImage} alt="Students" className="rounded-[50px] w-full h-[650px] object-cover ring-1 ring-slate-100" referrerPolicy="no-referrer" fetchPriority="high" />
                 
                 {/* Floating Card */}
                 <motion.div 

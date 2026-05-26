@@ -22,8 +22,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const textColor = scrolled ? "text-primary" : (isHomePage ? "text-white" : "text-primary");
-  const iconColor = scrolled || !isHomePage ? "text-primary" : "text-white";
+  const textColor = "text-primary";
+  const iconColor = "text-primary";
   const logoBg = "bg-white";
 
   return (
@@ -36,40 +36,39 @@ export default function Navbar() {
         )}
       >
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="bg-white rounded-xl p-1.5 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
-              {settings?.logoUrl ? (
-                <img src={settings.logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
-              ) : (
-                <GraduationCap className="w-8 h-8 text-primary" />
-              )}
-            </div>
-            <span className={cn(
-              "text-lg md:text-xl font-black tracking-tight truncate max-w-[120px] md:max-w-none",
-              textColor
-            )}>
-              {settings?.siteName || 'QA EDUCATION'}
-            </span>
-          </Link>
-
-          {/* Desktop Nav */}
-          <div className="hidden lg:flex items-center gap-6">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={cn(
-                  "text-sm font-black transition-colors hover:text-accent whitespace-nowrap",
-                  location.pathname === link.href 
-                    ? "text-accent" 
-                    : textColor
-                )}
-              >
-                {link.name}
-              </Link>
-            ))}
+        {/* Logo and Brand Name */}
+        <Link to="/" className="flex items-center gap-2 shrink-0">
+          <div className="bg-white rounded-xl p-1.5 flex items-center justify-center overflow-hidden shadow-sm shrink-0 border border-slate-100">
+            {settings?.logoUrl ? (
+              <img src={settings.logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
+            ) : (
+              <GraduationCap className="w-8 h-8 text-primary" />
+            )}
           </div>
+          <span className={cn(
+            "text-lg md:text-xl font-black tracking-tight truncate max-w-[150px] md:max-w-[200px] lg:max-w-[300px]",
+            textColor
+          )}>
+            {settings?.siteName || 'QA EDUCATION'}
+          </span>
+        </Link>
+
+        {/* Desktop Nav centered in the middle */}
+        <div className="hidden lg:flex items-center gap-6 md:gap-8">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              to={link.href}
+              className={cn(
+                "text-sm font-black transition-colors hover:text-accent whitespace-nowrap",
+                location.pathname === link.href 
+                  ? "text-accent" 
+                  : textColor
+              )}
+            >
+              {link.name}
+            </Link>
+          ))}
         </div>
 
         <div className="flex items-center gap-2 md:gap-4 shrink-0">
