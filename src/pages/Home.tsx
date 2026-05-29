@@ -131,12 +131,7 @@ export default function Home() {
       )}
 
       {/* Hero Section */}
-      <section id="hero" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-32 md:pt-40 lg:pt-44 xl:pt-48 pb-16 md:pb-24 overflow-hidden bg-slate-950">
-        <div className="absolute top-0 right-0 w-full h-full pointer-events-none">
-           <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/20 rounded-full blur-[140px]" />
-           <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
-        </div>
-
+      <section id="hero" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-32 md:pt-40 lg:pt-44 xl:pt-48 pb-16 md:pb-24 overflow-hidden bg-slate-950 bg-[radial-gradient(circle_at_top_right,rgba(239,62,84,0.12),transparent_45%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.06),transparent_40%)]">
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div 
@@ -147,7 +142,7 @@ export default function Home() {
             >
               <div className="relative inline-block group mb-6">
                 <div 
-                  className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/10 shadow-sm"
+                  className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-2xl border border-white/10 shadow-sm"
                 >
                   <Sparkles className="w-4 h-4 text-accent" />
                   <span className="text-xs md:text-sm font-black tracking-widest uppercase text-accent">{currentData.heroBadge}</span>
@@ -207,14 +202,14 @@ export default function Home() {
                transition={{ duration: 0.8, delay: 0.2 }}
                className="relative hidden lg:block"
             >
-               <div className="relative z-10 p-2 bg-white/5 backdrop-blur-3xl rounded-[60px] border border-white/10 shadow-2xl overflow-hidden">
+               <div className="relative z-10 p-2 bg-white/5 rounded-[60px] border border-white/10 shadow-2xl overflow-hidden">
                 <img src={currentData.heroImage} alt="Students" className="rounded-[50px] w-full h-[520px] xl:h-[580px] object-cover ring-1 ring-white/10" referrerPolicy="no-referrer" fetchPriority="high" />
                 
                 {/* Safe Floating Card inside the image boundaries */}
                 <motion.div 
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute left-6 bottom-6 bg-slate-900/95 backdrop-blur-md p-5 rounded-[24px] shadow-2xl border border-white/10 flex items-center gap-4 z-20"
+                  className="absolute left-6 bottom-6 bg-slate-900/95 p-5 rounded-[24px] shadow-2xl border border-white/10 flex items-center gap-4 z-20"
                 >
                    <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white shrink-0">
                       <TrendingUp className="w-5 h-5" />
@@ -591,15 +586,15 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="absolute -top-10 -left-10 w-40 h-40 bg-rose-500/5 rounded-full blur-2xl" />
-                <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
+                 <div className="hidden md:block absolute -top-10 -left-10 w-40 h-40 bg-rose-500/5 rounded-full blur-2xl" />
+                 <div className="hidden md:block absolute -bottom-10 -right-10 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
               </div>
           </div>
         </div>
       </section>
 
       {/* CTA Final */}
-      <section className="py-24 bg-accent relative overflow-hidden">
+      <section className="py-24 bg-accent relative overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_45%),radial-gradient(circle_at_bottom_left,rgba(45,42,74,0.15),transparent_45%)]">
          <div className="container mx-auto px-4 text-center relative z-10">
              <h2 className="text-3xl md:text-6xl font-black text-white mb-8 leading-tight">جاهز لتبدأ رحلة النجاح معنا؟</h2>
              <p className="text-white/80 font-bold mb-12 text-lg md:text-2xl max-w-3xl mx-auto leading-relaxed">انضم الآن إلى آلاف الطلاب المتفوقين في سنتر QA واحجز مكانك في طليعة الناجحين</p>
@@ -612,8 +607,6 @@ export default function Home() {
                 </Link>
              </div>
          </div>
-         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-[100px]" />
-         <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-[100px]" />
       </section>
     </div>
   );
