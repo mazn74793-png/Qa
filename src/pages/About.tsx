@@ -1,30 +1,18 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Target, Eye, Award, History } from 'lucide-react';
-import { getSiteSettings, SiteSettings } from '@/src/services/siteService';
+import { getSiteSettings, SiteSettings, DEFAULT_SETTINGS } from '@/src/services/siteService';
 
 export default function About() {
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
     getSiteSettings().then(data => {
       setSettings(data);
-    }).catch(() => {
-      // getSiteSettings already handles its own errors and returns DEFAULT_SETTINGS,
-      // but if something goes wrong, we ensure we have data.
-    });
+    }).catch(() => {});
   }, []);
 
   const currentSettings = settings;
-
-  if (!currentSettings) {
-    return (
-      <div className="min-h-screen pt-32 px-4 flex flex-col items-center justify-center gap-6">
-        <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-        <p className="text-xl font-black text-primary">جاري تحميل المعلومات...</p>
-      </div>
-    );
-  }
 
   return (
     <div id="about-page" className="min-h-screen bg-white">

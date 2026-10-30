@@ -28,7 +28,7 @@ export interface SiteSettings {
   whyChooseUsVideoUrl: string;
 }
 
-const DEFAULT_SETTINGS: SiteSettings = {
+export const DEFAULT_SETTINGS: SiteSettings = {
   siteName: "سنتر QA التعليمي",
   siteDescription: "سنتر QA التعليمي هو رفيقك في طريق النجاح والتميز الدراسي. نوفر بيئة تعليمية متطورة تهدف إلى تنمية مهارات الطلاب.",
   logoUrl: "",

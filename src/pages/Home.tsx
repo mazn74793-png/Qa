@@ -2,15 +2,15 @@ import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, CheckCircle2, TrendingUp, Users, BookOpen, Clock, Heart, Edit2, Save, X, Settings, ShieldCheck, Image as ImageIcon, Calendar, GraduationCap, ChevronLeft, Play, Video, Download, Search, Sparkles, Youtube, Volume2, VolumeX } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getSiteSettings, updateSiteSettings, SiteSettings } from '@/src/services/siteService';
+import { getSiteSettings, updateSiteSettings, SiteSettings, DEFAULT_SETTINGS } from '@/src/services/siteService';
 import { dataService } from '@/src/services/dataService';
 import { useAdmin } from '@/src/hooks/useAdmin';
 import { cn } from '@/src/lib/utils';
 
 export default function Home() {
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<SiteSettings | null>(null);
+  const [editData, setEditData] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [realSchedule, setRealSchedule] = useState<any[]>([]);
   const [realTeachers, setRealTeachers] = useState<any[]>([]);
   const { isAdmin } = useAdmin();
@@ -78,12 +78,7 @@ export default function Home() {
     alert("تم حفظ التعديلات بنجاح!");
   };
 
-  if (!settings || !editData) return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-       <div className="w-10 h-10 border-2 border-slate-100 border-t-accent rounded-full animate-spin mb-4" />
-       <p className="text-slate-400 font-black text-xs uppercase tracking-widest">تحميل البيانات</p>
-    </div>
-  );
+
 
   const updateField = (field: keyof SiteSettings, value: string) => {
     setEditData(prev => prev ? { ...prev, [field]: value } : null);

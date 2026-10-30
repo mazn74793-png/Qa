@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Phone, MapPin, Send, Facebook, MessageCircle, Instagram } from 'lucide-react';
-import { getSiteSettings, SiteSettings } from '@/src/services/siteService';
+import { getSiteSettings, SiteSettings, DEFAULT_SETTINGS } from '@/src/services/siteService';
 
 export default function Contact() {
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
-    getSiteSettings().then(setSettings);
+    getSiteSettings().then(setSettings).catch(() => {});
   }, []);
-
-  if (!settings) return <div className="min-h-screen flex items-center justify-center font-bold">جاري التحميل...</div>;
 
   return (
     <div id="contact-page" className="min-h-screen pb-12 md:pb-20">

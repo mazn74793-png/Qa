@@ -148,28 +148,6 @@ function AnimatedRoutes() {
 }
 
 export default function App() {
-  const [settings, setSettings] = useState<any>(null);
-  
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const service = await import('./services/siteService');
-        const siteSettings = await service.getSiteSettings();
-        setSettings(siteSettings);
-      } catch (err) {
-        console.warn("Could not load initial settings:", err);
-      } finally {
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            document.body.classList.add('app-ready');
-          }, 50);
-        });
-      }
-    };
-    
-    fetchSettings();
-  }, []);
-
   return (
     <Router>
       <ScrollToTop />
