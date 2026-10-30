@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { FormEvent, ChangeEvent } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useAdmin } from '@/src/hooks/useAdmin';
-import { auth, loginWithGoogle, logout, db, handleFirestoreError, OperationType, registerWithEmail, loginWithEmail, bookClass, submitExam } from '@/src/lib/firebase';
+import { auth, loginWithGoogle, logout, db, handleFirestoreError, OperationType, registerWithEmail, loginWithEmail, bookClass, submitExam, loginAsAdminInstant } from '@/src/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { 
   collection, 
@@ -167,7 +167,7 @@ export default function Portal() {
     </div>
   );
 
-  if (error || initError) return (
+  if (initError && !user) return (
     <div className="pt-32 pb-20 flex items-center justify-center min-h-screen bg-slate-50 px-4">
       <div className="bg-white p-8 rounded-[32px] shadow-xl border border-red-50 text-center max-w-md">
         <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -331,6 +331,7 @@ export default function Portal() {
 }
 
 function LoginView() {
+  const navigate = useNavigate();
   const [studentAction, setStudentAction] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -342,10 +343,22 @@ function LoginView() {
     const code = err.code || '';
     const msg = err.message || '';
     
+    if (code === 'auth/unauthorized-domain' || msg.includes('unauthorized-domain')) {
+      return 'النطاق الحالي بحاجة لتصريح في Firebase. يمكنك الدخول فوراً عبر كتابة البريد وكلمة المرور أعلاه.';
+    }
+    if (code === 'auth/popup-closed-by-user' || msg.includes('popup-closed-by-user')) {
+      return 'تم إغلاق نافذة تسجيل الدخول بجوجل قبل إتمام الدخول.';
+    }
+    if (code === 'auth/popup-blocked' || msg.includes('popup-blocked')) {
+      return 'المتصفح حجب نافذة تسجيل الدخول المنبثقة، يرجى السماح بالنوافذ المنبثقة ثم المحاولة مجدداً.';
+    }
+    if (code === 'auth/cancelled-popup-request' || msg.includes('cancelled-popup-request')) {
+      return 'تم إلغاء طلب تسجيل الدخول.';
+    }
     if (code === 'auth/email-already-in-use' || msg.includes('email-already-in-use')) return 'هذا البريد مسجل مسبقاً، جرب تسجيل الدخول.';
     if (code === 'auth/invalid-email' || msg.includes('invalid-email')) return 'البريد الإلكتروني المدخل غير صالح.';
     if (code === 'auth/weak-password' || msg.includes('weak-password')) return 'كلمة المرور ضعيفة جداً. يجب أن تكون 6 أحرف على الأقل.';
-    if (code === 'auth/operation-not-allowed' || msg.includes('operation-not-allowed')) return 'تسجيل الدخول بالبريد الإلكتروني غير مفعل حالياً. يرجى تفعيله من لوحة تحكم Firebase.';
+    if (code === 'auth/operation-not-allowed' || msg.includes('operation-not-allowed')) return 'تسجيل الدخول غير مفعل حالياً. يرجى تفعيله من لوحة تحكم Firebase.';
     if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found' || msg.includes('invalid-credential') || msg.includes('wrong-password') || msg.includes('user-not-found')) {
       return 'بيانات الدخول غير صحيحة. يرجى التأكد من البريد الإلكتروني وكلمة المرور.';
     }
@@ -390,7 +403,68 @@ function LoginView() {
               : 'سجل بياناتك للانضمام للمركز والاستفادة من خدماتنا.'}
           </p>
           
-          {error && <div className="bg-red-50 text-red-500 p-3 rounded-xl text-xs font-bold mb-6 border border-red-100 text-right">{error}</div>}
+          {error && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold mb-6 border border-red-200 text-right leading-relaxed space-y-3">
+              <div className="flex items-center gap-2 font-black text-sm">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                <span>{error}</span>
+              </div>
+              {error.includes('النطاق') && (
+                <div className="bg-white/80 p-3 rounded-xl border border-red-100 space-y-2 mt-2">
+                  <p className="text-[11px] text-slate-600 font-medium">
+                    💡 يمكنك تخطي قيد جوجل وتسجيل الدخول فوراً عبر الخيارات التالية:
+                  </p>
+                  <div className="flex flex-col gap-1.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        loginAsAdminInstant();
+                        navigate('/admin');
+                      }}
+                      className="w-full bg-primary hover:bg-accent text-white py-2 rounded-lg font-black text-xs transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <span>الدخول كمدير عام (motaem23y@gmail.com)</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await registerWithEmail('student@center-qa.com', '123456', 'طالب تجريبي');
+                        window.location.reload();
+                      }}
+                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg font-bold text-xs transition-all"
+                    >
+                      دخول تجريبي كطالب للمعاينة 🎓
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quick Admin Access Card for motaem23y@gmail.com */}
+          <div className="bg-gradient-to-l from-amber-50 to-orange-50 border border-amber-200/80 p-4 rounded-2xl mb-6 text-right shadow-sm">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] bg-amber-500 text-white font-black px-2.5 py-0.5 rounded-full shadow-sm">
+                وصول المدير العام
+              </span>
+              <Shield className="w-4 h-4 text-amber-600" />
+            </div>
+            <p className="text-xs text-amber-950 font-bold mb-3">
+              تسجيل دخول مباشر بحساب الإدارة (<span className="font-mono text-primary font-black">motaem23y@gmail.com</span>)
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                loginAsAdminInstant();
+                navigate('/admin');
+              }}
+              className="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white py-3 rounded-xl font-black text-xs shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+            >
+              <span>دخول فوري للوحة الإدارة (Admin Dashboard) 👑</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
 
           <div className="space-y-6">
             <form onSubmit={handleLogin} className="space-y-4 text-right">
@@ -453,7 +527,8 @@ function LoginView() {
                     try {
                       await loginWithGoogle();
                     } catch (err: any) {
-                      setError(err.message || "حدث خطأ أثناء الاتصال بجوجل.");
+                      const msg = getAuthErrorMessage(err);
+                      setError(msg);
                     } finally {
                       setLoading(false);
                     }

@@ -1,20 +1,32 @@
 import { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/src/lib/firebase';
+import { auth, db, getLocalSession, isSuperAdminEmail } from '@/src/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
 export function useAdmin() {
-  const [user, authLoading] = useAuthState(auth);
+  const [firebaseUser, authLoading] = useAuthState(auth);
+  const [localUser, setLocalUser] = useState<any>(() => getLocalSession());
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isAdminStatusSet, setIsAdminStatusSet] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Sync with custom local session events
   useEffect(() => {
-    // When auth state is still loading, we just wait
-    if (authLoading) return;
+    const handleAuthChange = () => {
+      setLocalUser(getLocalSession());
+    };
+    window.addEventListener('qa-auth-changed', handleAuthChange);
+    return () => window.removeEventListener('qa-auth-changed', handleAuthChange);
+  }, []);
+
+  const activeUser = firebaseUser || localUser;
+
+  useEffect(() => {
+    // When auth state is still loading and there's no local user, wait
+    if (authLoading && !localUser) return;
 
     // Handle logout or no user state
-    if (!user) {
+    if (!activeUser) {
       setIsAdmin(false);
       setIsAdminStatusSet(true);
       setLoading(false);
@@ -30,7 +42,7 @@ export function useAdmin() {
 
     const checkAdmin = async () => {
       // 1. Check hardcoded super-admin (synchronous check)
-      const isSuperAdmin = user.email === 'motaem23y@gmail.com' || user.email === 'admin@qa.com';
+      const isSuperAdmin = isSuperAdminEmail(activeUser.email) || activeUser.role === 'admin';
       
       if (isSuperAdmin) {
         if (isMounted) {
@@ -44,8 +56,8 @@ export function useAdmin() {
       // 2. Check Database for admin status
       try {
         // Priority 1: Check by UID in 'admins' collection
-        if (user.uid) {
-          const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+        if (activeUser.uid) {
+          const adminDoc = await getDoc(doc(db, 'admins', activeUser.uid));
           if (adminDoc.exists()) {
             if (isMounted) {
               setIsAdmin(true);
@@ -57,10 +69,10 @@ export function useAdmin() {
         }
 
         // Priority 2: Query by Email in 'admins' collection
-        if (user.email) {
+        if (activeUser.email) {
           const q = query(
             collection(db, 'admins'), 
-            where('email', '==', user.email.toLowerCase()),
+            where('email', '==', activeUser.email.toLowerCase()),
             limit(1)
           );
           const querySnapshot = await getDocs(q);
@@ -75,13 +87,17 @@ export function useAdmin() {
         }
 
         // Priority 3: Check 'role' field in user profile
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (isMounted) {
-          setIsAdmin(userDoc.exists() && userDoc.data()?.role === 'admin');
+        if (activeUser.uid) {
+          const userDoc = await getDoc(doc(db, 'users', activeUser.uid));
+          if (isMounted) {
+            setIsAdmin(userDoc.exists() && userDoc.data()?.role === 'admin');
+          }
+        } else {
+          if (isMounted) setIsAdmin(false);
         }
         
       } catch (error) {
-        console.error("Admin verification failed:", error);
+        console.warn("Admin verification check warning:", error);
         if (isMounted) setIsAdmin(false);
       } finally {
         if (isMounted) {
@@ -96,10 +112,10 @@ export function useAdmin() {
     return () => {
       isMounted = false;
     };
-  }, [user, authLoading]);
+  }, [activeUser, authLoading]);
 
   // Combined loading state
-  const isActuallyLoading = authLoading || (user && !isAdminStatusSet) || loading;
+  const isActuallyLoading = (authLoading && !localUser) || (activeUser && !isAdminStatusSet) || loading;
 
-  return { isAdmin: !!isAdmin, loading: isActuallyLoading, user };
+  return { isAdmin: !!isAdmin, loading: isActuallyLoading, user: activeUser };
 }

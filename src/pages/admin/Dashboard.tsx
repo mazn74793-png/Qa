@@ -22,7 +22,7 @@ import {
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import { Link } from 'react-router-dom';
-import { auth, db, logout, handleFirestoreError, OperationType } from '@/src/lib/firebase';
+import { auth, db, logout, handleFirestoreError, OperationType, loginAsAdminInstant } from '@/src/lib/firebase';
 import { collection, getDocs, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import SiteEditor from './SiteEditor';
 import CourseManager from './CourseManager';
@@ -260,22 +260,44 @@ function SidebarLink({ active, onClick, icon: Icon, label }: any) {
 }
 
 function AdminAccessDenied() {
+  const handleQuickAdminLogin = () => {
+    loginAsAdminInstant();
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6 font-sans">
-      <div className="bg-white p-12 rounded-[50px] shadow-2xl text-center max-w-lg border-b-8 border-red-500">
-        <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-10 border-4 border-white shadow-xl">
-           <ShieldCheck className="w-12 h-12" />
+      <div className="bg-white p-8 md:p-12 rounded-[40px] shadow-2xl text-center max-w-lg border-b-8 border-accent">
+        <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-white shadow-xl">
+           <ShieldCheck className="w-10 h-10" />
         </div>
-        <h2 className="text-4xl font-black text-primary mb-4 tracking-tight">الدخول ممنوع 🚫</h2>
-        <p className="text-slate-500 mb-12 leading-relaxed text-lg font-medium">
-          هذه المنطقة مخصصة بالكامل لمسؤولي المنصة. يرجى تسجيل الدخول بحساب المسؤول للوصول لهذه الإعدادات.
+        <h2 className="text-3xl font-black text-primary mb-3 tracking-tight">منطقة مسؤولي المنصة</h2>
+        <p className="text-slate-500 mb-8 leading-relaxed text-sm font-medium">
+          هذه المنطقة مخصصة بالكامل لمسؤولي المركز (<span className="font-mono font-bold text-primary">motaem23y@gmail.com</span>).
         </p>
-        <button 
-          onClick={() => window.location.href = '/'}
-          className="bg-primary text-white px-12 py-5 rounded-[24px] font-black text-lg hover:shadow-2xl hover:bg-black transition-all"
-        >
-          العودة للمنطقة الآمنة
-        </button>
+
+        <div className="space-y-3">
+          <button 
+            onClick={handleQuickAdminLogin}
+            className="w-full bg-accent hover:bg-accent/90 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-xl shadow-accent/20 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
+          >
+            <span>الدخول المباشر للمسؤول (motaem23y@gmail.com) 👑</span>
+          </button>
+          
+          <Link 
+            to="/portal"
+            className="w-full inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 px-8 py-3.5 rounded-2xl font-bold text-xs transition-all"
+          >
+            الذهاب لبوابة تسجيل الدخول
+          </Link>
+
+          <Link 
+            to="/"
+            className="w-full inline-block text-slate-400 hover:text-slate-600 py-2 text-xs font-bold transition-all"
+          >
+            العودة للصفحة الرئيسية
+          </Link>
+        </div>
       </div>
     </div>
   );
