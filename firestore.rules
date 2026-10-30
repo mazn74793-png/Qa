@@ -92,7 +92,7 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().get('role', 'student') == 'student';
       allow update: if (isOwner(userId) && (
         // Allow updating everything EXCEPT role for self
-        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'gradeLevel', 'parentId', 'avatarUrl', 'lastLogin'])
+        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'grade', 'gradeLevel', 'parentId', 'parentPhone', 'school', 'birthDate', 'photoURL', 'avatarUrl', 'lastLogin', 'updatedAt'])
       )) || isAdmin();
       allow delete: if isAdmin();
     }
@@ -123,8 +123,7 @@ service cloud.firestore {
     }
 
     match /exams/{examId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn() && (resource.data.get('active', false) == true || isTeacher());
+      allow get, list: if isSignedIn();
       allow write: if isTeacher();
     }
 

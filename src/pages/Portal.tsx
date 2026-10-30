@@ -852,7 +852,9 @@ function LecturesView({ userData }: { userData: any }) {
 
 function DashboardView({ user, userData }: { user: any, userData: any }) {
   const isAdmin = userData?.role === 'admin';
-  const [stats, setStats] = useState({ students: 0, exams: 0, bookings: 0, userBookings: 0, materials: 0, avgGrade: '0/0' });
+  const [stats, setStats] = useState({ students: 0, exams: 0, bookings: 0, userBookings: 0, materials: 0, avgGrade: 'لا يوجد' });
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -867,16 +869,59 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
             exams: examSnap.size,
             bookings: bookingSnap.size
           }));
+          setLoadingActivities(false);
         } else if (user) {
           const userBookingsSnap = await getDocs(query(collection(db, 'bookings'), where('studentId', '==', user.uid)));
           const materialsSnap = await getDocs(collection(db, 'materials'));
           const submissionsSnap = await getDocs(query(collection(db, 'submissions'), where('studentId', '==', user.uid), orderBy('submittedAt', 'desc')));
+          const examsSnap = await getDocs(query(collection(db, 'exams'), orderBy('createdAt', 'desc')));
           
           let gradeString = 'لا يوجد';
+          const items: any[] = [];
+
           if (!submissionsSnap.empty) {
             const last = submissionsSnap.docs[0].data();
-            gradeString = `${last.score}/${last.total}`;
+            const totalScore = last.total || last.maxScore || 0;
+            gradeString = `${last.score}/${totalScore}`;
+            items.push({
+              id: 'sub-last',
+              title: 'آخر تقييم تم إنجازه',
+              desc: `حصلت على ${last.score} من ${totalScore}`,
+              type: 'exam',
+              color: 'text-green-500',
+              action: () => (window as any).setActiveTab?.('grades')
+            });
           }
+
+          if (!examsSnap.empty) {
+            const activeExams = examsSnap.docs.map(d => ({ id: d.id, ...d.data() } as any)).filter((e: any) => e.active !== false);
+            if (activeExams.length > 0) {
+              const latestExam: any = activeExams[0];
+              items.push({
+                id: `exam-${latestExam.id}`,
+                title: latestExam.title,
+                desc: `امتحان متاح بواسطة ${latestExam.teacherName || 'الإدارة'} (${latestExam.durationMinutes || latestExam.duration || 30} دقيقة)`,
+                type: 'alert',
+                color: 'text-orange-500',
+                action: () => (window as any).setActiveTab?.('exams')
+              });
+            }
+          }
+
+          if (!materialsSnap.empty) {
+            const latestMat: any = materialsSnap.docs[0].data();
+            items.push({
+              id: 'mat-last',
+              title: latestMat.title || 'مذكرة جديدة',
+              desc: `مذكرة ${latestMat.subject || ''} بواسطة ${latestMat.teacherName || 'المعلم'}`,
+              type: 'file',
+              color: 'text-blue-500',
+              action: () => (window as any).setActiveTab?.('materials')
+            });
+          }
+
+          setActivities(items);
+          setLoadingActivities(false);
 
           setStats(prev => ({
             ...prev,
@@ -887,6 +932,7 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
         }
       } catch (err) {
         console.error("Stats fetch failed:", err);
+        setLoadingActivities(false);
       }
     };
     fetchData();
@@ -984,34 +1030,38 @@ function DashboardView({ user, userData }: { user: any, userData: any }) {
 
       {!isAdmin && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Notifications */}
+          {/* Dynamic Real Notifications */}
           <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm transition-all hover:shadow-xl hover:shadow-slate-200/20">
             <h3 className="text-xl font-black text-primary mb-8 flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <AlertCircle className="text-accent w-5 h-5" />
-                تنبيهات هامة
+                تنبيهات وتحديثات هامة
               </span>
-              <span className="text-xs bg-red-50 text-red-500 px-2.5 py-1 rounded-full">جديد</span>
+              {activities.length > 0 && <span className="text-xs bg-accent/10 text-accent px-2.5 py-1 rounded-full font-bold">نشط</span>}
             </h3>
-            <div className="space-y-6">
-              <ActivityItem 
-                title="امتحان الفيزياء الدوري" 
-                desc="السبت القادم 10 ص - قاعة 1" 
-                type="alert" 
-                color="text-orange-500"
-              />
-              <ActivityItem 
-                title="مذكرة البلاغة الجديدة" 
-                desc="تم رفع الجزء الثالث الآن" 
-                type="file" 
-                color="text-blue-500"
-              />
-              <ActivityItem 
-                title="تقييم الشهر الماضي" 
-                desc="درجتك 19/20 - ممتاز!" 
-                type="exam" 
-                color="text-green-500"
-              />
+            <div className="space-y-4">
+              {loadingActivities ? (
+                <div className="py-6 text-center text-slate-300 text-sm animate-pulse">جاري التحقق من التنبيهات...</div>
+              ) : activities.length > 0 ? (
+                activities.map((act) => (
+                  <ActivityItem 
+                    key={act.id}
+                    title={act.title} 
+                    desc={act.desc} 
+                    type={act.type} 
+                    color={act.color}
+                    onClick={act.action}
+                  />
+                ))
+              ) : (
+                <div className="py-10 text-center text-slate-400 font-bold bg-slate-50/50 rounded-2xl border border-slate-100 p-6">
+                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-xs">
+                    <AlertCircle className="w-6 h-6 text-slate-300" />
+                  </div>
+                  <p className="text-sm font-black text-slate-600 mb-1">لا توجد تنبيهات جديدة حالياً</p>
+                  <p className="text-xs text-slate-400">سيظهر هنا أي امتحان أو مذكرة جديدة فور إضافتها</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1058,10 +1108,11 @@ function StatCard({ title, value, icon: Icon, color, desc }: any) {
   );
 }
 
-function ActivityItem({ title, desc, color }: any) {
+function ActivityItem({ title, desc, color, onClick }: any) {
   return (
     <motion.div 
       whileHover={{ x: -10 }}
+      onClick={onClick}
       className="flex items-center gap-5 group cursor-pointer p-4 hover:bg-slate-50 transition-all rounded-3xl"
     >
       <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-slate-100 group-hover:scale-110 transition-transform", color)} >
@@ -1442,53 +1493,26 @@ function ScheduleView({ isAdmin, onAdd }: { isAdmin: boolean, onAdd: () => void 
 function ExamsView({ isAdmin, onAdd, onTake }: { isAdmin: boolean, onAdd: () => void, onTake: (exam: any) => void }) {
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [bookings, setBookings] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!isAdmin) {
-      const q = query(collection(db, 'bookings'), where('studentId', '==', auth.currentUser?.uid));
-      getDocs(q).then(async (snap) => {
-        const slotIds = snap.docs.map(d => d.data().slotId);
-        if (slotIds.length > 0) {
-          // Fetch teachers for these slots
-          const teacherList: string[] = [];
-          for (const sid of slotIds) {
-            const sDoc = await getDocFromServer(doc(db, 'schedule', sid));
-            if (sDoc.exists()) {
-              teacherList.push(sDoc.data().teacherName);
-            }
-          }
-          setBookings(teacherList);
-        }
-      });
-    }
-  }, [isAdmin]);
-
-  useEffect(() => {
-    // Only fetch active exams for students
-    const q = isAdmin 
-      ? query(collection(db, 'exams'), orderBy('createdAt', 'desc'))
-      : query(collection(db, 'exams'), where('active', '==', true), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'exams'), orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      // Filter for student: only show exams for teachers they have booked with
+      // Filter for student: only show active exams (default active is true if omitted)
       if (!isAdmin) {
-        data = data.filter((exam: any) => {
-          // If the exam isn't linked to a specific teacher, or if we have it in bookings
-          if (!exam.teacherName) return true; 
-          return bookings.includes(exam.teacherName);
-        });
+        data = data.filter((exam: any) => exam.active !== false);
       }
 
       setExams(data);
       setLoading(false);
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'exams');
+      console.warn("Could not load exams list:", error);
+      setLoading(false);
     });
     return unsubscribe;
-  }, [isAdmin, bookings.join(',')]);
+  }, [isAdmin]);
 
   return (
     <motion.div 
@@ -1517,7 +1541,8 @@ function ExamsView({ isAdmin, onAdd, onTake }: { isAdmin: boolean, onAdd: () => 
                 <h4 className="font-black text-primary text-sm md:text-base">{exam.title}</h4>
                 <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-1 text-[9px] md:text-[10px] text-slate-400 font-bold uppercase">
                   <span className="flex items-center gap-1"><User className="w-2.5 h-2.5 md:w-3 md:h-3" /> {exam.teacherName || 'الإدارة'}</span>
-                  <span className="flex items-center gap-1"><Clock className="w-2.5 h-2.5 md:w-3 md:h-3" /> {exam.durationMinutes} دقيقة</span>
+                  <span className="flex items-center gap-1"><Clock className="w-2.5 h-2.5 md:w-3 md:h-3" /> {exam.durationMinutes || exam.duration || 30} دقيقة</span>
+                  {exam.grade && <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-bold">{exam.grade}</span>}
                 </div>
               </div>
               <button 
@@ -1529,8 +1554,12 @@ function ExamsView({ isAdmin, onAdd, onTake }: { isAdmin: boolean, onAdd: () => 
             </div>
           ))
         ) : (
-          <div className="py-20 text-center text-slate-400 font-bold italic bg-white rounded-[32px] border border-slate-100">
-             لا يوجد امتحانات متاحة حالياً
+          <div className="py-16 text-center text-slate-400 font-bold bg-white rounded-[32px] border border-slate-100 flex flex-col items-center justify-center p-8">
+             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                <ClipboardCheck className="text-slate-300 w-8 h-8" />
+             </div>
+             <p className="text-slate-600 font-black text-base mb-1">لا توجد امتحانات متاحة حالياً</p>
+             <p className="text-slate-400 text-xs">لم يتم نشر أي امتحانات بعد، تابع هذه الصفحة باستمرار عند إضافة أي اختبار جديد</p>
           </div>
         )}
       </div>

@@ -108,8 +108,12 @@ export default function ExamManager() {
       return;
     }
     try {
+      const dur = Number(newExam.duration) || 30;
       await addDoc(collection(db, 'exams'), {
         ...newExam,
+        duration: dur,
+        durationMinutes: dur,
+        active: true,
         createdAt: serverTimestamp()
       });
       setShowAdd(false);

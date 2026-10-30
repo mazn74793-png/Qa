@@ -151,15 +151,14 @@ export default function App() {
   const [settings, setSettings] = useState<any>(null);
   
   useEffect(() => {
-    // Faster settings fetch
     const fetchSettings = async () => {
       try {
-        const service = await import('@/src/services/siteService');
+        const service = await import('./services/siteService');
         const siteSettings = await service.getSiteSettings();
         setSettings(siteSettings);
+      } catch (err) {
+        console.warn("Could not load initial settings:", err);
       } finally {
-        // Ensuring the app-ready signal is sent as soon as basic init is done
-        // Small delay to ensure rendering is committed
         requestAnimationFrame(() => {
           setTimeout(() => {
             document.body.classList.add('app-ready');

@@ -23,17 +23,19 @@ import {
   orderBy
 } from 'firebase/firestore';
 
-// Use environment variables for the Firebase config
+import firebaseAppletConfig from '../../firebase-applet-config.json';
+
+// Use environment variables for the Firebase config with direct fallback to firebase-applet-config.json
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId,
 };
 
-const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID;
+const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseAppletConfig.firestoreDatabaseId || '(default)';
 
 let app;
 try {
@@ -99,29 +101,48 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 
 // Test Connection
 async function testConnection() {
+  if (!firebaseConfig.apiKey) {
+    console.warn("Please check your Firebase configuration (API key is missing).");
+    return;
+  }
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
-    if(error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration.");
-    }
-    // Silently handle other connection errors in background
+    // Silently handle connection testing in the background without breaking app
   }
 }
 testConnection();
 
 // Auth Helpers
+export const isSuperAdminEmail = (email?: string | null) => {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  return normalized === 'motaem23y@gmail.com' || normalized === 'admin@qa.com';
+};
+
 export const loginWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    // Create/update user document if needed
+    const isAdmin = isSuperAdminEmail(result.user.email);
+    // Create/update user document with admin role if superadmin
     await setDoc(doc(db, 'users', result.user.uid), {
       uid: result.user.uid,
-      fullName: result.user.displayName || 'مستخدم جديد',
+      fullName: result.user.displayName || (isAdmin ? 'المدير العام' : 'مستخدم جديد'),
       email: result.user.email,
-      role: 'student', // Default role
+      role: isAdmin ? 'admin' : 'student',
       createdAt: new Date().toISOString()
     }, { merge: true });
+
+    if (isAdmin) {
+      await setDoc(doc(db, 'admins', result.user.uid), {
+        uid: result.user.uid,
+        email: result.user.email,
+        name: result.user.displayName || 'المدير العام للمنصة',
+        role: 'superadmin',
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+    }
+
     return result.user;
   } catch (error) {
     console.error("Login failed:", error);
@@ -133,15 +154,26 @@ export const registerWithEmail = async (email: string, pass: string, name: strin
   try {
     const result = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(result.user, { displayName: name });
+    const isAdmin = isSuperAdminEmail(result.user.email);
     
-    // Create student doc
+    // Create user doc
     await setDoc(doc(db, 'users', result.user.uid), {
       uid: result.user.uid,
       fullName: name,
       email: result.user.email,
-      role: 'student',
+      role: isAdmin ? 'admin' : 'student',
       createdAt: new Date().toISOString()
     });
+
+    if (isAdmin) {
+      await setDoc(doc(db, 'admins', result.user.uid), {
+        uid: result.user.uid,
+        email: result.user.email,
+        name: name,
+        role: 'superadmin',
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+    }
     
     return result.user;
   } catch (error) {
@@ -153,6 +185,19 @@ export const registerWithEmail = async (email: string, pass: string, name: strin
 export const loginWithEmail = async (email: string, pass: string) => {
   try {
     const result = await signInWithEmailAndPassword(auth, email, pass);
+    const isAdmin = isSuperAdminEmail(result.user.email);
+    if (isAdmin) {
+      // Ensure admin document exists
+      await setDoc(doc(db, 'admins', result.user.uid), {
+        uid: result.user.uid,
+        email: result.user.email,
+        name: result.user.displayName || 'المدير العام للمنصة',
+        role: 'superadmin'
+      }, { merge: true });
+      await setDoc(doc(db, 'users', result.user.uid), {
+        role: 'admin'
+      }, { merge: true });
+    }
     return result.user;
   } catch (error) {
     console.error("Login failed:", error);

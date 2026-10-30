@@ -77,11 +77,11 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
-      return docSnap.data() as SiteSettings;
+      return { ...DEFAULT_SETTINGS, ...docSnap.data() } as SiteSettings;
     }
     return DEFAULT_SETTINGS;
   } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'settings/global');
+    console.warn("Could not load site settings from Firestore, using default settings:", error);
     return DEFAULT_SETTINGS;
   }
 }
